@@ -1,15 +1,19 @@
 """oft generate: deterministic, complete, and checked; and the schemas under it."""
+import ast
 import glob
 import io
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 
-from oft import facts, generate, layout, names, paths, port, rocq, schema, shapes, symbols, yamlio
-from oft.tests.helpers import NEW_NAMESPACE, rename_namespace, tree
+from oft import claims, facts, generate, layout, names, paths, port, rocq, rules, schema, shapes, symbols, yamlio
+from oft.tests import test_classifier_images as ci
+from oft.tests.helpers import NEW_NAMESPACE, REPO, git, git_repo, rename_namespace, tree
 from oft.tests.test_layout import old_layout_tree
 
 
@@ -56,6 +60,56 @@ class Rendering(unittest.TestCase):
             t.write("projects/zlib/project.yaml", "extra: 1\n", "a")
             self.assertEqual(t.generate(), 1)
             self.assertIn("nothing rendered", t.last_output)
+
+
+class DistributionBody(unittest.TestCase):
+    """generate fails a Distribution.v whose body does not define the weights its harness.yaml gives, each above 0.
+    Each changed definition here follows a comment holding harness.yaml's, the one rules._distribution reads."""
+    DIST = "projects/zlib/checksum_fuzzer/Distribution.v"
+    HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
+
+    def defining(self, t, **weights):
+        text = t.read(self.DIST)
+        for name, value in weights.items():
+            old = re.search(r"Definition %s : Q := \(\d+ # \d+\)%%Q\." % name, text).group(0)
+            text = text.replace(old, "(* %s *)\nDefinition %s : Q := (%s)%%Q." % (old, name, value))
+        t.write(self.DIST, text)
+
+    def test_harness_yaml_s_weights_pass(self):
+        with tree() as t:
+            body = facts.split_distribution(t.read(self.DIST))[1]
+            self.assertIsNone(claims.distribution_body_error(body, t.yaml(self.HARNESS)))
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+            # a comment in the body changes a bound's fingerprint, which index/statements.tsv lists
+            self.defining(t, m_payload="90 # 100")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_a_zero_weight_fails(self):
+        with tree() as t:
+            self.defining(t, m_payload="0 # 100")
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(self.DIST + ": its component weights 0, 1/50, 1/50, None, 3/50 are not harness.yaml's "
+                          "components, each above 0", t.last_output)
+        with tree() as t:
+            t.write(self.DIST, t.read(self.DIST).replace("cd_lift cd.", "fun _ => 0%Q."))
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(self.DIST + ": it is not the form tools/oft/claims.py reads", t.last_output)
+
+    def test_a_zero_weight_harness_yaml_gives_too_fails(self):
+        with tree() as t:
+            self.defining(t, m_payload="0 # 100")
+            data = t.yaml(self.HARNESS)
+            data["distribution"]["components"]["payload"] = "0"
+            self.assertIn("each above 0", claims.distribution_body_error(
+                facts.split_distribution(t.read(self.DIST))[1], data))
+
+    def test_a_changed_weight_fails(self):
+        with tree() as t:
+            self.defining(t, m_payload="89 # 100", m_base="7 # 100")
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(self.DIST + ": its component weights 89/100, 1/50, 1/50, None, 7/100 are not harness.yaml's "
+                          "components, each above 0", t.last_output)
 
 
 class StatementText(unittest.TestCase):
@@ -123,7 +177,8 @@ class StatementText(unittest.TestCase):
 
     def test_mixed_exit_sets_keep_apart(self):
         """A statement is written "As [first]" only after one with the same exit
-        set, and the project page names an exit set other than the commonest."""
+        set, and the project page names an exit set other than the commonest, with
+        the builds it holds for when the harness's statements differ."""
         p = "projects/zlib/checksum_fuzzer/harness.yaml"
         with tree() as t:
             self.rejecting(t)
@@ -137,7 +192,38 @@ class StatementText(unittest.TestCase):
         asan = s[s.index("Definition ubsan_halts :"):s.index("Definition asan_halts :")]
         self.assertNotIn("As [plain_halts]", asan)
         self.assertIn("As [plain_halts]", ubsan)
-        self.assertIn("any status (status 0, 2 or 78 for checksum_fuzzer)", page)
+        self.assertIn("any status (status 0, 2 or 78 for checksum_fuzzer's plain, UBSan and ASan+UBSan builds)", page)
+
+    def test_a_finite_may_fail_statement_does_not_say_any_status(self):
+        """A may-fail statement with a finite exit set allows no more statuses than
+        its budget twin, so its text names its set and does not say it allows any."""
+        p = "projects/zlib/checksum_fuzzer/harness.yaml"
+        with tree() as t:
+            y = t.yaml(p)
+            y["statements"]["plain_halts_may_fail"]["exits"] = [0, 2]
+            t.put_yaml(p, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            s = t.read("projects/zlib/checksum_fuzzer/Statements.v")
+        doc = " ".join(s[s.index("Definition plain_halts :"):s.index("Definition plain_halts_may_fail :")].split())
+        self.assertIn("Every execution of the plain build exits, with status 0 or 2, on every input", doc)
+        self.assertIn("unlike [plain_halts].", doc)
+        self.assertNotIn("allows any exit status", doc)
+        self.assertIn("halts_may_fail Exits.ok_or_refused Images.plain.", s)
+
+    def test_the_may_fail_family_names_each_exit_set_with_its_statements(self):
+        """Where a project's may-fail statements differ in exit set, the project page gives each set with the
+        statements it holds for, not "any status or status 0 or 2" for the whole family."""
+        p = "projects/zlib/checksum_fuzzer/harness.yaml"
+        with tree() as t:
+            y = t.yaml(p)
+            y["statements"]["plain_halts_may_fail"]["exits"] = [0, 2]
+            t.put_yaml(p, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            page = t.read("projects/zlib/README.md")
+        line = next(x for x in page.splitlines() if x.startswith("- **`<build>_halts_may_fail`**"))
+        self.assertIn("every execution exits, with any status (status 0 or 2 for checksum_fuzzer's plain build).",
+                      line)
+        self.assertNotIn("any status or status 0 or 2", page)
 
     def test_a_return_only_check_beside_rejects_is_named(self):
         """78 does not say which line returned, so a check that reports a failure by
@@ -194,7 +280,7 @@ class StatementText(unittest.TestCase):
         self.assertIn("(targets Plain.v Plain_seg_000.hex Plain_seg_001.hex Plain_seg_002.hex Plain_seg_003.hex)", d)
 
     def test_chunked_segments(self):
-        self.assertEqual(generate.hex_targets("Plain", [1, 2]),
+        self.assertEqual(claims.hex_targets("Plain", [1, 2]),
                          ["Plain_seg_000.hex", "Plain_seg_001_chunk_000.hex", "Plain_seg_001_chunk_001.hex"])
 
     def test_a_harness_name_that_is_not_an_identifier(self):
@@ -243,12 +329,14 @@ class StatementText(unittest.TestCase):
         self.assertEqual(st["json/fuzzer-parse_bjdata/asan_agrees"], "suspected-false")
 
     def test_a_witness_is_described_from_its_fields(self):
+        """The page says which requests the position counts, so a reader who counts system calls is not misled."""
         with tree() as t:
             r = t.read("projects/zlib/checksum_fuzzer/README.md")
             k = t.read("analyses/known-issues.md")
-        want = ("false (witnessed): with the input file `01 00 00 00 00 00 00`, refusing the 3rd memory request "
-                "(an mmap of 4,096 bytes) makes the UBSan build end in an abort (SIGABRT) on an uncaught "
-                "std::bad_alloc (run under qemu-riscv64 10.0.11)")
+        want = ("false (witnessed): with the input file `01 00 00 00 00 00 00`, refusing the 3rd memory request that "
+                "backs an allocation (an mmap of 4,096 bytes; counted are each brk that asks for new pages, each "
+                "anonymous mmap without MAP_FIXED and each mremap) makes the UBSan build end in an abort (SIGABRT) on "
+                "an uncaught std::bad_alloc (run under qemu-riscv64 10.0.11)")
         self.assertIn(want, r)
         self.assertIn("zlib/checksum_fuzzer/ubsan_halts_may_fail", k)
 
@@ -366,6 +454,9 @@ class Shapes(unittest.TestCase):
         base.update(kw)
         return base
 
+    def test_the_size_grammar_is_the_project_schema_s(self):
+        self.assertEqual(shapes.SIZE.pattern, schema.load_schema("project")["defs"]["size"]["pattern"])
+
     def test_every_agreement_shape(self):
         want = {("may-fail", "error", "rv64g"): "agrees", ("may-fail", "signal", "rv64g"): "agrees_abort_modelled",
                 ("alloc-forced-only", "error", "rv64g"): "agrees_in",
@@ -374,7 +465,8 @@ class Shapes(unittest.TestCase):
                 ("may-fail", "signal", "rv64gc"): "agrees_abort_modelled_rv64gc",
                 ("alloc-forced-only", "error", "rv64gc"): "agrees_in_rv64gc"}
         for (reading, abort, machine), name in want.items():
-            self.assertEqual(shapes.shape_name(self.st(reading=reading, abort=abort, machine=machine)), name)
+            self.assertEqual(shapes.shape_name(self.st(reading=reading, abort=abort, machine=machine),
+                                               distribution=False), name)
 
     def test_combinations_with_no_shape_are_refused(self):
         for bad in (self.st(reading="alloc-forced-only", abort="signal", machine="rv64gc"),
@@ -384,11 +476,11 @@ class Shapes(unittest.TestCase):
                     {"kind": "bound", "builds": ["plain", "asan"], "reading": "may-fail", "abort": "signal"}):
             bad = {k: v for k, v in bad.items() if v is not None}
             with self.assertRaises(shapes.ShapeError):
-                shapes.term(bad)
+                shapes.term(bad, distribution=False)
 
     def test_rv64gc_input_set_shapes(self):
         st = {"kind": "decidability", "builds": ["plain", "asan"], "reading": "may-fail", "machine": "rv64gc"}
-        self.assertEqual(shapes.shape_name(st), "agreement_decidable_rv64gc")
+        self.assertEqual(shapes.shape_name(st, distribution=False), "agreement_decidable_rv64gc")
 
     HALTS = {"kind": "halts", "builds": ["plain"], "reading": "budget", "exits": [0, 2]}
     READ = {"failure_handlers": "none"}   # a harness whose linked code was read and installs no failure handler
@@ -537,10 +629,10 @@ class Fingerprints(unittest.TestCase):
                 seen.add(next(s.fingerprint for s in facts.load(t.root).statements() if s.id == bound))
         self.assertEqual(len(seen), 2)
 
-    def test_a_carriage_return_in_a_distribution_string_survives_generate_then_check(self):
+    def test_a_carriage_return_in_distribution_v_s_body_survives_generate_then_check(self):
         dist = "projects/zlib/checksum_fuzzer/Distribution.v"
         with tree() as t:
-            t.write(dist, t.read(dist) + 'Definition s := "a\rb".\n')
+            t.write(dist, t.read(dist) + '(* a\rb *)\n')
             self.assertEqual(t.generate(), 0, t.last_output)
             self.assertEqual(t.generate(check=True), 0, t.last_output)
 
@@ -655,6 +747,32 @@ class Schemas(unittest.TestCase):
             y["colour"] = {"shade": "blue"}
             self.assertTrue(any("unknown key" in e for e in schema.validate("project", y)))
 
+    def test_a_distribution_weight_or_mass_of_zero_is_refused(self):
+        rel = "projects/zlib/checksum_fuzzer/harness.yaml"
+        with tree(render=False) as t:
+            for key in ("payload", "wrong_argc", "missing_file", "envp", "full_support", "mass"):
+                for zero in ("0", "0/5"):
+                    with self.subTest(key=key, zero=zero):
+                        y = t.yaml(rel)
+                        d = y["distribution"]
+                        (d if key == "mass" else d["components"])[key] = zero
+                        if key == "envp":
+                            d["envp"] = ["A=1"]
+                        self.assertTrue(any("distribution" in e for e in schema.validate("harness", y)), key)
+
+    def test_the_statement_files_rocq_is_written_by_claims_alone(self):
+        def calls(path, function):
+            tree_ = ast.parse(open(os.path.join(os.path.dirname(generate.__file__), path)).read())
+            node = next(n for n in tree_.body if isinstance(n, ast.FunctionDef) and n.name == function)
+            return {(n.value.id, n.attr) for n in ast.walk(node)
+                    if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name)}
+        self.assertNotIn(("shapes", "term"), calls("generate.py", "statements_v"))
+        self.assertIn(("claims", "statements_v"), calls("generate.py", "statements_v"))
+        self.assertIn(("shapes", "term"), calls("claims.py", "statements_v"))
+        text = open(generate.__file__).read()
+        for template in ("Images.v.tmpl", "images-dune.tmpl", "Distribution-header.v.tmpl"):
+            self.assertNotIn(template, text)
+
     def test_yaml_is_strict(self):
         self.assertEqual(yamlio.load("d: 2026-11-02\nb: yes\n"), {"d": "2026-11-02", "b": "yes"})
         with self.assertRaises(yamlio.YamlError):
@@ -689,6 +807,26 @@ class UninstrumentedWords(unittest.TestCase):
             st = t.read("projects/zlib/checksum_fuzzer/Statements.v")
             self.assertIn("in the code it instruments", st)
 
+    def test_the_rust_allocator_shim_is_a_kind(self):
+        """oss-verify's link check lists the allocator shim of a Rust ASan build as kind rust-allocator-shim."""
+        shim = {"name": "client.allocator_shim.rcgu.o", "sha256": "5e" * 32}
+        with tree(render=False) as t:
+            y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+            y["builds"]["asan"]["uninstrumented"] = [dict(shim, kind="rust-allocator-shim")]
+            self.assertEqual(schema.validate("harness", y), [])
+            y["builds"]["asan"]["uninstrumented"] = [dict(shim, kind="not-a-kind")]
+            errors = schema.validate("harness", y)
+            self.assertEqual(len(errors), 1, errors)
+            self.assertIn("uninstrumented[0].kind: 'not-a-kind' is not one of", errors[0])
+        with tree() as t:
+            h = "projects/zlib/checksum_fuzzer/harness.yaml"
+            y = t.yaml(h)
+            y["builds"]["asan"]["uninstrumented"] = [dict(shim, kind="rust-allocator-shim")]
+            t.put_yaml(h, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertIn("- asan: `client.allocator_shim.rcgu.o` (Rust's allocator shim)",
+                          t.read("projects/zlib/checksum_fuzzer/README.md"))
+
 
 class PublishedModel(unittest.TestCase):
     def test_publishing_the_model_changes_the_readme_and_no_fingerprint(self):
@@ -710,6 +848,872 @@ class PublishedModel(unittest.TestCase):
             c = r["semantics"]["commit"]
             self.assertIn("commit [`%s`](%s/commit/%s)" % (c[:12], r["semantics"]["repository"], c), readme)
             self.assertEqual(t.read("index/statements.tsv"), before)
+
+
+CHECKSUM = "projects/zlib/checksum_fuzzer/"
+API_DRIVER = "projects/zlib/api-driver/"
+# two scenarios of the upstream fuzz target and two functions of a debug build: stand-ins, not facts of zlib
+SCENARIOS = [{"name": "gzip-stream", "reason": "The recipe builds zlib without its gzip file functions."},
+             {"name": "large-window", "reason": "The driver caps the window at 15 bits."}]
+DEBUG_ADDITIONS = [{"function": "z_debug_dump", "source": "zutil.c"},
+                   {"function": "inflate_table_check", "source": "contrib/debug/inftrees_check.c"}]
+SANITIZERS = {"plain": "none", "ubsan": "undefined", "asan": "address", "asan-ubsan": "address+undefined"}
+
+
+def flat(text):
+    """text with every run of white space read as one space: the words of wrapped prose."""
+    return " ".join(text.split())
+
+
+def statement_docs(text):
+    """{statement name: its doc comment, flat} of a rendered Statements.v."""
+    return {m.group(2): flat(m.group(1)) for m in re.finditer(r"\(\*\* (.*?) \*\)\nDefinition (\w+)", text, re.S)}
+
+
+def definitions(text):
+    """The Definitions of a rendered Statements.v, without their doc comments."""
+    return re.findall(r"^Definition .*?\.$", text, re.M | re.S)
+
+
+def with_fields(t, rel=CHECKSUM, scenarios=SCENARIOS, enable_debug=False, unittests=False, additions=None, **extra):
+    """Give the harness at rel a deviation record (with enable_debug and unittests as given), excluded_scenarios and,
+    with additions, debug_additions; extra sets other harness.yaml keys."""
+    y = t.yaml(rel + "harness.yaml")
+    y["deviation"] = {"library_commit": y["library"]["commit"], "tls_backend": "none", "enable_debug": enable_debug,
+                      "unittests": unittests, "sanitizer": {b: SANITIZERS[b] for b in y["builds"]},
+                      "harness_origin": "patched", "architecture": "riscv64"}
+    if scenarios:
+        y["excluded_scenarios"] = scenarios
+    if additions:
+        y["debug_additions"] = additions
+    y.update(extra)
+    t.put_yaml(rel + "harness.yaml", y)
+
+
+EXCLUDED_DOC = ("No binary that this statement is about runs these scenarios of the upstream fuzz target: "
+                "- gzip-stream: The recipe builds zlib without its gzip file functions. "
+                "- large-window: The driver caps the window at 15 bits.")
+EXCLUDED_README = ("No binary that the statements here are about runs these scenarios of the upstream fuzz target:\n\n"
+                   "- `gzip-stream`: The recipe builds zlib without its gzip file functions.\n"
+                   "- `large-window`: The driver caps the window at 15 bits.")
+DEBUG_DOC = ("Each binary that this statement is about contains zlib built with its debug configuration: ENABLE_DEBUG "
+             "and UNITTESTS. The statement claims only the exact binary of each build that it is about. It claims "
+             "nothing about zlib built without this configuration. The harness calls these functions, which only the "
+             "debug configuration exports: - [z_debug_dump] in zutil.c - [inflate_table_check] in "
+             "contrib/debug/inftrees_check.c The maintainers of zlib can refuse a witness found only through these "
+             "functions.")
+DEBUG_README = ("Each binary that the statements here are about contains zlib built with its debug configuration: "
+                "`ENABLE_DEBUG` and `UNITTESTS`. Each statement claims only the exact binary of each build that it is "
+                "about. It claims nothing about zlib built without this configuration.\n\n"
+                "The harness calls these functions, which only the debug configuration exports:\n\n"
+                "- `z_debug_dump` in `zutil.c`\n- `inflate_table_check` in `contrib/debug/inftrees_check.c`\n\n"
+                "The maintainers of zlib can refuse a witness found only through these functions.")
+
+
+class ExcludedScenariosAndDebugBuild(unittest.TestCase):
+    """harness.yaml excluded_scenarios, deviation and debug_additions: comment text in every rendered statement's doc
+    and in the harness README, which `oft generate --check` holds to the facts (spec R3, check C3)."""
+
+    def test_two_excluded_scenarios_are_in_each_statement_and_in_the_readme(self):
+        with tree() as t:
+            with_fields(t)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            docs = statement_docs(t.read(CHECKSUM + "Statements.v"))
+            self.assertEqual(sorted(docs), sorted(t.yaml(CHECKSUM + "harness.yaml")["statements"]))
+            for name, doc in docs.items():
+                self.assertIn(EXCLUDED_DOC, doc, name)
+                self.assertNotIn("debug configuration", doc, name)
+            readme = t.read(CHECKSUM + "README.md")
+            self.assertIn(EXCLUDED_README, readme)
+            self.assertNotIn("debug configuration", readme)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_a_debug_build_names_its_configuration_its_functions_and_the_refusal_in_both_files(self):
+        with tree() as t:
+            with_fields(t, scenarios=None, enable_debug=True, unittests=True, additions=DEBUG_ADDITIONS)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            docs = statement_docs(t.read(CHECKSUM + "Statements.v"))
+            self.assertEqual(len(docs), 11)
+            for name, doc in docs.items():
+                self.assertTrue(doc.endswith(DEBUG_DOC), name)
+                self.assertNotIn("scenarios of the upstream fuzz target", doc, name)
+            readme = t.read(CHECKSUM + "README.md")
+            self.assertIn(DEBUG_README, readme)
+            self.assertIn("- `enable_debug` is `true`: the builds compile zlib with its `ENABLE_DEBUG` setting.",
+                          readme)
+            self.assertIn("- `unittests` is `true`: the builds compile zlib with its `UNITTESTS` setting.", readme)
+
+    def test_one_debug_setting_is_named_alone(self):
+        with tree() as t:
+            with_fields(t, scenarios=None, unittests=True)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            doc = statement_docs(t.read(CHECKSUM + "Statements.v"))["plain_halts"]
+            self.assertIn("contains zlib built with its debug configuration: UNITTESTS. The statement claims only", doc)
+            self.assertNotIn("ENABLE_DEBUG", doc)
+            self.assertNotIn("can refuse a witness", doc)       # no debug_additions: no list and no refusal note
+            readme = t.read(CHECKSUM + "README.md")
+            self.assertIn("its debug configuration: `UNITTESTS`. Each statement", readme)
+            self.assertIn("- `enable_debug` is `false`: the builds compile zlib without its `ENABLE_DEBUG` setting.",
+                          readme)
+
+    def test_the_readme_says_each_deviation_field_in_words(self):
+        with tree() as t:
+            with_fields(t, scenarios=None)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            readme = t.read(CHECKSUM + "README.md")
+            self.assertIn(
+                "## The build these statements are about\n"
+                "The `deviation` record in harness.yaml says what these builds are. It also says where they differ "
+                "from the builds of OSS-Fuzz.\n\n"
+                "- `library_commit` is `51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf`: the builds use zlib at this "
+                "commit.\n"
+                "- `tls_backend` is `none`: the binaries link no TLS library.\n"
+                "- `enable_debug` is `false`: the builds compile zlib without its `ENABLE_DEBUG` setting.\n"
+                "- `unittests` is `false`: the builds compile zlib without its `UNITTESTS` setting.\n"
+                "- `sanitizer` gives the sanitizers of each build:\n"
+                "  - plain: no sanitizer\n  - ubsan: UndefinedBehaviorSanitizer\n  - asan: AddressSanitizer\n"
+                "  - asan-ubsan: AddressSanitizer and UndefinedBehaviorSanitizer\n"
+                "- `origin` (where the fuzz target comes from) is `oss-fuzz`: the fuzz target is the file of "
+                "OSS-Fuzz.\n"
+                "- `harness_origin` (what the harness source is) is `patched`: the build applies a patch to the "
+                "harness source.\n"
+                "- `architecture` is `riscv64`: the binaries are riscv64 programs.\n\n"
+                "## What the harness checks\n", readme)
+            self.assertNotIn("scenarios of the upstream fuzz target", readme)
+            y = t.yaml(CHECKSUM + "harness.yaml")
+            y["deviation"]["tls_backend"] = "wolfssl"
+            t.put_yaml(CHECKSUM + "harness.yaml", y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertIn("- `tls_backend` is `wolfssl`: the binaries link the TLS library wolfSSL.\n",
+                          t.read(CHECKSUM + "README.md"))
+
+    def test_with_every_build_withheld_the_readme_says_that_no_check_reads_tls_backend(self):
+        """No published build has a scan, so deviation.compare takes any tls_backend: the README says that, and not
+        what the binaries link.  A harness that publishes a build says what they link, as before, also with another
+        build withheld."""
+        unread = "- `tls_backend` is `%s`: no published build has a scan, so no check reads this value.\n"
+        with tree() as t:
+            n = 0
+            for rel, only in ((CHECKSUM, None), (API_DRIVER, {"asan-ubsan"})):
+                with_fields(t, rel=rel, scenarios=None)
+                y = t.yaml(rel + "harness.yaml")
+                y["deviation"]["tls_backend"] = "openssl"
+                withheld = only or set(y["builds"])
+                for b in withheld:
+                    y["builds"][b] = {"file": y["builds"][b]["file"], "withheld": "not-yet-published"}
+                    n += 1
+                for s in y["statements"].values():
+                    if withheld & set(s["builds"]):
+                        for k in ("witness", "binds_checks"):
+                            s.pop(k, None)
+                        s["status"], s["withheld"] = "withheld", "not-yet-published"
+                t.put_yaml(rel + "harness.yaml", y)
+            r = t.yaml("release.yaml")
+            r["counts"]["binaries"] -= n
+            t.put_yaml("release.yaml", r)
+            self.assertEqual(t.generate(), 1)         # checksum_fuzzer's statement files are no longer produced
+            for line in t.last_output.splitlines():
+                if line.endswith("no longer produce; remove it"):
+                    os.unlink(t.path(line.split(":")[0]))
+            for tls in ("openssl", "none"):
+                y = t.yaml(CHECKSUM + "harness.yaml")
+                y["deviation"]["tls_backend"] = tls
+                t.put_yaml(CHECKSUM + "harness.yaml", y)
+                self.assertEqual(t.generate(), 0, t.last_output)
+                readme = t.read(CHECKSUM + "README.md")
+                self.assertIn("commit.\n" + unread % tls + "- `enable_debug` is", readme)
+                self.assertNotIn("TLS library", readme)
+            readme = t.read(API_DRIVER + "README.md")
+            self.assertIn("commit.\n- `tls_backend` is `openssl`: the binaries link the TLS library OpenSSL.\n", readme)
+            self.assertNotIn("no check reads", readme)
+
+    def test_a_withheld_statement_gets_none_of_the_text(self):
+        with tree() as t:
+            with_fields(t, rel=API_DRIVER, enable_debug=True, additions=DEBUG_ADDITIONS)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            s = t.read(API_DRIVER + "Statements.v")
+            self.assertIn("(* asan_ubsan_agrees: withheld; see README.md. *)\n", s)
+            docs = statement_docs(s)
+            self.assertNotIn("asan_ubsan_agrees", docs)
+            for name, doc in docs.items():
+                self.assertIn(EXCLUDED_DOC, doc, name)
+                self.assertIn("The driver calls these functions, which only the debug configuration exports", doc)
+            self.assertEqual(flat(s).count("No binary that this statement is about"), len(docs))
+
+    def test_the_fields_change_no_definition_no_fingerprint_and_no_other_file(self):
+        with tree() as t:
+            before = generate.render_all(facts.load(t.root))
+            prints, tsv = fingerprints(t), t.read("index/statements.tsv")
+            with_fields(t, enable_debug=True, unittests=True, additions=DEBUG_ADDITIONS)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            after = generate.render_all(facts.load(t.root))
+            self.assertEqual(sorted(k for k in before if before[k] != after.get(k)),
+                             [CHECKSUM + "README.md", CHECKSUM + "Statements.v"])
+            self.assertEqual(sorted(after), sorted(before))
+            self.assertEqual(definitions(after[CHECKSUM + "Statements.v"]),
+                             definitions(before[CHECKSUM + "Statements.v"]))
+            self.assertEqual(len(definitions(before[CHECKSUM + "Statements.v"])), 11)
+            self.assertEqual(fingerprints(t), prints)
+            self.assertEqual(t.read("index/statements.tsv"), tsv)
+
+    def test_a_harness_with_none_of_the_fields_renders_as_before_them(self):
+        """No section, no paragraph and no blank line of the new text: removing the fields renders every file as
+        it was before they were added."""
+        with tree() as t:
+            before = generate.render_all(facts.load(t.root))
+            readme = before[CHECKSUM + "README.md"]
+            for absent in ("## The build these statements are about", "## Instances", "debug configuration",
+                           "scenarios of the upstream fuzz target"):
+                self.assertNotIn(absent, readme + before[CHECKSUM + "Statements.v"])
+            self.assertIn("prints each return value.\n\n## What the harness checks\n", readme)
+            self.assertIn("| open |\n\n## Builds\n", readme)
+            plain = t.read(CHECKSUM + "harness.yaml")
+            statements = t.yaml(CHECKSUM + "harness.yaml")["statements"]
+            statements["plain_halts"]["instance"] = InstanceList.HALTS
+            with_fields(t, enable_debug=True, additions=DEBUG_ADDITIONS, statements=statements)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertIn("## Instances", t.read(CHECKSUM + "README.md"))
+            t.write(CHECKSUM + "harness.yaml", plain)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(generate.render_all(facts.load(t.root)), before)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_rendered_before_a_scenario_was_added_fails_the_check(self):
+        with tree() as t:
+            with_fields(t, scenarios=SCENARIOS[:1])
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+            with_fields(t)
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(CHECKSUM + "Statements.v: differs from its rendering", t.last_output)
+            self.assertIn(CHECKSUM + "README.md: differs from its rendering", t.last_output)
+
+    def test_rendered_before_enable_debug_was_set_true_fails_the_check(self):
+        with tree() as t:
+            with_fields(t)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            with_fields(t, enable_debug=True)
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(CHECKSUM + "Statements.v: differs from its rendering", t.last_output)
+            self.assertIn(CHECKSUM + "README.md: differs from its rendering", t.last_output)
+
+    def test_a_definition_edited_by_hand_fails_the_check(self):
+        with tree() as t:
+            with_fields(t, enable_debug=True, unittests=True, additions=DEBUG_ADDITIONS)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            p = CHECKSUM + "Statements.v"
+            s = t.read(p)
+            edited = s.replace("halts_may_fail Exits.any Images.plain.", "halts_may_fail Exits.ok Images.plain.")
+            self.assertNotEqual(edited, s)
+            t.write(p, edited)
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn(p + ": differs from its rendering", t.last_output)
+
+
+WORKFLOWS = os.path.join(REPO, ".github", "workflows")
+# partial_checkouts searches every file of the repository but those of the facts trees: projects/ and the old
+# layout's top folders hold facts and proofs, and no script or workflow that makes a checkout.  It leaves out Markdown
+# files too, since a document makes no checkout (no job runs it), and tests, which check out trees of their own.
+FACTS_TREES = ("projects",) + layout.OLD_TOPS
+# the paths the guard (partial_checkouts) leaves out: a file under a facts tree, a Markdown file, and a test (one under
+# a tests or testdata folder, or whose name starts with test_).  pr.yml's reach step holds these patterns word for word,
+# in this order, as the patterns of its `grep -vE` (test_keys.py checks it).
+GUARD_SKIPS = (r"^(%s)/" % "|".join(FACTS_TREES), r"\.md$", r"(^|/)(tests|testdata)/", r"(^|/)test_[^/]*$")
+# a line that makes or widens a partial checkout: a `git sparse-checkout set` or `add`, in shell or as the words of a
+# Python list or call, or a write of git's sparse-checkout file itself.  pr.yml's reach step holds it word for word,
+# with partial_checkouts' skips, and runs these tests when a changed file holds such a line: change the two together.
+SPARSE_COMMAND = r"sparse-checkout[^A-Za-z0-9_-]+(set|add)([^A-Za-z0-9_-]|$)|info/sparse-checkout"
+EXPRESSION = re.compile(r"\$\{\{.*?\}\}")   # a GitHub Actions expression
+_WHOLE = "whole directories in cone mode, so each proof library is in the checkout whole or not at all"
+_FOLDERS = ("whole folders in or out, none inside a proof library, so each proof library is in the checkout whole or "
+            "not at all")
+_CB = ("sp: '/*' with the projects and proofs folders out and, back in, proofs/lib and the unit's project and each "
+       "donor, as /proofs/<x>/ and /projects/<x>/: " + _FOLDERS)
+# Each line that partial_checkouts finds and cannot read, by (file, the line with its indent removed): a partial
+# checkout whose patterns it cannot read, or a line that names one in another way; and why it makes no tree that keeps
+# a proof library's lib/dune without its other sources.  A new such line, or a changed one, fails InstanceList until a
+# person reads it and writes it here.
+UNREAD = {
+    (".github/workflows/pr.yml",
+     "sparse='sparse-checkout[^A-Za-z0-9_-]+(set|add)([^A-Za-z0-9_-]|$)|info/sparse-checkout'"):
+        "the pattern the reach step searches the changed files for, to run these tests: it makes no checkout",
+    (".github/workflows/pr.yml", 'git -C base sparse-checkout set --no-cone "${paths[@]}"'):
+        "the release_window job's DRIFT_PATHS (/tools/ /theories/ /toolchain/ /tests/ /dune-project /release.yaml "
+        ".gitattributes), which platform_drift reads: no file of a proof library",
+    (".github/workflows/pr.yml", 'git -C head sparse-checkout set --no-cone "${paths[@]}"'):
+        "the release_window job's DRIFT_PATHS (/tools/ /theories/ /toolchain/ /tests/ /dune-project /release.yaml "
+        ".gitattributes), which platform_drift reads: no file of a proof library",
+    (".github/workflows/publish.yml", "${{ needs.cut.result != 'success' && 'tools/publish' || '' }}"):
+        "tools/publish in cone mode, or no sparse checkout: no library, or each one whole",
+    (".github/workflows/review.yml", 'git sparse-checkout add --stdin < "$RUNNER_TEMP/dirs"'):
+        "the fuzz targets' directories that the step checks, added to the job's cone checkout: " + _WHOLE,
+    ("dev/stream/bin/ossv-measure-clone", 'git "${cred[@]}" sparse-checkout add "proofs/$t1" checker-image vendor'):
+        "added to the cone of `git clone --sparse`: " + _WHOLE,
+    ("dev/stream/bin/ossv-measure-clone", 'git "${cred[@]}" sparse-checkout add "proofs/$t2"'):
+        "added to the cone of `git clone --sparse`: " + _WHOLE,
+    ("dev/stream/bin/ossv-measure-clone",
+     'record "A2 sparse-checkout add proofs/$t1 checker-image vendor; submodule update --init" . "$s"'):
+        "the name under which the script records the time of the add above it",
+    ("dev/stream/bin/ossv-measure-clone", 'record "B1 sparse-checkout add proofs/$t2" . "$s"'):
+        "the name under which the script records the time of the add above it",
+    ("dev/stream/bin/ossv-queue-check",
+     'must(["git", "-C", str(path), "sparse-checkout", "set", "--no-cone", sparse], "the sparse checkout")'):
+        "each caller gives the one pattern tools: no file of a proof library",
+    ("dev/stream/bin/ossv-wt-add",
+     '${sparse_lock[@]+"${sparse_lock[@]}"} git -C "$destination" sparse-checkout set --cone -- "${sparse[@]}"'):
+        "top-level directories, proofs/lib and the folders of the projects in the lane: " + _WHOLE,
+    ("tools/oft/ci/facts-review-gather",
+     'git -C "$git_dir" sparse-checkout set --no-cone "${paths[@]/#//}" "${sparse[@]}" "${moved[@]/#//}"'):
+        "no file of a proof library: of a fuzz target's proofs it takes the provenance folder alone, in either layout",
+    ("tools/oft/ci/pr-steps.sh",
+     "printf '/*\\n!/proofs/*/*/lib/\\n!/projects/*/*/proofs/lib/\\n' > \"$checkout/.git/info/sparse-checkout\""):
+        "release-check.yml's plan set (test_workflow_verdicts holds them equal): no library, dune included",
+    ("tools/oft/layout.py", 'lines.append("  git sparse-checkout add %s" % (lib if in_cone else "/%s/" % lib))'):
+        "advice that oft prints to a person: it adds one library back whole",
+    ("tools/publish/dry-run", 'git(path, "sparse-checkout", "set", "--no-cone", *sparse)'):
+        "each caller gives DRIFT_PATHS or a few of /tools/, /release.yaml, /toolchain/allowed-axioms.txt and "
+        "/.github/actions/place-drafts/: no file of a proof library",
+    # on main since #2581; the entry stands only where the file is, so it holds at every base too
+    ("dev/stream/bin/ossv-find-mirror", 'git(["sparse-checkout", "set", "--no-cone"] + sparse_patterns(row), path)'):
+        "a mirror of another repository's published proof corpus, at its pinned commit: not a tree of this "
+        "repository, and no oft generate or lint runs over it",
+    ("dev/stream/lane/tools/asan-unit-base.sh",
+     'git -C "$WT" sparse-checkout set --no-cone "${cone[@]}" > /dev/null'):
+        "asan_cone (lines 87-92): '/*' with the projects and proofs folders out and, back in, proofs/lib, the unit's "
+        "project without its proofs folders, the unit's proofs folder and each donor: " + _FOLDERS,
+    ("dev/stream/lane/tools/cb-01d729faac6c", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-1edd6bbbf529", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-28528e1b4dbc", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-4770bf02b744", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-5a64e42d3e50", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-8b16df1d4b9f", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/cb-d02a58a345b9", 'git -C "$d" sparse-checkout set --no-cone "${sp[@]}" > /dev/null &&'):
+        _CB,
+    ("dev/stream/lane/tools/pr-vm-check-0f9b9814dfc0.sh",
+     'm = re.findall(r"^\\s*git -C base sparse-checkout set (.*)$", s["run"], re.M)'):
+        "Python that finds the patterns of the base step of the lint job of a pr.yml, to hold lint_base_sparse_args "
+        "to them: it makes no checkout",
+    ("dev/stream/lane/tools/pr-vm-check-0f9b9814dfc0.sh",
+     'git -C "$P/head" sparse-checkout set --no-cone "${sparse[@]}"'):
+        "nolib_patterns (lines 273-276): '/*' without the old layout's libraries, and without the per-project "
+        "layout's too when L1_LAYOUT is true: no library, dune included, or each one whole",
+    ("dev/stream/lane/tools/pr-vm-check-0f9b9814dfc0.sh",
+     'else git -C "$P/base" sparse-checkout set --no-cone "${sparse[@]}"; fi'):
+        "nolib_patterns (lines 273-276): '/*' without the old layout's libraries, and without the per-project "
+        "layout's too when L1_LAYOUT is true: no library, dune included, or each one whole",
+    ("dev/stream/lane/tools/pr-vm-check-0f9b9814dfc0.sh", 'git -C "$L/base" sparse-checkout set "${sparse[@]}"'):
+        "lint_base_sparse_args (lines 279-285): --cone tools findings, or --no-cone '/*' '!/*/' with /tools/, "
+        "/findings/ and the projects' unpatched.yaml and findings folders back in: no file of a proof library",
+    ("dev/stream/lane/tools/pr-vm-check-8984a0871231.sh",
+     'm = re.findall(r"^\\s*git -C base sparse-checkout set (.*)$", s["run"], re.M)'):
+        "Python that finds the patterns of the base step of the lint job of a pr.yml, to hold lint_base_sparse_args "
+        "to them: it makes no checkout",
+    ("dev/stream/lane/tools/pr-vm-check-8984a0871231.sh",
+     'git -C "$P/head" sparse-checkout set --no-cone "${sparse[@]}"'):
+        "nolib_patterns (lines 261-264): '/*' without the old layout's libraries, and without the per-project "
+        "layout's too when L1_LAYOUT is true: no library, dune included, or each one whole",
+    ("dev/stream/lane/tools/pr-vm-check-8984a0871231.sh",
+     'else git -C "$P/base" sparse-checkout set --no-cone "${sparse[@]}"; fi'):
+        "nolib_patterns (lines 261-264): '/*' without the old layout's libraries, and without the per-project "
+        "layout's too when L1_LAYOUT is true: no library, dune included, or each one whole",
+    ("dev/stream/lane/tools/pr-vm-check-8984a0871231.sh", 'git -C "$L/base" sparse-checkout set "${sparse[@]}"'):
+        "lint_base_sparse_args (lines 267-273): --cone tools findings, or --no-cone '/*' '!/*/' with /tools/, "
+        "/findings/ and the projects' unpatched.yaml and findings folders back in: no file of a proof library",
+    ("dev/stream/lane/tools/ship.sh", 'git -C "$WT" sparse-checkout set --no-cone "${want[@]}"'):
+        "ship_cone (lines 314-335): '/*' with the projects and proofs folders out and, back in, proofs/lib, each "
+        "unit's project without its proofs folders, each donor and each unit's proofs folder: " + _FOLDERS,
+    # the line and the next, which its backslash joins to it
+    ("dev/stream/lane/tools/ship.sh", '[ "$sparse" = "$(printf \'%s\\n\' "${want[@]}")" ]      '
+     '|| git -C "$WT" sparse-checkout set --no-cone "${want[@]}"'):
+        "ship_cone's set again, as at line 374, when the worktree's set is not that one: " + _FOLDERS,
+    ("dev/stream/lane/tools/zdraftbase.py", "git('sparse-checkout', 'set', '--no-cone', *pats, cwd=wt)"):
+        "sparse_patterns (lines 79-86): the unit's proofs folder, /projects/ (without its proofs folders in the "
+        "per-project layout) and /theories/: " + _FOLDERS,
+}
+
+
+def _sparse_set(verb, words):
+    """(cone, [pattern]) of `git sparse-checkout <verb> <words>`, or None when the words do not say what it checks
+    out: an `add` widens a set made elsewhere, --stdin reads the patterns from elsewhere, a set that names neither
+    --cone nor --no-cone keeps the mode the checkout had, and a pattern can hold a value of the script's own (a word
+    that is not text, in Python, is None).  A value that is a whole part of a non-cone pattern's path, in a pattern
+    with a part that is text, names one project or fuzz target: it reads as `*`, which is that set for each name at
+    once (/projects/$p/ reads as /projects/*/).  A pattern of values alone ("$PATTERNS", or a workflow's
+    ${{ inputs.x }}) can stand for any patterns at all, so it is not read."""
+    if verb != "set":
+        return None
+    cone, patterns, options = None, [], True
+    for w in words:
+        if options and w == "--":
+            options = False
+        elif options and w in ("--cone", "--no-cone"):
+            cone = w == "--cone"
+        elif options and w in ("--skip-checks", "--sparse-index", "--no-sparse-index"):
+            continue
+        elif w is None or (options and w.startswith("-")):
+            return None
+        else:
+            patterns.append(w)
+    if cone is None or not patterns:
+        return None
+    out = []
+    for p in patterns:
+        if "$" in p or "`" in p:
+            if cone:
+                return None
+            p = "/".join("*" if re.fullmatch(r"\$(\w+|\{\w+\})", part) else part for part in p.split("/"))
+            if "$" in p or "`" in p or not re.search(r"[^!/*]", p):
+                return None
+        out.append(p)
+    return cone, out
+
+
+def _shell_lines(text):
+    """(number, line) of each line of shell text, with a line that ends in a backslash joined to the next."""
+    out, lines, i = [], text.split("\n"), 0
+    while i < len(lines):
+        n, line = i + 1, lines[i]
+        while line.endswith("\\") and i + 1 < len(lines):
+            i += 1
+            line = line[:-1] + " " + lines[i]
+        out.append((n, line))
+        i += 1
+    return out
+
+
+def _folded_lines(text):
+    """The numbers of the lines of YAML text inside a folded block scalar: after a key whose value is `>`, `>-` or
+    `>+` (an indentation digit allowed), each later line that is blank or indented more than the key's line.  YAML
+    joins those lines, so a command there can run on to the next line with no backslash: the test does not read them."""
+    out, key = set(), None
+    for n, line in enumerate(text.split("\n"), 1):
+        if key is not None and (not line.strip() or len(line) - len(line.lstrip(" ")) > key):
+            out.add(n)
+            continue
+        m = re.match(r"( *)(-\s+)?[^\s#][^#]*:\s+>([1-9][-+]?|[-+][1-9]?)?\s*(#.*)?$", line)
+        key = len(m.group(1)) if m else None
+    return out
+
+
+def _shell_command(line):
+    """(verb, [word]) of the `git sparse-checkout set` or `add` of one line of shell; "comment" when the line names
+    one only in a comment; None when it names one in another way (in a string, or as git's sparse-checkout file)."""
+    lex = shlex.shlex(EXPRESSION.sub("${expression}", line), posix=True, punctuation_chars=True)
+    lex.whitespace_split = True
+    try:
+        tokens = list(lex)
+    except ValueError:                  # a quote that the line does not close
+        return None
+    for i in range(len(tokens) - 1):
+        if tokens[i] == "sparse-checkout" and tokens[i + 1] in ("set", "add"):
+            words = []
+            for w in tokens[i + 2:]:
+                if w[:1] and w[0] in "();<>|&":
+                    if w[0] in "<>" and words and words[-1].isdigit():
+                        words.pop()     # the file descriptor of a redirection, as in 2>
+                    break
+                words.append(w)
+            return tokens[i + 1], words
+    named = re.search(SPARSE_COMMAND, line)
+    if named and re.search(r"(^|\s)#", line[:named.start()]) and not re.search(SPARSE_COMMAND, " ".join(tokens)):
+        return "comment"
+    return None
+
+
+def _python_commands(text):
+    """{line: (verb, [word])} of each `git sparse-checkout set` or `add` of Python source: a list, a tuple or a call
+    whose items run "sparse-checkout", then "set" or "add".  An item that is no string constant is None."""
+    found = {}
+    for node in ast.walk(ast.parse(text)):
+        items = (node.elts if isinstance(node, (ast.List, ast.Tuple))
+                 else node.args if isinstance(node, ast.Call) else [])
+        words = [n.value if isinstance(n, ast.Constant) and isinstance(n.value, str) else None for n in items]
+        for i in range(len(words) - 1):
+            if words[i] == "sparse-checkout" and words[i + 1] in ("set", "add"):
+                found[items[i].lineno] = (words[i + 1], words[i + 2:])
+    return found
+
+
+def _language(root, rel):
+    """"python" or "shell": the language of the file rel of the repository at root, by its name or its #! line (the
+    `run:` lines of a workflow or an action are shell); None for any other file."""
+    if rel.endswith(".py"):
+        return "python"
+    if rel.endswith((".sh", ".bash", ".yml", ".yaml")):
+        return "shell"
+    with open(os.path.join(root, rel), "rb") as f:
+        first = f.readline().decode("utf-8", "replace")
+    if not first.startswith("#!"):
+        return None
+    return "python" if "python" in first else "shell" if re.search(r"\b(ba|da|z)?sh\b", first) else None
+
+
+# What partial_checkouts does not see:
+# - A file is searched only when git grep finds a line of it that matches SPARSE_COMMAND, such as `sparse-checkout`
+#   and `set` on one line.  So a command split over two lines is never found in a file with no other such line: the
+#   two words on two lines, a shell continuation before `set`, or a Python list with one item per line.
+# - A plain (not folded) multi-line YAML value is read from its first line only.  `- run: git sparse-checkout set
+#   --no-cone '/*'`, with more patterns on a deeper next line, reads as ['/*'], the whole tree.
+# - _folded_lines takes the block's indent from the line of the key: the column of its `-`.  So after `- if: >-` it
+#   counts the other keys of that step as folded.  A readable one-line `run:` there is refused, and its UNREAD entry
+#   takes the set out of the comparison.
+# - An UNREAD entry is keyed on the line of the `set` (or the line that names one) alone.  So for each entry whose
+#   patterns come from other lines, a change to those lines is not seen: for example the asan_cone, ship_cone and
+#   sparse_patterns of asan-unit-base.sh, ship.sh and zdraftbase.py, the cb scripts' sp, and pr-vm-check's
+#   nolib_patterns and lint_base_sparse_args.
+# - Each set is compared only on the fixture tree of InstanceList, in both layouts: its one proof library is
+#   zlib/checksum_fuzzer's.  A set is never applied to this repository's own index.
+# - A value that holds two path parts reads as one `*`, which matches one part.  In the cb scripts `$u` is `P/H`, so a
+#   pattern such as `/proofs/$u/` there would be compared as `/proofs/*/`, which is not the script's set.
+def partial_checkouts(root=REPO):
+    """The partial checkouts of the repository at root: ([(where, cone, [pattern])], [(where, file, line)]).  The
+    first list holds each one whose patterns this reads: the `sparse-checkout` of each step of a workflow or an
+    action, and each `git sparse-checkout set` that git grep finds in a shell or Python file outside FACTS_TREES.  The
+    second holds each one that _sparse_set cannot read (each `add` among them, and each set with a pattern of values
+    alone), each line of a folded block of a YAML file (`run: >-`, _folded_lines), whose text this does not unfold,
+    and each line that names one in another way: a string, a write of git's sparse-checkout file, a file in another
+    language.  Markdown files and tests are left out (GUARD_SKIPS): a document makes no checkout, and a test checks
+    out trees of its own."""
+    read, unread = [], []
+
+    def take(where, rel, text, verb, words):
+        got = _sparse_set(verb, words)
+        if got:
+            read.append((where,) + got)
+        else:
+            unread.append((where, rel, text))
+
+    steps = []
+    for path in sorted(glob.glob(os.path.join(root, ".github", "workflows", "*.y*ml"))):
+        for job, data in (yamlio.load_file(path).get("jobs") or {}).items():
+            steps += [("%s: %s" % (os.path.relpath(path, root), job), s) for s in data.get("steps") or []]
+    for path in sorted(glob.glob(os.path.join(root, ".github", "actions", "**", "action.y*ml"), recursive=True)):
+        steps += [(os.path.relpath(path, root), s) for s in (yamlio.load_file(path).get("runs") or {}).get("steps")
+                  or []]
+    for where, step in steps:
+        given = (step.get("with") or {}) if isinstance(step, dict) else {}
+        text = str(given.get("sparse-checkout") or "").strip()
+        if text:
+            cone = given.get("sparse-checkout-cone-mode", True) not in (False, "false")
+            take(where, where.split(":")[0], text, "set",
+                 ["--cone" if cone else "--no-cone"] + EXPRESSION.sub("${expression}", text).split())
+    r = subprocess.run(["git", "-C", root, "grep", "-z", "-l", "-I", "-E", "-e", SPARSE_COMMAND, "--", "."]
+                       + [":(exclude)%s" % top for top in FACTS_TREES], capture_output=True, text=True)
+    assert r.returncode in (0, 1), r.stderr
+    for rel in sorted(p for p in r.stdout.split("\0") if p):
+        if any(re.search(p, rel) for p in GUARD_SKIPS):
+            continue
+        language = _language(root, rel)
+        with open(os.path.join(root, rel), encoding="utf-8", errors="replace") as f:
+            source = f.read()
+        folded = _folded_lines(source) if rel.endswith((".yml", ".yaml")) else set()
+        lines = _shell_lines(source) if language == "shell" else list(enumerate(source.split("\n"), 1))
+        commands = {}
+        if language == "python":
+            try:
+                commands = _python_commands(source)
+            except SyntaxError:
+                pass
+        for n, line in lines:
+            if language == "python":
+                got = commands.get(n)
+                if got is None and (line.strip().startswith("#") or not re.search(SPARSE_COMMAND, line)):
+                    continue
+            elif not re.search(SPARSE_COMMAND, line):
+                continue
+            elif n in folded:
+                got = None
+            else:
+                got = _shell_command(line) if language == "shell" else None
+                if got == "comment":
+                    continue
+            if got is None:
+                unread.append(("%s:%d" % (rel, n), rel, line.strip()))
+            else:
+                take("%s:%d" % (rel, n), rel, line.strip(), *got)
+    return read, unread
+
+
+class InstanceList(unittest.TestCase):
+    """statements.<s>.instance: the harness README lists each statement's instance under what an instance shows.  A
+    row names its lemma file (lib/Instances/<s>.v of the proof library) when the file is in the tree and `oft check`
+    checks it, and only of those rows does the README say that every premise holds; a row with no lemma is recorded,
+    not yet proved, and a withheld or withdrawn statement's row is not proved."""
+    HALTS = {"file": "plain_halts.bin", "sha256": "ab" * 32, "bytes": 0, "path": "refused-by-driver"}
+    BOUND = {"file": "asan_disagrees_at_most.bin", "sha256": "cd" * 32, "bytes": 4102, "path": "reaches-harness"}
+    SHOWS = ("An instance is one input file that the record of a statement names. An instance does not show that any "
+             "harness code ran on the input.")
+    PROVED = ("For each row that names a lemma, the lemma proves that every premise of the statement holds on the "
+              "file. Thus the premises of the statement can hold together.")
+    RECORDED = ("For each row that is recorded, not yet proved, there is no lemma yet. Nothing proves that the "
+                "premises of the statement hold on the file.")
+    FINITE = ("For a bound or decidability statement, the lemma proves that the instance is a valid finite input with "
+              "a valid entry on both builds. It does not show that the two builds disagree on it. A disagreement of "
+              "the two builds is the event that a bound statement measures, not a premise.")
+    HEAD = "| statement | file | bytes | sha256 | path | lemma |\n|---|---|---:|---|---|---|\n"
+    HALTS_ROW = ("| `plain_halts` | `proofs/provenance/evidence/instances/plain_halts.bin` | 0 | `%s` | "
+                 "`refused-by-driver`: the driver exits with status 2 before it calls the harness | " % ("ab" * 32))
+    BOUND_ROW = ("| `asan_disagrees_at_most` | `proofs/provenance/evidence/instances/asan_disagrees_at_most.bin` | "
+                 "4,102 | `%s` | `reaches-harness`: the driver calls the harness on the file | " % ("cd" * 32))
+
+    def put(self, t, **instances):
+        y = t.yaml(CHECKSUM + "harness.yaml")
+        for name, rec in instances.items():
+            y["statements"][name]["instance"] = rec
+        t.put_yaml(CHECKSUM + "harness.yaml", y)
+
+    def lemma(self, t, name):
+        """Write the lemma file of statement name's instance; its path from the harness folder."""
+        st = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"].statements[name]
+        t.write(st.instance_lemma(), "Lemma %s_instance : True. Proof. exact I. Qed.\n" % name)
+        return os.path.relpath(st.instance_lemma(), CHECKSUM)
+
+    def section(self, t):
+        readme = t.read(CHECKSUM + "README.md")
+        return readme[readme.index("## Instances\n"):readme.index("\n\n## Builds\n")]
+
+    def test_rows_with_no_lemma_are_recorded_not_yet_proved(self):
+        with tree() as t:
+            statements, prints = t.read(CHECKSUM + "Statements.v"), fingerprints(t)
+            self.put(t, plain_halts=self.HALTS, asan_disagrees_at_most=self.BOUND)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertIn("|\n\n## Instances\n", t.read(CHECKSUM + "README.md"))
+            self.assertEqual(self.section(t), "## Instances\n" + self.SHOWS + "\n\n" + self.RECORDED + "\n\n"
+                             + self.HEAD + self.HALTS_ROW + "recorded, not yet proved |\n"
+                             + self.BOUND_ROW + "recorded, not yet proved |")
+            self.assertNotIn("every premise", self.section(t))
+            self.assertEqual(t.read(CHECKSUM + "Statements.v"), statements)
+            self.assertEqual(fingerprints(t), prints)
+
+    def test_rows_with_a_lemma_name_it_and_only_they_have_every_premise_hold(self):
+        with tree() as t:
+            self.put(t, plain_halts=self.HALTS, asan_disagrees_at_most=self.BOUND)
+            halts, bound = self.lemma(t, "plain_halts"), self.lemma(t, "asan_disagrees_at_most")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(self.section(t), "## Instances\n" + self.SHOWS + "\n\n" + self.PROVED + "\n\n"
+                             + self.FINITE + "\n\n" + self.HEAD + self.HALTS_ROW + "`%s` |\n" % halts
+                             + self.BOUND_ROW + "`%s` |" % bound)
+            self.assertEqual(halts, "proofs/lib/Instances/plain_halts.v")
+
+    def test_a_lemma_on_some_rows_says_each_sentence_of_its_own_rows(self):
+        with tree() as t:
+            self.put(t, plain_halts=self.HALTS, asan_disagrees_at_most=self.BOUND)
+            halts = self.lemma(t, "plain_halts")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(self.section(t), "## Instances\n" + self.SHOWS + "\n\n" + self.PROVED + "\n\n"
+                             + self.RECORDED + "\n\n" + self.HEAD + self.HALTS_ROW + "`%s` |\n" % halts
+                             + self.BOUND_ROW + "recorded, not yet proved |")
+            self.assertNotIn("valid finite input", self.section(t), "no lemma proves the bound's instance")
+
+    def test_with_no_bound_or_decidability_instance_the_finite_sentence_is_absent(self):
+        with tree() as t:
+            self.put(t, plain_halts=self.HALTS)
+            self.lemma(t, "plain_halts")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            readme = t.read(CHECKSUM + "README.md")
+            self.assertIn("## Instances\n" + self.SHOWS + "\n\n" + self.PROVED + "\n\n| statement |", readme)
+            self.assertNotIn("valid finite input", readme)
+
+    def test_a_withheld_statement_s_lemma_is_not_proved(self):
+        """check.instances_to_check checks only the instances of the statements Statements.v carries, so a withheld
+        statement's row is not proved although its lemma file is there; the bound's row, which is checked, names its
+        lemma."""
+        with tree() as t:
+            self.put(t, plain_halts=self.HALTS, asan_disagrees_at_most=self.BOUND)
+            y = t.yaml(CHECKSUM + "harness.yaml")
+            y["statements"]["plain_halts"].update(status="withheld", withheld="not-yet-published")
+            t.put_yaml(CHECKSUM + "harness.yaml", y)
+            self.lemma(t, "plain_halts")
+            bound = self.lemma(t, "asan_disagrees_at_most")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(self.section(t), "## Instances\n" + self.SHOWS + "\n\n" + self.PROVED + "\n\n"
+                             + self.FINITE + "\n\n" + self.HEAD + self.HALTS_ROW
+                             + "not proved: `oft check` does not check the lemma of a withheld statement |\n"
+                             + self.BOUND_ROW + "`%s` |" % bound)
+            # the bound's lemma gone and the statement withdrawn: no row is proved, and the README says of none that a
+            # lemma proves it
+            os.remove(t.path(CHECKSUM, bound))
+            y["statements"]["plain_halts"] = dict(y["statements"]["plain_halts"], status="withdrawn",
+                                                  reason="A stand-in reason.")
+            del y["statements"]["plain_halts"]["withheld"]
+            t.put_yaml(CHECKSUM + "harness.yaml", y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(self.section(t), "## Instances\n" + self.SHOWS + "\n\n" + self.RECORDED + "\n\n"
+                             + self.HEAD + self.HALTS_ROW
+                             + "not proved: `oft check` does not check the lemma of a withdrawn statement |\n"
+                             + self.BOUND_ROW + "recorded, not yet proved |")
+
+    @unittest.skipUnless(os.path.isdir(WORKFLOWS) and os.path.exists(os.path.join(REPO, ".git")),
+                         "no .github/workflows or no git: tools/oft without the checkout around it")
+    def test_a_checkout_without_the_library_sources_renders_the_same_readme(self):
+        """Each partial checkout of the repository (partial_checkouts) that keeps a proof library's lib/dune is a tree
+        that `oft generate` may render.  Three of them leave out the library's other sources and are rendered: pr.yml's
+        lint job (`generate --check`), enroll.yml's facts job (facts-tree.sh: `generate`) and regenerate-shared.sh
+        (`generate --check --skip-shared`).  Each one, applied by git, renders every generated file as the whole tree
+        does, in both layouts, whether it leaves out the library's other sources (here lib/Helper.v) or keeps the
+        whole library.  A checkout that `oft generate` refuses before it renders (generate.run: an error of the facts,
+        or a proof library left unwritten) is not compared: such a tree gets no README from oft generate, so it cannot
+        render a wrong one.  The controls: without its Instances/ lines a set that leaves out the other sources leaves
+        out the lemma, and the row is recorded, not yet proved; and a set that keeps lib/dune and lib/Helper.v but not
+        lib/Instances/ is rendered and compared, and its README differs, so its comparison fails.
+
+        What the test reads: the `sparse-checkout` of each step of a workflow or an action, and each `git
+        sparse-checkout set` with --cone or --no-cone and patterns of text, in a shell or Python file (a value that is
+        a whole part of a non-cone pattern's path, in a pattern with a part that is text, reads as `*`).  What it
+        refuses: a pattern of values alone ("$PATTERNS", ${{ inputs.x }}), a line of a folded YAML block (`run: >-`),
+        an `add`, and each other line that it finds and cannot read; each one fails the test, naming the file and the
+        line, until UNREAD says why it is no such tree.  What it leaves out: the facts trees (FACTS_TREES), Markdown
+        files and tests.  A set that leaves out all of lib/, dune included, is out of scope: facts.load finds a library
+        by its lib/dune, so that tree has no library at all, and it is no tree to render.
+
+        What it does not see (the comment above partial_checkouts says each one in full).  git grep lists a file only
+        when a line of it matches SPARSE_COMMAND, such as `sparse-checkout` and `set` on one line.  So a command split
+        over two lines is never found in a file with no other such line: the two words on two lines, a shell
+        continuation before `set`, or a Python list with one item per line.  A plain (not folded) multi-line YAML
+        value is read from its first line only.  After `- if: >-`, _folded_lines counts the other keys of that step as
+        folded: a readable one-line `run:` there is refused, and its UNREAD entry takes the set out of the comparison.
+        An UNREAD entry is keyed on the line of the `set` (or the line that names one) alone, so for each entry whose
+        patterns come from other lines a change to those lines is not seen: for example the asan_cone, ship_cone and
+        sparse_patterns of asan-unit-base.sh, ship.sh and zdraftbase.py, the cb scripts' sp, and pr-vm-check's
+        nolib_patterns and lint_base_sparse_args.  Each set is compared only on this test's fixture tree, in both
+        layouts, and never applied to this repository's own index.  A value that holds two path parts (in the cb
+        scripts, `$u` is `P/H`) reads as one `*`, which matches one part."""
+        checkouts, unread = partial_checkouts()
+        self.assertEqual(["%s: %s" % (where, text) for where, rel, text in unread if (rel, text) not in UNREAD], [],
+                         "partial checkouts whose patterns this test cannot read: give each one literal patterns, or "
+                         "add it to UNREAD with the reason that it keeps no proof library without its sources")
+        found = {(rel, text) for _where, rel, text in unread}
+        self.assertEqual([k for k in UNREAD if os.path.exists(os.path.join(REPO, k[0])) and k not in found], [],
+                         "UNREAD entries that their file no longer holds")
+        sets = {}
+        for where, cone, patterns in checkouts:
+            sets.setdefault((cone, tuple(patterns)), []).append(where)
+        for name, make in (("new", lambda t: None), ("old", old_layout_tree)):
+            with self.subTest(layout=name), tree() as t:
+                make(t)
+                self.put(t, plain_halts=self.HALTS)
+                halts = self.lemma(t, "plain_halts")
+                lib = os.path.normpath(os.path.join(CHECKSUM, halts, "..", ".."))
+                lemma = os.path.normpath(os.path.join(CHECKSUM, halts))
+                t.write(os.path.join(lib, "Helper.v"), "Definition one := 1.\n")
+                self.assertEqual(t.generate(), 0, t.last_output)
+                git_repo(t.root)
+                work = t.path("..", "checkout")
+                git(t.root, "worktree", "add", "-q", "--detach", work, "HEAD")
+                want = generate.render_all(facts.load(work))
+                self.assertIn(self.HALTS_ROW + "`%s` |" % halts, want[CHECKSUM + "README.md"])
+                rendered = []
+                for (cone, patterns), wheres in sorted(sets.items()):
+                    if self.renders_alike(work, lib, lemma, want, cone, list(patterns), wheres):
+                        rendered += wheres
+                # the control: a set that keeps lib/dune and lib/Helper.v and leaves out lib/Instances/ is compared,
+                # and its README, whose row is recorded, not yet proved, is not the whole tree's
+                self.assertRaises(self.failureException, self.renders_alike, work, lib, lemma, want, False,
+                                  ["/*", "!/proofs/*/*/lib/*/", "!/projects/*/*/proofs/lib/*/"], ["the control"])
+                self.assertEqual([os.path.exists(os.path.join(work, p))
+                                  for p in (os.path.join(lib, "dune"), os.path.join(lib, "Helper.v"), lemma)],
+                                 [True, True, False])
+                got = self.rendering(work)
+                self.assertIsNotNone(got, "oft generate refuses the control's checkout")
+                self.assertIn(self.HALTS_ROW + "recorded, not yet proved |", got[CHECKSUM + "README.md"])
+                for where in (".github/workflows/pr.yml: lint", ".github/workflows/enroll.yml: facts",
+                              "tools/oft/ci/regenerate-shared.sh:"):
+                    if os.path.exists(os.path.join(REPO, where.split(":")[0])):
+                        self.assertTrue([w for w in rendered if w.startswith(where)], (where, rendered))
+
+    def renders_alike(self, work, lib, lemma, want, cone, patterns, wheres):
+        """Check out the sparse set patterns in the worktree work; unless the checkout has no lib/dune of the library
+        lib, or `oft generate` refuses it (rendering), assert that it renders every file as want (the whole tree's
+        rendering) has it, failing with wheres.  When the checkout leaves out the library's other sources
+        (lib/Helper.v), the control too: without its Instances/ lines the set leaves out the lemma file, and the row
+        is recorded, not yet proved.  Whether it compared."""
+        self.sparse(work, cone, patterns)
+        if not os.path.isfile(os.path.join(work, lib, "dune")):
+            return False
+        got = self.rendering(work)
+        if got is None:
+            return False
+        self.assertEqual(sorted(k for k in set(got) | set(want) if got.get(k) != want.get(k)), [], ", ".join(wheres))
+        if not os.path.exists(os.path.join(work, lib, "Helper.v")) and any("/Instances/" in p for p in patterns):
+            self.sparse(work, cone, [p for p in patterns if "/Instances/" not in p])
+            self.assertFalse(os.path.exists(os.path.join(work, lemma)), ", ".join(wheres))
+            got = self.rendering(work)
+            self.assertIsNotNone(got, ", ".join(wheres))
+            self.assertIn(self.HALTS_ROW + "recorded, not yet proved |", got[CHECKSUM + "README.md"], ", ".join(wheres))
+        return True
+
+    @staticmethod
+    def rendering(root):
+        """generate.render_all of the tree at root, or None when `oft generate` refuses the tree before it renders, as
+        generate.run does: facts.load, rules.check and rules.symbol_facts give an error, or a proof library of the
+        commit is left unwritten (layout.unwritten_libraries)."""
+        loaded = facts.load(root)
+        rules.check(loaded)
+        rules.symbol_facts(loaded)
+        if loaded.errors or layout.unwritten_libraries(
+                root, sorted("%s/%s" % (h.project.name, h.name) for h in loaded.harnesses())):
+            return None
+        return generate.render_all(loaded)
+
+    @staticmethod
+    def sparse(path, cone, patterns):
+        """Make the worktree at path hold what the sparse set patterns holds, in cone mode or not."""
+        git(path, "sparse-checkout", "set", "--cone" if cone else "--no-cone", "--skip-checks", "--", *patterns)
+
+
+class PartialCheckouts(unittest.TestCase):
+    """partial_checkouts on a git repository of its own, by the path that the repository's test takes: what it reads,
+    what it refuses, and what it leaves out."""
+    VALUE_ALONE = 'git sparse-checkout set --no-cone "$PATTERNS"'
+    LITERAL = "git -C \"$d\" sparse-checkout set --no-cone '/*' '!/proofs/*/*/lib/*/' \"/projects/$p/\""
+    WORKFLOW = "\n".join([
+        "on: push",
+        "jobs:",
+        "  build:",
+        "    runs-on: ubuntu-latest",
+        "    steps:",
+        "      - uses: actions/checkout@v4",
+        "        with:",
+        "          sparse-checkout: ${{ inputs.paths }}",
+        "          sparse-checkout-cone-mode: false",
+        "      - run: >-",
+        "          git sparse-checkout set --no-cone '/*'",
+        "          '!/proofs/*/*/lib/*/'",
+        "      - run: |",
+        "          git sparse-checkout set --no-cone '/*' \\",
+        "            '!/proofs/*/*/lib/*/'",
+        ""])
+
+    def test_what_it_reads_refuses_and_leaves_out(self):
+        """It reads a script's literal patterns and a `run: |` block; it refuses a pattern of values alone and a line
+        of a `run: >-` block, naming the file and the line; it reads no file of a facts tree and no Markdown file."""
+        files = {"dev/lane/x.sh": "#!/bin/bash\n%s\n" % self.VALUE_ALONE,
+                 "dev/lane/y.sh": "#!/bin/bash\n%s\n" % self.LITERAL,
+                 ".github/workflows/w.yml": self.WORKFLOW,
+                 "projects/zlib/x.sh": "#!/bin/bash\n%s\n" % self.VALUE_ALONE,
+                 "proofs/zlib/y.sh": "#!/bin/bash\n%s\n" % self.LITERAL,
+                 "docs/checkouts.md": "Check out a part of the tree with `%s`.\n" % self.VALUE_ALONE}
+        with tempfile.TemporaryDirectory(prefix="oft-test-") as root:
+            for rel, text in files.items():
+                os.makedirs(os.path.join(root, os.path.dirname(rel)), exist_ok=True)
+                with open(os.path.join(root, rel), "w", encoding="utf-8") as f:
+                    f.write(text)
+            git_repo(root)
+            read, unread = partial_checkouts(root)
+        self.assertEqual([c[0] for c in read + unread if c[0].startswith(("projects/", "proofs/")) or ".md:" in c[0]],
+                         [], "a file of a facts tree, or a Markdown file")
+        self.assertEqual(unread, [
+            (".github/workflows/w.yml: build", ".github/workflows/w.yml", "${{ inputs.paths }}"),
+            (".github/workflows/w.yml:11", ".github/workflows/w.yml", "git sparse-checkout set --no-cone '/*'"),
+            ("dev/lane/x.sh:2", "dev/lane/x.sh", self.VALUE_ALONE)])
+        self.assertEqual(read, [(".github/workflows/w.yml:14", False, ["/*", "!/proofs/*/*/lib/*/"]),
+                                ("dev/lane/y.sh:2", False, ["/*", "!/proofs/*/*/lib/*/", "/projects/*/"])])
 
 
 ZLIB_UBSAN_AGREES = ("projects/zlib/checksum_fuzzer/harness.yaml", "projects/zlib/api-driver/harness.yaml")
@@ -774,7 +1778,7 @@ class ProjectBudgets(unittest.TestCase):
         self.assertIn("agrees Budgets.Asan.lim_source Budgets.Asan.lim_target Images.plain Images.asan.", s)
         self.assertNotIn("for the UBSan build, with 2 GiB for the plain build", s)
         st = next(x for x in facts_tree.statements() if x.id == "zlib/checksum_fuzzer/ubsan_agrees")
-        self.assertEqual(shapes.shape_name(st.data), "agrees")
+        self.assertEqual(st.shape_name(), "agrees")
 
     def test_the_as_path_carries_the_own_budgets_sentence(self):
         with tree() as t:
@@ -806,21 +1810,23 @@ class ProjectBudgets(unittest.TestCase):
                             (["4095", "5TiB"], "at least 4096 bytes"), (["5TiB", "2GiB"], "at least the plain one"),
                             (["2 GiB", "5TiB"], "not a size"), ([2, "5TiB"], "not a size")):
             with self.assertRaises(shapes.ShapeError) as e:
-                shapes.term(st, {"budgets": {"agrees": {"undefined": pair}}})
+                shapes.term(st, {"budgets": {"agrees": {"undefined": pair}}}, distribution=False)
             self.assertIn(words, str(e.exception))
         with self.assertRaises(shapes.ShapeError) as e:
-            shapes.term(st, {"budgets": {"agrees": {"address": ["1GiB", "1TiB"]}}})     # no pair for ubsan and no enum
+            shapes.term(st, {"budgets": {"agrees": {"address": ["1GiB", "1TiB"]}}},   # no pair for ubsan and no enum
+                        distribution=False)
         self.assertIn("an agreement statement names its budgets", str(e.exception))
         with self.assertRaises(shapes.ShapeError) as e:
-            shapes.term(dict(st, budgets="standard"), {"budgets": {"agrees": {"undefined": ["2GiB", "5TiB"]}}})
+            shapes.term(dict(st, budgets="standard"), {"budgets": {"agrees": {"undefined": ["2GiB", "5TiB"]}}},
+                        distribution=False)
         self.assertIn("sets this statement's budgets, so it names none", str(e.exception))
 
     def test_a_pair_equal_to_the_default_is_the_enum(self):
         st = {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "alloc-forced-only"}
-        enum = shapes.term(dict(st, budgets="standard"))
+        enum = shapes.term(dict(st, budgets="standard"), distribution=False)
         for pb in ({"budgets": {"agrees": {"undefined": ["16GiB", "512GiB"]}}},
                    {"budgets": {"agrees": {"undefined": ["16384MiB", "512GiB"]}}}):
-            self.assertEqual(shapes.term(st, pb), enum)
+            self.assertEqual(shapes.term(st, pb, distribution=False), enum)
             self.assertIsNone(shapes.own_budgets(st, pb))
         with tree() as t:
             before = fingerprints(t)
@@ -833,7 +1839,7 @@ class ProjectBudgets(unittest.TestCase):
     def test_literals_and_words_come_from_bytes(self):
         st = {"kind": "agreement", "builds": ["plain", "ubsan"], "reading": "alloc-forced-only"}
         pb = {"budgets": {"agrees": {"undefined": ["1024MiB", "4352GiB"]}}}
-        self.assertEqual(shapes.term(st, pb)[1],
+        self.assertEqual(shapes.term(st, pb, distribution=False)[1],
                          "agrees_in Env.alloc_forced_only 0x40000000%Z 0x44000000000%Z Images.plain Images.ubsan")
         self.assertEqual(shapes.budget_words(st, pb), ("1 GiB", "4352 GiB", True))
         self.assertEqual(shapes.size_bytes("4096"), 4096)
@@ -1283,7 +2289,7 @@ class SharedFiles(unittest.TestCase):
         for rel in ("dune-project", "projects/zlib/checksum_fuzzer/README.md",
                     "projects/zlib/rocq-oss-fuzz-theorems-zlib.opam",
                     "proofs/zlib/checksum_fuzzer/plain_halts/dune", "proofs/zlib/checksum_fuzzer/lib/dune",
-                    "index/x/statements.tsv", "docs/statements.md"):
+                    "index/x/statements.tsv", "docs/statements.md", "tools/publish/private-harnesses.txt"):
             self.assertFalse(paths.is_shared(rel), rel)
 
     def test_skip_shared_ignores_a_stale_shared_file(self):
@@ -1358,6 +2364,94 @@ class SharedFiles(unittest.TestCase):
             for rel in shared:
                 with open(os.path.join(copy, rel), encoding="utf-8") as f:
                     self.assertEqual(f.read(), want[rel], rel)
+
+
+class PrivateHarnessesFile(unittest.TestCase):
+    """tools/publish/private-harnesses.txt (generate.PRIVATE_HARNESSES; K10 of Dispatch issue OSSV-424): each name of
+    each project's private_harnesses as one `<project>/<harness>` line, the lines sorted, each ended by a newline, and
+    no byte when nothing is held.  Only a tree that has tools/publish/ gets the file.  `--check`, with --skip-shared
+    too, refuses a tree whose file is missing or gives another list."""
+
+    FILE = generate.PRIVATE_HARNESSES
+
+    def hold(self, t, **fields):
+        """Give each project of FIELDS its private_harnesses."""
+        for project, field in fields.items():
+            rel = "projects/%s/project.yaml" % project
+            t.put_yaml(rel, dict(t.yaml(rel), private_harnesses=field))
+
+    def check(self, t, shared=None):
+        buf = io.StringIO()
+        rc = generate.run(t.root, check=True, out=buf, shared=shared)
+        return rc, buf.getvalue()
+
+    def rendered(self, t):
+        self.assertEqual(t.generate(), 0, t.last_output)
+        with open(t.path(self.FILE), "rb") as f:
+            return f.read()
+
+    def test_a_tree_without_tools_publish_gets_no_file(self):
+        with tree() as t:
+            self.hold(t, zlib=["held_target"])
+            self.assertNotIn(self.FILE, generate.render_all(facts.load(t.root)))
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertFalse(os.path.lexists(t.path("tools")))
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def test_the_file_is_empty_when_nothing_is_held(self):
+        with tree() as t:
+            os.makedirs(t.path("tools", "publish"))
+            self.assertEqual(self.rendered(t), b"")
+            self.assertEqual(self.check(t, shared=False)[0], 0)
+            t.write(self.FILE, "zlib/held_target\n")
+            rc, out = self.check(t, shared=False)
+            self.assertEqual(rc, 1, out)
+            self.assertIn(self.FILE + ": differs from its rendering", out)
+
+    def test_two_held_harnesses_of_two_projects_render_two_sorted_lines(self):
+        with tree() as t:
+            os.makedirs(t.path("tools", "publish"))
+            self.hold(t, zlib=["minigzip_fuzzer"], json=["fuzzer-parse_bjdata"])
+            self.assertEqual(self.rendered(t), b"json/fuzzer-parse_bjdata\nzlib/minigzip_fuzzer\n")
+            # the negative control: a file that matches its fields passes --check, with --skip-shared too
+            for shared in (None, False):
+                rc, out = self.check(t, shared)
+                self.assertEqual(rc, 0, out)
+            # each project's names are sorted too, whatever the order of its field
+            self.hold(t, zlib=["minigzip_fuzzer", "held_target"])
+            self.assertEqual(self.rendered(t),
+                             b"json/fuzzer-parse_bjdata\nzlib/held_target\nzlib/minigzip_fuzzer\n")
+
+    def test_check_refuses_a_file_that_lacks_a_line_has_one_more_or_is_missing(self):
+        with tree() as t:
+            os.makedirs(t.path("tools", "publish"))
+            self.hold(t, zlib=["minigzip_fuzzer"], json=["fuzzer-parse_bjdata"])
+            good = self.rendered(t).decode()
+            for case, text in (("lacks a line", "json/fuzzer-parse_bjdata\n"),
+                               ("has one more", good + "zlib/held_target\n"), ("is missing", None)):
+                with self.subTest(case=case):
+                    if text is None:
+                        os.remove(t.path(self.FILE))
+                    else:
+                        t.write(self.FILE, text)
+                    said = "missing" if text is None else "differs from its rendering"
+                    for shared in (None, False):
+                        rc, out = self.check(t, shared)
+                        self.assertEqual(rc, 1, out)
+                        self.assertIn("%s: %s" % (self.FILE, said), out)
+                    # no shared file: the line's render, which writes the shared files alone, leaves it to the pull
+                    # request
+                    rc, out = self.check(t, shared=True)
+                    self.assertEqual(rc, 0, out)
+                    t.write(self.FILE, good)
+
+    def test_the_port_form_none_reads_as_the_internal_copy(self):
+        """The cut writes `none` as the port of a project with a held fuzz target whose port is the internal copy, so
+        the release's page says what the internal page says.  The public port keeps its name."""
+        words = generate._port_repository_words
+        self.assertEqual(words({"repository": "none"}), "the internal copy of the OSS Verify port")
+        self.assertEqual(words({"repository": schema.INTERNAL_PORT_REPOSITORY}), words({"repository": "none"}))
+        self.assertEqual(words({"repository": schema.OSS_VERIFY_REPOSITORY}), "`theorem-labs/oss-verify`")
 
 
 class DuneProject(unittest.TestCase):
@@ -1491,3 +2585,132 @@ class Layout(unittest.TestCase):
                           b.read("index/PROOFS.md"))
             self.assertIn("\tprojects/zlib/checksum_fuzzer/proofs/plain_halts\t"
                           "projects/zlib/checksum_fuzzer/proofs/provenance/PROVENANCE.md", b.read("index/proofs.tsv"))
+
+
+class ClaimsFollowDeclarations(unittest.TestCase):
+    """A sentence a page writes says only what the declaration it comes from supports."""
+
+    # the sentence a harness with no check of its own gives for each kind of its statements, in the order given
+    NO_CHECK = (("halts", "Its halts statements say only that the code it calls never crashes, hangs or trips a "
+                          "sanitizer."),
+                ("agreement", "Its agreement statements say only that the code never crashes or trips a sanitizer, "
+                              "and allow a run that never ends."),
+                ("bound", "Its bound statements say only how often its builds may disagree."),
+                ("decidability", "Its decidability statements say only that some program decides where its builds "
+                                 "agree."))
+    NOTHING = "No statement here says anything about the code it calls."
+    # the one sentence of the four classifier kinds, after the others
+    CLASSIFIER = "Its classifier statements say only how the classifier programs of its pairs answer."
+
+    def no_check_pages(self, kinds):
+        """The harness README and Statements.v of the fixture's checksum_fuzzer, each with its whitespace runs made
+        one space, rendered once, after its checks are removed and each of its statements of a kind not in KINDS is
+        withdrawn."""
+        p = "projects/zlib/checksum_fuzzer/harness.yaml"
+        with tree(render=False) as t:
+            y = t.yaml(p)
+            y["checks"] = []
+            for st in y["statements"].values():
+                st.pop("binds_checks", None)
+                if st["kind"] not in kinds:
+                    st.pop("witness", None)
+                    st.update(status="withdrawn", reason="Withdrawn for this test.")
+            t.put_yaml(p, y)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            return [" ".join(t.read("projects/zlib/checksum_fuzzer/" + f).split())
+                    for f in ("README.md", "Statements.v")]
+
+    def assert_says_only(self, pages, sentences):
+        """Each page says that the harness makes no check and then exactly SENTENCES, none of the other kinds' and
+        none of the old forms."""
+        for page in pages:
+            self.assertIn("makes no check of its own beyond not crashing. " + " ".join(sentences), page)
+            for _kind, other in self.NO_CHECK + ((None, self.NOTHING),):
+                if other not in sentences:
+                    self.assertNotIn(other, page)
+            self.assertNotIn("a statement about it says only", page)
+            for kind, _sentence in self.NO_CHECK:
+                self.assertNotIn("; its %s statements" % kind, page)
+
+    def test_a_harness_with_no_check_says_what_each_kind_of_its_statements_says(self):
+        """Only a halts statement rules out a run that never ends: an agreement statement allows one, and a bound or a
+        decidability statement says nothing of one run.  Each kind among the statements has a sentence of its own."""
+        self.assert_says_only(self.no_check_pages({k for k, _ in self.NO_CHECK}), [s for _, s in self.NO_CHECK])
+        with tree() as t:     # the fixture's api-driver has no check and agreement statements only
+            agrees_only = " ".join(t.read("projects/zlib/api-driver/README.md").split())
+        self.assert_says_only([agrees_only], [dict(self.NO_CHECK)["agreement"]])
+
+    def test_each_kind_alone_gets_only_its_own_sentence(self):
+        for kind, sentence in self.NO_CHECK:
+            with self.subTest(kind=kind):
+                self.assert_says_only(self.no_check_pages({kind}), [sentence])
+
+    def test_a_harness_with_no_live_statement_says_none_says_anything(self):
+        self.assert_says_only(self.no_check_pages(set()), [self.NOTHING])
+
+    def test_the_classifier_statements_have_one_sentence_after_the_others(self):
+        """The four classifier kinds share one sentence, after the decidability statements', as _order gives the
+        kinds; a harness whose live statements are classifier statements says that sentence alone."""
+        def no_check(y):
+            y["checks"] = []
+            for st in y["statements"].values():
+                st.pop("binds_checks", None)
+
+        def classifier_only(y):
+            no_check(y)
+            for st in y["statements"].values():
+                if st["kind"] not in shapes.CLASSIFIER_KINDS:
+                    st.pop("witness", None)
+                    st.update(status="withdrawn", reason="Withdrawn for this test.")
+        unit = "projects/zlib/checksum_fuzzer/"
+        for change, sentences in ((no_check, [s for _, s in self.NO_CHECK] + [self.CLASSIFIER]),
+                                  (classifier_only, [self.CLASSIFIER])):
+            with self.subTest(change=change.__name__), tree(render=False) as t:
+                ci.with_images(t, change)
+                h = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"]
+                self.assertEqual(generate._no_check_claim(h), " ".join(sentences))
+                self.assertEqual(t.generate(), 0, t.last_output)
+                self.assert_says_only([" ".join(t.read(unit + f).split()) for f in ("README.md", "Statements.v")],
+                                      sentences)
+
+    def test_the_main_page_counts_the_statements_known_false(self):
+        """It says some are known false only when the count beside it says so."""
+        with tree() as t:
+            n_false = sum(1 for s in facts.load(t.root).statements()
+                          if s.status in ("refuted", "counterexample", "witnessed-false"))
+            self.assertGreater(n_false, 0)
+            self.assertIn("%d are known to be false" % n_false if n_false > 1 else "1 is known to be false",
+                          t.read("README.md"))
+            y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+            st = y["statements"]["ubsan_halts_may_fail"]
+            del st["witness"]
+            st["status"] = "open"
+            t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+            shutil.rmtree(t.path("counterexamples"))
+            self.assertEqual(t.generate(), 0, t.last_output)
+            readme = t.read("README.md")
+        self.assertIn("none is known to be false", readme)
+        self.assertIn("0 known false", readme)
+        self.assertNotIn("some are known to be false", readme)
+
+    def test_unlisted_patches_are_placed_where_the_release_has_them(self):
+        """A recipe-built project that attaches its source has its unlisted patches in that recipe; one that does
+        not attach its source (the fixture's json: a recipe and no source archive, as mosquitto is) says that no
+        published archive holds them.  Neither page says they ship in a source bundle."""
+        with tree() as t:
+            z = t.yaml("projects/zlib/project.yaml")
+            del z["withheld"]
+            z["library"]["patch_count"] = 3
+            t.put_yaml("projects/zlib/project.yaml", z)
+            j = t.yaml("projects/json/project.yaml")
+            j["library"]["patch_count"] = 1
+            t.put_yaml("projects/json/project.yaml", j)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            zlib, json = t.read("projects/zlib/README.md"), t.read("projects/json/README.md")
+        self.assertIn("  - 2 patches more, whose text is not in this repository: it is in `recipe.tar.zst` in release "
+                      "[v2026.11.0](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.11.0), under "
+                      "`patches/`, in the order `patches/series.tsv` gives", zlib)
+        self.assertIn("  - 1 patch, whose text is not in this repository, and no published archive holds it\n", json)
+        for page in (zlib, json):
+            self.assertNotIn("whose text is not in this release yet", page)
+            self.assertNotIn("source bundle", page)

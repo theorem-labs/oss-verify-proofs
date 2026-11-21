@@ -1,0 +1,55 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{unit_prefix}}.BudgetWit.Rzb
+import {{unit_prefix}}.BudgetWit.RunB
+import {{package}}.Reusable.YN3e
+
+/-! The start of `fuzz_knock`'s process over `rzb`: a mirror of `Reusable/YN3e.lean`'s
+`src0_start_gen` and `src0_start` (`YN3e.lean:864`, `:1102`), from `init_config` through musl's
+`_start_c`/`__libc_start_main` up to the call of `main`.
+
+The statements are R1's with `realizes` written `rzb`; the proofs are R1's with each run taken by
+`RunB.rzb_run_gen`/`RunB.rzb_run_to_gen` (twins of `YP03.rz_run_gen`/`rz_run_to_gen`), each
+spliced loop by `Rzb.rzb_msteps` (twin of `YK15.rz_msteps`), and the `set_tid_address` ecall by
+`RunB.rzb_set_tid_first` (twin of `YP0n.rz_set_tid_first`). Those lemmas build every `rzb` node
+of the walk with its `grant_ok`, so no node is built in this file. The public `YN3e` declarations
+that do not mention `realizes` (`E_main`, `E_st`, `ss_main`, `main_state`, `runs_main`, the `ews*`
+facts, the phase addresses) are `YN3e`'s own, by import.
+
+Mirrored, private as in R1: `yn3e_run_ok_b`, `yn3e_run_ec_b`, `yn3e_runto_ok_b` (R1
+`yn3e_run_ok`, `yn3e_run_ec`, `yn3e_runto_ok`). Copied from `YN3e.lean` unchanged, private as in
+R1 (a private name is not visible across modules): `yn3e_p64`, `yn3e_p63`, `yn3e_p32`,
+`yn3e_p31`; `yn3e_nec`, `yn3e_isec`, `yn3e_addok`, `yn3e_addok_sound`; `yn3e_chkF`, `yn3e_chk_t`,
+`yn3e_chk_f`, `yn3e_chk`; `yn3e_opt_mem`, `yn3e_add_chunk_eq`, `yn3e_ss_main`. R1's macro
+`yn3e_omega` is copied as `bwst_omega` (a Lean macro is global). The copied `yn3e_chk_t` and
+`yn3e_chk_f` evaluate the same closed check as R1's in the kernel once more. -/
+
+namespace {{unit_prefix}}.BudgetWit.StartB
+open {{package}}.Reusable
+open {{package}}.Reusable.YN3e
+open {{unit_prefix}}.images
+open {{unit_prefix}}.BudgetWit.Rzb (rzb rzb_msteps)
+
+attribute [local instance] {{package}}.Reusable.YK11.fx0
+
+section Addr
+-- The section is empty: this file writes no address; the start walk's addresses are `YN3e`'s.
+end Addr
+/-- R1's `yn3e_omega`: `omega`, after the powers of two are numerals. -/
+/-! ## The computed facts of the walk, checked by the kernel (copied from `YN3e.lean:696-806`) -/
+/-! ## The three run lemmas over `rzb` (mirrors of `YN3e.lean:810-862`) -/
+
+/-- `RunB.rzb_run_gen` for a run that does not end at an `ecall`. The run's status is generalized
+before the split, so that no `match` on the computed status is left to reduce. -/
+/-! ## The start walk over `rzb` -/
+
+/-- Mirror of `YN3e.src0_start_gen` (`YN3e.lean:864`) over `rzb`. -/
+  -- Phase A: from the entry to the `envp` count loop.
+  -- Phase B: the `envp` count loop (`src0_envp_count`), spliced in.
+  -- Phase C: to the `__progname` scan.
+  -- Phase D: the `__progname` scan (`src0_progname_scan`) and its store, spliced in.
+  -- Phase E: to the `set_tid_address` call.
+  -- Phase F: `set_tid_address` returns the thread id.
+  -- Phase G: to the store of the stack guard; its value is the `AT_RANDOM` data.
+  -- Phase G2: to the store of the canary.
+/-- Mirror of `YN3e.src0_start` (`YN3e.lean:1102`) over `rzb`. -/
+end {{unit_prefix}}.BudgetWit.StartB

@@ -1,0 +1,24 @@
+# A row of tools/oft/third-party-proofs.yaml, the table of third-party proof files (lint.THIRD_PARTY): one file of a
+# fuzz target's proofs folder that comes from another project's proofs, pinned by its path and the SHA-256 of its
+# bytes, with its licence, where it comes from and the lines of the upstream author's notice in it.  lint.py's
+# load_third_party holds each row to this definition (schema.validate_def), and checks in code what it cannot say: the
+# path is a Rocq file of a fuzz target's proofs folder (lint.proof_rocq), the notice's first line is not after its
+# last, and no two rows name one path.  Only lint.py reads this file (tools/oft/keys.py, NOT_THE_CHECKER).
+defs:
+  row:
+    type: object
+    fields:
+      path: {type: str}                                 # the file, from the repository's top
+      sha256: {type: sha256}                            # the SHA-256 of its bytes
+      spdx: {type: enum, values: [LGPL-2.1-or-later]}   # its licence (lint.THIRD_PARTY_LICENCES)
+      upstream:
+        type: object
+        fields:
+          repository: {type: str, pattern: '^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+$'}   # <owner>/<name> on GitHub
+          commit: {type: commit}
+          path: {type: str, optional: true}             # the file there
+      notice:                                           # its lines, from 1, in the file
+        type: object
+        fields:
+          first: {type: int, min: 1}
+          last: {type: int, min: 1}

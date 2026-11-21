@@ -83,7 +83,8 @@ def patch_name(path):
 class Scripts(unittest.TestCase):
     """A directory of stand-in commands at the front of PATH, a home directory, and an environment of named variables
     only (helpers.child_environment): no GitHub token, no agent settings or credentials and no git configuration of
-    the person running the tests."""
+    the person running the tests.  After the stand-ins, PATH names this interpreter's directory, so a script's
+    `env python3` does not start a version manager's shim, which would read the person's own configuration."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory(prefix="oft-facts-review-")
@@ -92,8 +93,8 @@ class Scripts(unittest.TestCase):
         self.home = os.path.join(self.dir, "home")
         os.mkdir(self.bin)
         os.mkdir(self.home)
-        self.env = child_environment(self.home, PATH=self.bin + os.pathsep + os.environ["PATH"], PR="7",
-                                     REPO="acme/proofs")
+        path = os.pathsep.join([self.bin, os.path.dirname(sys.executable), os.environ["PATH"]])
+        self.env = child_environment(self.home, PATH=path, PR="7", REPO="acme/proofs")
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -819,8 +820,8 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(self.jobs["comment"]["permissions"], {"contents": "read", "pull-requests": "write"})
 
     def test_the_review_reaches_the_model_gateway_only(self):
-        """The review signs in to the OSS Verify model gateway with oss-verify-ci's Google identity token, over the
-        tailnet, and asks facts-review-served for the provider ossv-gateway, which takes that one base URL alone."""
+        """The review signs in to the model gateway with oss-verify-ci's Google identity token, over the
+        tailnet, and asks facts-review-served for the provider model-gateway, which takes that one base URL alone."""
         steps = {s.get("name"): s for s in self.jobs["review"]["steps"]}
         gateway = steps["get the model gateway's identity token"]
         self.assertEqual(gateway["id"], "gateway")
@@ -836,9 +837,9 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(env["ANTHROPIC_BASE_URL"], "${{ env.REVIEW_GATEWAY_URL }}")
         # The URL is the repository variable's, for the review job and the comment job's check alike: a tailnet's
         # names stay out of this repository's text (oft lint).
-        self.assertEqual(yamlio.load_file(WORKFLOW)["env"]["REVIEW_GATEWAY_URL"], "${{ vars.OSSV_MODEL_GATEWAY_URL }}")
+        self.assertEqual(yamlio.load_file(WORKFLOW)["env"]["REVIEW_GATEWAY_URL"], "${{ vars.MODEL_GATEWAY_URL }}")
         self.assertEqual(env["ANTHROPIC_AUTH_TOKEN"], "${{ steps.gateway.outputs.id_token }}")
-        self.assertEqual(env["REVIEW_PROVIDER"], "ossv-gateway")
+        self.assertEqual(env["REVIEW_PROVIDER"], "model-gateway")
         self.assertEqual(env["ANTHROPIC_DEFAULT_HAIKU_MODEL"], "claude-haiku-4-5")
         self.assertFalse([k for k in env if "FEDERATION" in k or "IDENTITY" in k], env)
         names = list(steps)
@@ -846,45 +847,133 @@ class WorkflowTest(unittest.TestCase):
         self.assertLess(names.index("review"), names.index("leave the tailnet"))
 
 
+# The agent files' patterns: each AGENTS.md, CLAUDE.md and SKILL.md and every file under a skills/ directory, at any
+# depth, owned by the team engineering, whose one member is the stream owner, at his choice (INFRA-4439, ask
+# d6ca8783-84a8-4f99-a199-9ad2a29040f1; INFRA-4447, ask 6d9f2067-b913-46e5-8b1b-3eff6696ec05).
+AGENT_FILES = ("**/AGENTS.md", "**/CLAUDE.md", "**/SKILL.md", "skills/")
+# the one team every owned line names, with no person beside it (OSSV-688, ask 10c9f8ad-4262-41b3-a768-9c3218b8acc5)
+TEAM = "@theorem-labs/engineering"
+# agent files at the root and further down, a fuzz target's source copy, folders of lines with no owner and theories/
+AGENT_PATHS = ("AGENTS.md", "CLAUDE.md", f"projects/zlib/fz/source/{INSTRUCTIONS}", "projects/zlib/fz/source/AGENTS.md",
+               ".claude/skills/review-facts/SKILL.md", ".claude/skills/porting-released-proofs/references/asan-kit.md",
+               "dev/stream/briefs/example/skill/variant-checklist/SKILL.md", "tools/enroll/AGENTS.md",
+               "tools/publish/skills/a/SKILL.md", "theories/AGENTS.md", "theories/skills/a/SKILL.md")
+
+
 @unittest.skipUnless(os.path.exists(CODEOWNERS) and os.path.exists(REVIEW_MD),
                      "no .github/CODEOWNERS or review.md: the internal repository alone has them")
 class CodeOwnersTest(unittest.TestCase):
-    def test_theories_the_axioms_review_md_and_codeowners_are_the_owned_paths(self):
-        """review.md says what the facts review checks, and CODEOWNERS who may change it: only a human may change
-        either, so they are owned by the two people who own the reviewer's rules, whose approval main's branch rule
-        requires (no team has a grant on this repository). Their lines are the last two, since GitHub takes the last
-        line that matches. /theories/ and /toolchain/allowed-axioms.txt keep the same two owners: the OSSV-129
-        replay found an agent reviewer catches a change to what a statement claims at most 1 time in 5, and never
-        under the final rules, and the stream owner's answer on that issue
-        (OSSV-129/comment/111bc5d4-f81f-48f6-a9a7-48d6e07a8c79) reads "I don't think we should be
-        widening allowed axioms without approval"; no later line matches a path of either. No other path has an
-        owner, approvals.yaml and the publishing paths included: a code owner is a user or a team, never an App, so
-        naming the two people there left an agent no way to approve a release but the stream owner's admin token,
-        which reaches him as an approval card, while R12 of OSSV-122's spec lets an agent approve a
-        release in his name (CODEOWNERS' header)."""
-        patterns = [line.split("#", 1)[0].split() for line in read(CODEOWNERS).splitlines()]
+    def owned_lines(self, text):
+        """Hold the owned lines of CODEOWNERS `text` as the test below says, and return the statement templates'
+        lines and the lines of claims.py, shapes.py and render.py. No subTest here: a failure raises, so that the
+        control (test_dropping_an_agent_file_line_fails_the_check) sees it."""
+        patterns = [line.split("#", 1)[0].split() for line in text.splitlines()]
         patterns = [" ".join(p) for p in patterns if p]
         owned = [p for p in patterns if len(p.split()) > 1]
-        admins = owned[-1].split(None, 1)[1]
-        self.assertEqual(len(admins.split()), 2, "two owners")
-        kept = [f"/theories/ {admins}", f"/toolchain/allowed-axioms.txt {admins}"]
-        last = [f"/review.md {admins}", f"/.github/CODEOWNERS {admins}"]
-        self.assertEqual(owned, kept + last)
-        self.assertEqual(patterns[-2:], last)
-        # no later line matches a path of either, so GitHub's last match for one is the line above
-        for path in ("theories/X.v", "toolchain/allowed-axioms.txt"):
-            self.assertEqual(owners_of(read(CODEOWNERS), path), admins.split())
+        # every owned line names the one team, and no person
+        self.assertEqual({p.split(None, 1)[1] for p in owned}, {TEAM})
+        kept = [f"/theories/ {TEAM}", f"/toolchain/allowed-axioms.txt {TEAM}",
+                f"/toolchain/checker.Dockerfile {TEAM}", f"/toolchain/lps-core.paths {TEAM}",
+                f"/.github/workflows/index.yml {TEAM}"]
+        agent = [f"{pattern} {TEAM}" for pattern in AGENT_FILES]
+        templates = [f"/tools/oft/templates/{name} {TEAM}" for name in ("*.v.tmpl", "images-dune.tmpl",
+                                                                        "proof-dune.tmpl", "harness-dune.tmpl")]
+        claims = [f"/tools/oft/claims.py {TEAM}", f"/tools/oft/shapes.py {TEAM}", f"/tools/oft/render.py {TEAM}"]
+        last = [f"/review.md {TEAM}", f"/.github/CODEOWNERS {TEAM}"]
+        self.assertEqual(owned, agent + kept + templates + claims + last)
+        # the templates' and the modules' lines are the suffix with the last two, and those two match no path of
+        # theirs, so no line of any form (a directory, a wildcard or an unanchored name) can follow and take them back
+        self.assertEqual(patterns[-len(templates + claims + last):], templates + claims + last)
+        # every owned line follows every line with no owner, so none of those (a fuzz target's source/, tools/enroll/,
+        # tools/publish/) takes an agent file back
+        self.assertEqual(patterns[-len(owned):], owned)
+        for path in AGENT_PATHS:
+            self.assertEqual(owners_of(text, path), [TEAM], path)
+        return templates, claims
+
+    def test_theories_the_axioms_review_md_and_codeowners_are_the_owned_paths(self):
+        """review.md says what the facts review checks, and CODEOWNERS who may change it: only a human may change
+        either, so they are owned by the team engineering, whose approval main's branch rule requires. Every owned
+        line names that one team and no person, at the stream owner's request (OSSV-688, ask
+        10c9f8ad-4262-41b3-a768-9c3218b8acc5). review.md's and CODEOWNERS' lines are the last two, since GitHub
+        takes the last line that matches. /theories/ and /toolchain/allowed-axioms.txt are owned too: the
+        OSSV-129 replay found an agent reviewer catches a change to what a statement claims at most 1 time in 5, and
+        never under the final rules, and the stream owner's answer on that issue
+        (OSSV-129/comment/111bc5d4-f81f-48f6-a9a7-48d6e07a8c79) reads "I don't think we should be
+        widening allowed axioms without approval"; no later line matches a path of either. toolchain/checker.Dockerfile
+        and toolchain/lps-core.paths are owned too: they define the image every proof is checked in, with its Rocq
+        and the process model that gives a statement's words their meaning. index.yml is owned too: its push-main
+        job pushes onto main past the merge queue with a deploy key, and its own check of each render commit is all
+        that keeps the bot from writing a statement file. The statement templates
+        (tools/oft/templates/*.v.tmpl, tools/oft/templates/images-dune.tmpl) are owned too: a template sets the text
+        of each statement, in every fuzz target, one added later included, so a change to a template waits for a
+        code owner (OSSV-688, comment bbfa8cfc-1426-4491-b972-4eb899c48208); the folder's other templates
+        have no owner. claims.py, shapes.py and render.py, which write the Rocq of a statement file, are owned too
+        (OSSV-688, ask 4b3eecb2-e37d-42a3-8873-ff64d9c4e9fd). The templates' and these modules' lines come just
+        before the last two, so no line can take them back. The agent files (each
+        AGENTS.md, CLAUDE.md and SKILL.md and every file under a skills/ directory, at any depth) are the team's
+        too, at the stream owner's choice (INFRA-4439, ask d6ca8783-84a8-4f99-a199-9ad2a29040f1; INFRA-4447, ask
+        6d9f2067-b913-46e5-8b1b-3eff6696ec05): their lines come after every line with no owner, so none takes an
+        agent file back, a copy in a fuzz target's source/ included. A fuzz
+        target's statement files (harness.yaml, Statements.v, Images.v, images/dune, Distribution.v) have no owner.
+        No other path has an owner, approvals.yaml and the publishing paths included: a code owner is a user or a
+        team, never an App, so naming people there left an agent no way to approve a release but the stream owner's
+        admin token, which reaches him as an approval card, while R12 of OSSV-122's spec lets an agent approve a
+        release in his name (CODEOWNERS' header)."""
+        templates, claims = self.owned_lines(read(CODEOWNERS))
+        # each of these lines names what is there, so that a rename cannot leave a template or a module unowned
+        folder = os.path.join(REPO, "tools", "oft", "templates")
+        self.assertTrue([n for n in os.listdir(folder) if n.endswith(".v.tmpl")], folder)
+        for line in templates[1:] + claims:
+            with self.subTest(line=line):
+                self.assertTrue(os.path.exists(os.path.join(REPO, line.split()[0].strip("/"))), line)
+        for path in ("theories/X.v", "toolchain/allowed-axioms.txt", "toolchain/checker.Dockerfile",
+                     "toolchain/lps-core.paths", ".github/workflows/index.yml",
+                     "tools/oft/templates/Statements.v.tmpl", "tools/oft/templates/Images.v.tmpl",
+                     "tools/oft/templates/New.v.tmpl", "tools/oft/templates/images-dune.tmpl",
+                     "tools/oft/templates/proof-dune.tmpl", "tools/oft/templates/harness-dune.tmpl",
+                     "tools/oft/claims.py", "tools/oft/shapes.py", "tools/oft/render.py"):
+            with self.subTest(path=path):
+                self.assertEqual(owners_of(read(CODEOWNERS), path), [TEAM])
+        # the folder's other files are no statement template, and a .v.tmpl one folder down or in a folder whose name
+        # only begins as the templates' does is none either: on no line
+        for path in ("tools/oft/templates/README.md.tmpl", "tools/oft/templates/harness-README.md.tmpl",
+                     "tools/oft/templates/dune-project.tmpl", "tools/oft/templates/project.opam.tmpl",
+                     "tools/oft/templates/sub/x.v.tmpl", "tools/oft/templatesX/a.v.tmpl"):
+            with self.subTest(path=path):
+                self.assertIsNone(owners_of(read(CODEOWNERS), path))
+        # a fuzz target's files request no one's review: its harness.yaml, Distribution.v and source copy are listed
+        # with the facts, with no owner, and its other statement files and its proofs are on no line
+        for path in ("projects/zlib/fz/harness.yaml", "projects/zlib/fz/Distribution.v",
+                     "projects/zlib/fz/source/fz.c"):
+            with self.subTest(path=path):
+                self.assertEqual(owners_of(read(CODEOWNERS), path), [])
+        for path in ("projects/zlib/fz/Statements.v", "projects/zlib/fz/Images.v", "projects/zlib/fz/images/dune",
+                     "projects/zlib/fz/proofs/p/Proof.v"):
+            with self.subTest(path=path):
+                self.assertIsNone(owners_of(read(CODEOWNERS), path))
+
+    def test_dropping_an_agent_file_line_fails_the_check(self):
+        """The control of the check above: the file as it is passes it, and a copy with any one agent-file line taken
+        out fails it, so a change that drops one turns this class red."""
+        text = read(CODEOWNERS)
+        self.owned_lines(text)
+        lines = text.splitlines(keepends=True)
+        for pattern in AGENT_FILES:
+            with self.subTest(dropped=pattern):
+                kept = [line for line in lines if line.split("#", 1)[0].split()[:1] != [pattern]]
+                self.assertEqual(len(kept), len(lines) - 1, pattern)
+                with self.assertRaises(AssertionError) as raised:
+                    self.owned_lines("".join(kept))
+                self.assertIn(pattern, str(raised.exception))
 
     def test_the_review_criteria_are_listed_with_the_facts(self):
         """The docs review.md reads as main's are its criteria, so CODEOWNERS lists them as files that need
-        judgement, with the same owners as the facts (none), as it lists the skill. GitHub takes the
-        last line whose pattern matches a path, so that line is checked."""
-        skill = read(REVIEW_MD)
-        start = skill.index("**The docs are main's**")
-        docs = re.findall(r"`(docs/[^`]+)`", skill[start:skill.index(")", skill.index("running.md", start))])
-        self.assertEqual(docs, ["docs/facts.md", "docs/statements.md", "docs/building.md", "docs/running.md"])
-        review = [".github/workflows/facts-review.yml", "tools/oft/requirements.txt",
-                  ".claude/skills/review-facts/SKILL.md", f"projects/zlib/fz/source/{INSTRUCTIONS}"]
+        judgement, with the same owners as the facts (none). GitHub takes the last line whose pattern matches a path,
+        so that line is checked. The review's skill and an instruction file in a fuzz target's source copy are agent
+        files, so the agent files' lines give them the team engineering (INFRA-4439, INFRA-4447)."""
+        docs = ["docs/facts.md", "docs/statements.md", "docs/building.md", "docs/running.md"]
+        review = [".github/workflows/facts-review.yml", "tools/oft/requirements.txt"]
         review += [f"tools/oft/ci/facts-review-{n}" for n in ("gather", "run", "comment", "gate")]
         codeowners = read(CODEOWNERS)
         facts_owners = owners_of(codeowners, "projects/zlib/project.yaml")
@@ -892,6 +981,9 @@ class CodeOwnersTest(unittest.TestCase):
         for path in docs + review:
             with self.subTest(path=path):
                 self.assertEqual(owners_of(codeowners, path), facts_owners)
+        for path in (".claude/skills/review-facts/SKILL.md", f"projects/zlib/fz/source/{INSTRUCTIONS}"):
+            with self.subTest(path=path):
+                self.assertEqual(owners_of(codeowners, path), [TEAM])
 
     def test_lint_exceptions_are_listed_with_the_tools(self):
         """Each entry of tools/oft/lint-exceptions.yaml is a reviewed decision, so CODEOWNERS lists the file, with the
@@ -914,16 +1006,20 @@ class CodeOwnersTest(unittest.TestCase):
 
 def owners_of(text, path):
     """The owners CODEOWNERS `text` gives `path`: those of the last line whose pattern matches it (GitHub's rule), or
-    None. Patterns: a leading / anchors at the root, a trailing / takes everything below, * stays inside one name."""
+    None. Patterns: a leading / anchors at the root, a leading **/ matches in every folder, a trailing / takes
+    everything below, * stays inside one name."""
     owners = None
     for line in text.splitlines():
         line = line.split("#", 1)[0].strip()
         if not line:
             continue
         pattern, *names = line.split()
-        regex = re.escape(pattern.strip("/")).replace(r"\*", "[^/]*")
-        regex = ("^" if pattern.startswith("/") or "/" in pattern.strip("/") else "(^|.*/)") + regex
-        regex += "(/.*)?$" if pattern.endswith("/") or "*" not in pattern else "$"
+        body = pattern.strip("/")
+        anywhere = body.startswith("**/")
+        body = body[3:] if anywhere else body
+        regex = re.escape(body).replace(r"\*", "[^/]*")
+        regex = ("^" if not anywhere and (pattern.startswith("/") or "/" in body) else "(^|.*/)") + regex
+        regex += "(/.*)?$" if pattern.endswith("/") or "*" not in body else "$"
         if re.match(regex, path):
             owners = names
     return owners

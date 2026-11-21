@@ -36,13 +36,37 @@ defs:
       licence: {type: spdx}
       checks: {type: list, items: {type: ref, name: check}}
       # where the fuzz target turns an input away by returning a value other than 0 or -1
-      # (the driver's status 78); its halts statements then allow 78
+      # (the driver's status 78); a halts statement with a finite exit set includes 78
+      # exactly when this list is present (`exits: any` allows every status)
       rejects: {type: list, items: {type: ref, name: reject}, min: 1, optional: true}
       # whether code linked into the binary can end a failed check with another status (docs/facts.md,
       # "Failure handlers"): none, present or unknown.  Absent is unknown.  Only none lets a statement prove a check.
       failure_handlers: {type: enum, values: [none, present, unknown], optional: true}
       distribution: {type: ref, name: distribution, optional: true}
+      # the classifier programs of a pair, keyed by the sanitizer build of the pair they are about (docs/facts.md,
+      # "Classifiers"); absent: the harness publishes none
+      classifiers:
+        type: map
+        keys: build-name
+        values: {type: ref, name: classifier_pair}
+        optional: true
+      # the originals: each built by the same recipe as its build, with the same driver and modifications, but with
+      # none of the project's library patches (project.yaml patches, library.patch_count) and from the upstream harness
+      # source where source.modified is true; keyed by build; absent: the harness publishes none
+      originals:
+        type: map
+        keys: build-name
+        values: {type: ref, name: original}
+        optional: true
       model_gap: {type: list, items: {type: feature}, optional: true}
+      # what the builds are, where they can differ from OSS-Fuzz's (docs/facts.md); the rules hold sanitizer's keys to
+      # builds' and library_commit to library.commit
+      deviation: {type: ref, name: deviation, optional: true}
+      # scenarios of the upstream fuzz target that these binaries do not run
+      excluded_scenarios: {type: list, items: {type: ref, name: excluded_scenario}, min: 1, optional: true}
+      # functions the harness calls that only the debug configuration exports; only with deviation.enable_debug or
+      # deviation.unittests true
+      debug_additions: {type: list, items: {type: ref, name: debug_addition}, min: 1, optional: true}
       statements:
         type: map
         keys: statement-name
@@ -65,6 +89,33 @@ defs:
       version: {type: str, max: 40, optional: true}
       licence: {type: spdx}
 
+  deviation:
+    type: object
+    fields:
+      library_commit: {type: commit}
+      tls_backend: {type: enum, values: [none, openssl, gnutls, mbedtls, wolfssl]}
+      enable_debug: {type: bool}                                # the library's ENABLE_DEBUG
+      unittests: {type: bool}                                   # the library's UNITTESTS
+      sanitizer:
+        type: map
+        keys: build-name
+        values: {type: enum, values: [none, address, undefined, address+undefined]}
+      harness_origin: {type: enum, values: [upstream, patched, vendored, extended]}
+      architecture: {type: enum, values: [riscv64]}
+
+  excluded_scenario:
+    type: object
+    fields:
+      name: {type: str, pattern: '^[a-z0-9][a-z0-9_-]*$', max: 80}
+      reason: {type: str, max: 200}                             # one line (spec R3): str, not text
+
+  debug_addition:
+    type: object
+    fields:
+      function: {type: str, pattern: '^[A-Za-z_][A-Za-z0-9_]*$'}
+      # a file of the library's tree at library.commit, from its top: no '.' or '..' segment, no leading '/'
+      source: {type: str, pattern: '^[A-Za-z0-9_+-][A-Za-z0-9._+-]*(/[A-Za-z0-9_+-][A-Za-z0-9._+-]*)*$'}
+
   # static riscv64 (RV64G) Linux ELF, musl (a Go fuzz target: no C library); run as <file> <input-file>.
   # A published build has bytes, sha256 and segments; a withheld one has none of them.
   build:
@@ -81,16 +132,46 @@ defs:
       withheld: {type: enum, values: [source-bundle, not-yet-published], optional: true}
       # the code linked into this build that no sanitizer instruments, as its link
       # recorded it: the toolchain's runtimes, library archives from the build image,
-      # and listed assembly or Fortran members of the library.  Absent: not recorded
+      # listed assembly or Fortran members of the library, and in a Rust ASan build
+      # rustc's allocator shim.  Absent: not recorded
       # in this release (the toolchain's runtimes are uninstrumented in every build)
       uninstrumented: {type: list, items: {type: ref, name: uninstrumented}, min: 1, optional: true}
+
+  # A classifier: a static riscv64 (RV64G) Linux ELF that reads the same input file as the builds and exits 0 for
+  # yes, 1 for no and 2 for maybe.  a is about where the pair's two originals agree; b about where each of the pair's
+  # builds agrees with its original (theories/ClassifierShapes.v).  Published like a build: bytes, sha256 and
+  # segments, or withheld with none of them.
+  classifier_pair:
+    type: object
+    fields:
+      a: {type: ref, name: classifier, optional: true}
+      b: {type: ref, name: classifier, optional: true}
+
+  classifier:
+    type: object
+    fields:
+      file: {type: str, pattern: '^[A-Za-z0-9._+-]+\.classifier-[ab]-(ubsan|asan|asan-ubsan)$'}
+      bytes: {type: int, min: 1, optional: true}
+      sha256: {type: sha256, optional: true}
+      segments: {type: list, items: {type: int, min: 1, max: 4096}, min: 1, optional: true}
+      withheld: {type: enum, values: [source-bundle, not-yet-published], optional: true}
+
+  # An original: a build without the patches (harness `originals` above says which).  Published like a build.
+  original:
+    type: object
+    fields:
+      file: {type: str, pattern: '^[A-Za-z0-9._+-]+\.original-(plain|ubsan|asan|asan-ubsan)$'}
+      bytes: {type: int, min: 1, optional: true}
+      sha256: {type: sha256, optional: true}
+      segments: {type: list, items: {type: int, min: 1, max: 4096}, min: 1, optional: true}
+      withheld: {type: enum, values: [source-bundle, not-yet-published], optional: true}
 
   uninstrumented:
     type: object
     fields:
       name: {type: str, pattern: '^[A-Za-z0-9._+-]+$', max: 120}       # the archive, object or member, by file name
       kind: {type: enum, values: [libc, compiler-rt, sanitizer-runtime, cxx-runtime, fortran-runtime,
-                                  image-library, assembly, fortran, driver]}
+                                  image-library, assembly, fortran, driver, rust-allocator-shim]}
       sha256: {type: sha256, optional: true}                           # an archive or object the link took
       source: {type: str, pattern: '^[A-Za-z0-9._+/-]+$', max: 200, optional: true}   # a member's source file in the library tree
 
@@ -145,12 +226,12 @@ defs:
       components:
         type: object
         fields:
-          payload: {type: fraction}
-          wrong_argc: {type: fraction}
-          missing_file: {type: fraction}
-          envp: {type: fraction, optional: true}
-          full_support: {type: fraction}
-      mass: {type: fraction}
+          payload: {type: positive-fraction}
+          wrong_argc: {type: positive-fraction}
+          missing_file: {type: positive-fraction}
+          envp: {type: positive-fraction, optional: true}
+          full_support: {type: positive-fraction}
+      mass: {type: positive-fraction}
 
   # One statement.  Its Rocq text is fixed by these fields and project.yaml's
   # `budgets` (tools/oft/shapes.py);
@@ -159,19 +240,33 @@ defs:
   statement:
     type: object
     fields:
-      kind: {type: enum, values: [halts, agreement, bound, decidability]}
+      kind: {type: enum, values: [halts, agreement, bound, decidability, classifier-total, classifier-sound,
+                                  classifier-maybe, classifier-bound]}
+      # classifier statements only: which classifier of the pair (classifiers.<build>) the statement names
+      classifier: {type: enum, values: [a, b], optional: true}
+      # classifier-sound only, required there: which images stand for the originals, the builds without the patches
+      # (unpatched, harness.yaml originals) or the published builds (published), which the rules allow only where
+      # project.yaml gives library.patch_count 0 and lists no patches and source.modified is false
+      originals: {type: enum, values: [published, unpatched], optional: true}
       shape: {type: str, pattern: '^[a-z][a-z0-9_]*$', optional: true}   # redundant; if given, must be the one the fields give
       env: {type: enum, values: [may_fail, alloc_forced_only, forced_only], optional: true}   # redundant, likewise
       builds: {type: list, items: {type: build-name}, min: 1}
       # what the environment may refuse: budget (halts: only what the memory
       # budget forces), may-fail (any call, at any time), alloc-forced-only
       # (any call, but memory only when the budget is spent or no address range
-      # is free)
-      reading: {type: enum, values: [budget, may-fail, alloc-forced-only]}
+      # is free).  Every kind has one but classifier-total, classifier-maybe and classifier-bound, whose terms name
+      # no build, which refuse it (shapes.py)
+      reading: {type: enum, values: [budget, may-fail, alloc-forced-only], optional: true}
       exits: {type: union, of: [{type: const, value: any}, {type: list, items: {type: int, min: 0, max: 255}, min: 1}], optional: true}
       budgets: {type: enum, values: [standard, asan], optional: true}   # agreement only; absent when project.yaml budgets.agrees sets a pair for its sanitizer
       abort: {type: enum, values: [error, signal], optional: true}      # agreement only; default error
       machine: {type: enum, values: [rv64g, rv64gc], optional: true}    # pair statements; default rv64g
+      # a second statement beside its first (the statement the same kind,
+      # builds and reading name without a twin), and how it differs from it:
+      # any-exit (halts: exits any, beside a finite set) or alloc-forced-only
+      # (agreement: read alloc-forced-only, beside may-fail); its name is its
+      # first's name + _any_exit or _alloc_forced_only (tools/oft/names.py)
+      twin: {type: enum, values: [any-exit, alloc-forced-only], optional: true}
       # halts only: whether a check of the harness that ends the process on
       # failure is excluded by this statement; recomputed and compared
       binds_checks: {type: bool, optional: true}
@@ -182,6 +277,8 @@ defs:
       gap: {type: list, items: {type: feature}, min: 1, optional: true} # model-gap, when the harness has no model_gap
       withheld: {type: enum, values: [source-bundle, not-yet-published], optional: true}   # withheld only
       revision: {type: int, min: 1, optional: true}                     # default 1
+      # one input on which every premise of the statement holds: a file under proofs/provenance/evidence/instances/
+      instance: {type: ref, name: instance, optional: true}
 
   # A run of a published build, in an environment the statement allows, that
   # the statement forbids.  Typed, so the sentence a page shows is fixed by it.
@@ -196,9 +293,23 @@ defs:
         optional: true
         fields:
           call: {type: enum, values: [mmap, brk, mremap]}
-          position: {type: int, min: 1}               # the k-th memory request of the run
+          # the k-th memory request of the run that backs an allocation, counted in order as docs/facts.md says: each
+          # brk that asks for new pages, each anonymous mmap without MAP_FIXED (MAP_FIXED_NOREPLACE counts), and each
+          # mremap; not brk(NULL), a brk that asks for no new page, a file mmap or a MAP_FIXED mmap.  So k is not the
+          # run's k-th system call
+          position: {type: int, min: 1}
           bytes: {type: int, min: 1}
       outcome: {type: enum, values: [abort, segfault, trap, exit]}     # SIGABRT, SIGSEGV, SIGILL, or an exit
       exit: {type: int, min: 1, max: 255, optional: true}             # outcome exit only: the status it exits with
       after: {type: enum, values: [failed-assertion, uncaught-bad-alloc, out-of-memory-message], optional: true}
       runner: {type: str, max: 80}                    # what ran it, e.g. "qemu-riscv64 10.0.11"
+
+  # path: refused-by-driver (argv has no input file name, so the driver exits 2) or reaches-harness (the driver calls
+  # the harness on the file)
+  instance:
+    type: object
+    fields:
+      file: {type: str, pattern: '^[A-Za-z0-9._-]+$'}
+      sha256: {type: sha256}
+      bytes: {type: int, min: 0, max: 67108863}
+      path: {type: enum, values: [refused-by-driver, reaches-harness]}

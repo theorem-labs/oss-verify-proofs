@@ -8,7 +8,7 @@ import sys
 import unittest
 
 from oft import prove, symbols
-from oft.tests.helpers import REPO, tree
+from oft.tests.helpers import HAVE_THEOREM, NO_THEOREM, THEOREM, tree
 from oft.tests.test_contracts import CONTRACT_LIB, CRC, ENTRY, FACT, LIB, STATE, TABLE, contract_repo, put_row
 from oft.tests.test_keys import TOOLS, UNIT, commit
 
@@ -350,13 +350,14 @@ class Prove(unittest.TestCase):
                            "head": {"address": "0x11270", "size": 108}}, got["functions"])
             self.assertEqual(len(got["functions"]), len(r.rows))
 
+    @unittest.skipUnless(HAVE_THEOREM, NO_THEOREM)
     def test_theorem_passes_its_arguments_to_oft(self):
         with tree() as t:
             base = contract_repo(t)
             put_row(t, "LLVMFuzzerTestOneInput", exact="1e" * 32, masked="2d" * 32, lines="fuzz/checksum.c:3-9")
             head = commit(t)
-            done = subprocess.run([os.path.join(REPO, "theorem"), "--root", t.root, "prove", UNIT, "--base", base,
-                                   "--head", head], capture_output=True, text=True)
+            done = subprocess.run([THEOREM, "--root", t.root, "prove", UNIT, "--base", base, "--head", head],
+                                  capture_output=True, text=True)
             self.assertEqual((done.returncode, done.stderr), (0, ""))
             self.assertEqual(done.stdout, prove.markdown(self.report(t, base, head)))
 

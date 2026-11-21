@@ -1,4 +1,4 @@
-"""oft change-ledger: what one change cost, summed from the records that hold it.
+"""oft change-ledger: what one change, or one fuzz target, cost, summed from the records that hold it.
 
 A change is one named piece of work, with its folder changes/<change>/ (only this repository has it: `oft
 release-tree` removes changes/).  What it holds as input:
@@ -26,8 +26,15 @@ release-tree` removes changes/).  What it holds as input:
     session-totals.tsv  one row per tag of a session, with the model it asked for and the models that answered
     contracts.tsv       with prove.json: each contract's predicted state, its state at HEAD and whether its file was
                         edited (the work key's precision, measured)
-    gaps.tsv            each figure that could not be read in full, and why
+    gaps.tsv            each figure that could not be read in full, and why; and each session file that ran inside the
+                        change's window, in a folder of one of its transcripts or below it, that no tag of the change
+                        claims (column `sessions`), with the change that does tag it, if any
     inputs.tsv          what the sum read: the unit, the base and head commits, the VM sample files, and when
+    check-results.tsv   each recorded check (checks.tsv), its seconds and what it found, read from its own output:
+                        `passed`, `failed` or `not read`, with the statements it proved (and refuted, when any), its
+                        steps passed and failed, and its exit status.  A check passed only when it exited 0, no step
+                        failed and it proved or refuted a statement; an exit status alone is not a verdict.  With no
+                        check recorded, there is none
     journal.md          from templates/journal.md.tmpl when it is missing; people and agents write it
 
 Each figure comes from a record that was read, never from a typed number:
@@ -92,6 +99,27 @@ base, and a tag that breaks tag's rules (the sum checks them again: a transcript
 session tagged in two steps or changes with no windows or with windows that overlap, a step that needed no work and
 has a session or a check log) are errors: the sum stops and writes nothing.
 
+A fuzz target (<project>/<harness>) is the other thing a ledger is kept for: `oft change-ledger tag --target
+PROJECT/HARNESS` and `sum --target PROJECT/HARNESS` write the same files, with the same columns, under
+changes/targets/<project>/<harness>/, so that what a target cost (and from it, new linked kB per agent-hour) is
+read from the record of the sessions that settled it rather than inferred from commit trailers.  The target must be
+one this repository has (projects/<project>/<harness>/harness.yaml): an unknown one is refused and nothing is
+written.  `targets` is therefore no change's name.
+
+The two are separate axes over the same sessions: the one-tag rule (a session counts in one step of one change)
+holds inside each axis, so the session that proved a target as part of a change is tagged once in that change and
+once in that target, and neither sum counts it twice.  A target's tag is idempotent, keyed on the session: a tag
+of a session this target already counts, in a window that shares a moment with it, writes nothing and is no
+error, so a settle step may run again, from another machine (another host, another VM list, the transcript at
+another path) or after the session grew.  `check` and `no-work` take a CHANGE, so a target's ledger holds its
+sessions alone and its check_seconds is `not measured`, with that reason in gaps.tsv.  A target sum with no
+tagged session is refused rather than written, because an empty target ledger read as 0 hours would make a
+settled target look free.  `tag` writes one local file and reads no repository, so it runs with no credential,
+but it is not a pure writer: it opens and parses the transcript it is given, holds the file's own session entry
+to --session, and refuses a window that holds no entry of it.  The transcript must therefore be on the disk of
+the machine that runs the command, and a path string alone is not enough.  `sum --base` reads this checkout's
+git history for the unit's figures.
+
 This module is not the checker (keys.NOT_THE_CHECKER): no check reads a ledger."""
 import collections
 import csv
@@ -110,6 +138,7 @@ COLUMNS = ("step", "sessions", "wall_start", "wall_end", "agent_hours", "waiting
            "edits_content")
 SESSION_COLUMNS = ("step", "session", "host", "vms", "transcript", "from", "until")
 CHECK_COLUMNS = ("step", "log")
+CHECK_RESULT_COLUMNS = ("step", "log", "seconds", "result")
 NO_WORK_COLUMNS = ("step", "why")
 TOTALS_COLUMNS = ("step", "session", "host", "vms", "transcript", "from", "until", "requested", "served",
                   "wall_start", "wall_end", "agent_hours", "waiting_hours", "tool_hours", "input_tokens",
@@ -124,6 +153,20 @@ JOURNAL_SECTIONS = ("What we did", "Where verification helped", "Where it strugg
 NOT_MEASURED = "not measured"
 NOT_APPLICABLE = "-"
 TOTAL = "total"
+# the folder under changes/ that holds the fuzz targets' ledgers, changes/targets/<project>/<harness>/, so that a
+# target's ledger is internal and removed by `oft release-tree` for the same reason a change's is (paths.py).  No
+# change is named this.
+TARGETS = "targets"
+# what a ledger counts a session in, by its kind: the word goes into what a refused tag says
+KIND_WORD = {"change": "change", "target": "fuzz target"}
+# what `tag` answers, which its caller prints and turns into an exit status: a row written, or a session this
+# target already counts (a target's tag is idempotent, so a settle step may run again)
+TAGGED_NOW = "tagged now"
+ALREADY_TAGGED = "already tagged"
+# the exit status of `already tagged`.  3, not 2: argparse exits 2 on a usage error (a misspelt option, a missing
+# value) and prints nothing on stdout, so a caller that branches on the status alone would read a command it got
+# wrong as a target it had already recorded
+ALREADY_TAGGED_STATUS = 3
 # an assistant turn longer than this counts as waiting_hours, not agent_hours: the agent was waiting, not working
 TURN_GAP = 600
 # two samples of a machine further apart than this mean it was stopped between them (bin/ossv-stream-numbers)
@@ -144,6 +187,17 @@ GIT = ("proof_lines_added", "proof_lines_removed", "identical", "moved", "change
 CHANGE = re.compile(r"[a-z0-9][a-z0-9._-]*\Z")
 WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 ELAPSED = re.compile(r"Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): ([0-9]+(?::[0-9]+){0,2}(?:\.[0-9]+)?)")
+# GNU time -v's exit line, oft check's own summary line and its own line for each statement that passed, as
+# check.proof_claim reads it: the proof's folder in either layout (projects/<p>/<h>/proofs/<s>, proofs/<p>/<h>/<s>),
+# `proves` or `refutes` (captured apart: a refutation shows its statement false), the statement's id, the bound of a
+# bounded proof if any, and its allowed assumptions; a line it quotes from a process it ran starts `  | `, so the
+# anchors at the start of a line leave those out
+EXIT_STATUS = re.compile(r"^\s*Exit status: (\d+)\s*$", re.MULTILINE)
+SUMMARY = re.compile(r"^oft check: (\d+) step\(s\) passed, (\d+) failed", re.MULTILINE)
+PROVES = re.compile(r"^(?:projects|proofs)/\S+: (proves|refutes) (\S+?)(?: \([^)]*\))?; "
+                    r"assumptions: \d+ axioms, all allowed$", re.MULTILINE)
+# what `ossv-job fetch` writes for a farm run: its record (exit_code, duration_s) and its log
+FARM_RECORD, FARM_LOG = "result.json", "job.log"
 HEX = re.compile(r"0x[0-9a-fA-F]+")
 DEC = re.compile(r"\b\d+\b")
 
@@ -161,6 +215,9 @@ Transcript = collections.namedtuple("Transcript", "path session entries cut")
 def _folder(root, change):
     if not CHANGE.match(change or ""):
         raise LedgerError("a change is named with lower-case letters, digits, '.', '_' and '-', not %r" % change)
+    if change == TARGETS:
+        raise LedgerError("changes/%s/ holds the fuzz targets' ledgers (--target PROJECT/HARNESS), so %r is no "
+                          "change's name" % (TARGETS, TARGETS))
     return os.path.join(root, "changes", change)
 
 
@@ -168,6 +225,45 @@ def _word(what, value):
     if not WORD.match(value or "") or value == TOTAL:
         raise LedgerError("a %s is named with letters, digits, '.', '_' and '-' (and is not %r), not %r"
                           % (what, TOTAL, value))
+
+
+# One ledger: a change's (changes/<change>/) or a fuzz target's (changes/targets/<project>/<harness>/).  kind is
+# `change` or `target`; name is the change or <project>/<harness>; rel is its folder from the root of the checkout,
+# and folder the folder itself.
+Ledger = collections.namedtuple("Ledger", "kind name rel folder")
+
+
+def _rel(kind, name):
+    """The folder of the ledger of kind and name, from the root of the checkout."""
+    return "changes/%s" % name if kind == "change" else "changes/%s/%s" % (TARGETS, name)
+
+
+def _target(root, target):
+    """(project, harness) of the fuzz target named <project>/<harness>, which this repository must have: an unknown
+    one is refused here, so that no command writes a ledger for a target that does not exist."""
+    try:
+        project, harness = layout.split_unit(target or "")
+    except ValueError as e:
+        raise LedgerError("%s (--target)" % e) from None
+    for what, part in (("project", project), ("harness", harness)):
+        if not WORD.match(part):
+            raise LedgerError("a %s is named with letters, digits, '.', '_' and '-', not %r" % (what, part))
+    facts = "%s/harness.yaml" % layout.statement_dir(project, harness)
+    if not os.path.isfile(os.path.join(root, facts)):
+        raise LedgerError("%s is no fuzz target of this repository: it has no %s" % (target, facts))
+    return project, harness
+
+
+def ledger_of(root, change=None, target=None):
+    """The Ledger one command names: a change (CHANGE) or a fuzz target (--target PROJECT/HARNESS), exactly one of
+    the two."""
+    if (change is None) == (target is None):
+        raise LedgerError("name one ledger: a change (CHANGE) or a fuzz target (--target PROJECT/HARNESS)")
+    if target is None:
+        return Ledger("change", change, _rel("change", change), _folder(root, change))
+    name = "%s/%s" % _target(root, target)
+    rel = _rel("target", name)
+    return Ledger("target", name, rel, os.path.join(root, *rel.split("/")))
 
 
 def _stored(path):
@@ -262,12 +358,25 @@ def read_transcript(path):
     return Transcript(path, session, entries, cut)
 
 
-def _tagged(root):
-    """(change, row) of every row of every changes/*/sessions.tsv under root."""
+def _tagged(root, kind):
+    """(name, row) of every row of every sessions.tsv of the ledgers of kind under root: of the changes
+    (changes/<change>/) or of the fuzz targets (changes/targets/<project>/<harness>/).  The two are separate axes
+    over the same sessions, each with its own one-tag rule, so a session that worked on a change and on a fuzz
+    target is tagged in both and neither sum counts it twice."""
     top = os.path.join(root, "changes")
-    for change in sorted(os.listdir(top)) if os.path.isdir(top) else ():
-        for row in _read_tsv(os.path.join(top, change, "sessions.tsv"), SESSION_COLUMNS):
-            yield change, row
+    if kind == "change":
+        for change in sorted(os.listdir(top)) if os.path.isdir(top) else ():
+            if change == TARGETS:
+                continue
+            for row in _read_tsv(os.path.join(top, change, "sessions.tsv"), SESSION_COLUMNS):
+                yield change, row
+        return
+    targets = os.path.join(top, TARGETS)
+    for project in sorted(os.listdir(targets)) if os.path.isdir(targets) else ():
+        folder = os.path.join(targets, project)
+        for harness in sorted(os.listdir(folder)) if os.path.isdir(folder) else ():
+            for row in _read_tsv(os.path.join(folder, harness, "sessions.tsv"), SESSION_COLUMNS):
+                yield "%s/%s" % (project, harness), row
 
 
 def _logical(transcript):
@@ -293,34 +402,131 @@ def _apart(a, b):
     return any(end is not None and start is not None and end <= start for end, start in ((a1, b0), (b1, a0)))
 
 
-def _where(change, row):
+# the transcript entries omp writes with no timestamp by design; any other line with none is an entry the ledger
+# cannot date (in 300 session files of one sessions folder on 2026-11-11, `title` was the only such kind)
+UNTIMED_TYPES = ("title",)
+
+
+def _entry_time(raw, path):
+    """The timestamp of the transcript line raw; None for a blank line or an entry of UNTIMED_TYPES, which carry no
+    time by design; False for a line that is no JSON entry or carries no readable timestamp."""
+    if not raw.strip():
+        return None
+    try:
+        entry = json.loads(raw)
+    except (ValueError, UnicodeDecodeError):
+        return False
+    if not isinstance(entry, dict):
+        return False
+    if "timestamp" not in entry and entry.get("type") in UNTIMED_TYPES:
+        return None
+    try:
+        return _time(entry["timestamp"], path)
+    except (TypeError, KeyError, LedgerError):
+        return False
+
+
+def _span(path):
+    """(earliest, latest) timestamp of the transcript at path, or the reason they cannot be read or are uncertain.
+    Every line is read, whole however long it is, because entries are not in time order: a background call's result
+    can be written after a later entry, so the first and the last line do not bound the session.  A line that cannot
+    be read or dated may hold any time, so a file with one has no certain span either."""
+    try:
+        with open(path, "rb") as f:
+            if os.fstat(f.fileno()).st_size == 0:
+                return "it is empty"
+            times = [_entry_time(raw, path) for raw in f]
+    except OSError as e:
+        return f"it cannot be read: {e.strerror or e}"
+    stamps = [t for t in times if t]
+    bad = sum(t is False for t in times)
+    if not stamps:
+        return "it holds no entry with a readable timestamp"
+    if bad:
+        return (f"{bad} line(s) of it cannot be read or carry no readable timestamp, so its span is uncertain (its "
+                f"dated entries run from {_stamp(min(stamps))} to {_stamp(max(stamps))})")
+    return min(stamps), max(stamps)
+
+
+def _unclaimed(sessions, everything, name, word="change"):
+    """A gaps.tsv row for each session file that ran inside the window of the ledger `name` (a change, or a fuzz
+    target when word says so), in a folder that holds one of its transcripts or below it, and that no tag of it
+    claims; it names the ledger and step of the same kind that tag it, if any.  A file there whose span cannot be
+    read (_span) may have run inside the window, so it gets a row with the reason instead.  A cost is complete only
+    when each session that worked in its window is counted or named, and a session nobody tagged is otherwise
+    invisible to the ledger."""
+    stamps = [t for s in sessions for t in (s.first, s.last) if t is not None]
+    if not stamps:
+        return []
+    lo, hi = min(stamps), max(stamps)
+    mine = {os.path.realpath(os.path.expanduser(s.row["transcript"])) for s in sessions}
+    claims = collections.defaultdict(list)
+    for c, row in everything:
+        if c != name:
+            claims[os.path.realpath(os.path.expanduser(row["transcript"]))].append(f"{c} (step {row['step']})")
+    looked, out, unlisted = set(), [], []
+    for folder in sorted({os.path.dirname(p) for p in mine}):
+        for top, dirs, files in os.walk(folder, onerror=unlisted.append):
+            dirs.sort()
+            for file in sorted(files):
+                path = os.path.realpath(os.path.join(top, file))
+                if not file.endswith(".jsonl") or path in mine or path in looked:
+                    continue
+                looked.add(path)
+                span = _span(path)
+                if not isinstance(span, str) and (span[1] < lo or span[0] > hi):
+                    continue
+                tagged = ("tagged to " + ", ".join(sorted(set(claims[path]))) if path in claims
+                          else f"tagged to no {word}")
+                if isinstance(span, str):
+                    # a file whose times cannot be read may have run inside the window: it is named, never dropped
+                    what = (f"{_stored(path)}: {span}, so whether it ran inside this {word}'s window is not known; "
+                            f"no tag of it is in this {word}: {tagged}")
+                else:
+                    what = (f"{_stored(path)} ran from {_stamp(span[0])} to {_stamp(span[1])}, inside this {word}'s "
+                            f"window, and no tag of it is in this {word}: {tagged}")
+                out.append({"step": NOT_APPLICABLE, "session": NOT_APPLICABLE, "column": "sessions", "what": what})
+    for e in unlisted:
+        # a folder that cannot be listed may hold a session that ran inside the window: it is named, never dropped
+        out.append({"step": NOT_APPLICABLE, "session": NOT_APPLICABLE, "column": "sessions",
+                    "what": f"{_stored(e.filename)}: the folder cannot be listed ({e.strerror or e}), so a session file "
+                            f"under it may have run inside this {word}'s window with no tag of it in this {word}"})
+    return out
+
+
+def _where(kind, name, row):
     window = "" if (row["from"], row["until"]) == (NOT_APPLICABLE,) * 2 else ", from %s until %s" % (row["from"],
-                                                                                                   row["until"])
-    return "changes/%s/sessions.tsv (step %s%s)" % (change, row["step"], window)
+                                                                                                    row["until"])
+    return "%s/sessions.tsv (step %s%s)" % (_rel(kind, name), row["step"], window)
 
 
-# what a refused tag says, when a session worked on several steps or changes
-SHARED = ("; to count one session in several steps or changes, give each tag its own window (--from, --until), no "
+# what a refused tag says, when a session worked on several steps or changes (or several fuzz targets): the kind's
+# word (KIND_WORD) goes in
+SHARED = ("; to count one session in several steps or %ss, give each tag its own window (--from, --until), no "
           "two of one session overlapping")
 
 
-def _tag_problem(others, change, row):
-    """Why row (of changes/<change>/sessions.tsv) may not stand beside others, [(change, row)] of every other tagged
-    row, or None: a session counts in one step of one change, its fragments (X.jsonl, X-2.jsonl) too, and a transcript
-    is tagged once, unless the two tags have windows that share no moment: each entry then counts in the one tag whose
-    window holds it, so no cost is summed twice.  Two fragments of one session may share its session id."""
-    for other_change, other in others:
+def _tag_problem(others, kind, name, row):
+    """Why row (of the sessions.tsv of the ledger of kind and name) may not stand beside others, [(name, row)] of
+    every other row tagged in a ledger of that kind, or None: a session counts in one step of one change (of one
+    fuzz target), its fragments (X.jsonl, X-2.jsonl) too, and a transcript is tagged once, unless the two tags have
+    windows that share no moment: each entry then counts in the one tag whose window holds it, so no cost is summed
+    twice.  Two fragments of one session may share its session id."""
+    word = KIND_WORD[kind]
+    shared = SHARED % word
+    for other_name, other in others:
         fragment = _logical(other["transcript"]) == _logical(row["transcript"])
         if (other["session"] != row["session"] and not fragment) or _apart(other, row):
             continue
         if other["session"] == row["session"] and not (fragment and other["transcript"] != row["transcript"]):
-            return ("session %s is already tagged in %s: a session counts in one step of one change%s"
-                    % (row["session"], _where(other_change, other), SHARED))
-        if fragment and (other_change, other["step"]) != (change, row["step"]):
+            return ("session %s is already tagged in %s: a session counts in one step of one %s%s"
+                    % (row["session"], _where(kind, other_name, other), word, shared))
+        if fragment and (other_name, other["step"]) != (name, row["step"]):
             return ("%s is a fragment of the session of %s, tagged in %s: a session's fragments count in one step of "
-                    "one change%s" % (row["transcript"], other["transcript"], _where(other_change, other), SHARED))
+                    "one %s%s" % (row["transcript"], other["transcript"], _where(kind, other_name, other), word,
+                                  shared))
         if other["transcript"] == row["transcript"]:
-            return "%s is already tagged in %s%s" % (row["transcript"], _where(other_change, other), SHARED)
+            return "%s is already tagged in %s%s" % (row["transcript"], _where(kind, other_name, other), shared)
     return None
 
 
@@ -335,24 +541,25 @@ def _idle(folder):
     return out
 
 
-def _idle_problem(change, idle, sessions, checks):
-    """Why the records of change may not stand together, or None: a step recorded as needing no work (idle, {step:
-    why}) has no tagged session (sessions, sessions.tsv rows) and no check log (checks, checks.tsv rows)."""
+def _idle_problem(name, idle, sessions, checks):
+    """Why the records of the ledger `name` (a change, or a fuzz target's <project>/<harness>) may not stand
+    together, or None: a step recorded as needing no work (idle, {step: why}) has no tagged session (sessions,
+    sessions.tsv rows) and no check log (checks, checks.tsv rows)."""
     worked = ([(r["step"], "session %s is tagged" % r["session"]) for r in sessions]
               + [(r["step"], "the check log %s is recorded" % r["log"]) for r in checks])
     for step, what in worked:
         if step in idle:
             return ("step %s of %s is recorded as needing no work (no-work.tsv: %s), and %s for it: a step that needed "
-                    "no work has no session and no check log" % (step, change, idle[step], what))
+                    "no work has no session and no check log" % (step, name, idle[step], what))
     return None
 
 
-def _own(path, session, change):
-    """The Transcript at path, whose own session id must be session, as changes/<change>/sessions.tsv tags it."""
+def _own(path, session, rel):
+    """The Transcript at path, whose own session id must be session, as the ledger at rel tags it."""
     t = read_transcript(path)
     if t.session != session:
-        raise LedgerError("%s is the transcript of session %s, not of %s as changes/%s/sessions.tsv tags it"
-                          % (path, t.session, session, change))
+        raise LedgerError("%s is the transcript of session %s, not of %s as %s/sessions.tsv tags it"
+                          % (path, t.session, session, rel))
     return t
 
 
@@ -362,21 +569,30 @@ def _moment(text, what):
     return t.strftime("%Y-%m-%dT%H:%M:%S" + (".%f" if t.microsecond else "") + "Z")
 
 
-def tag(root, change, step, session, host, transcript, vms=(), since=None, until=None):
+def tag(root, change, step, session, host, transcript, vms=(), since=None, until=None, target=None):
     """`oft change-ledger tag`: record that the agent session `session`, which ran on host and drove vms, worked on
-    step of change, with its transcript (whose own session id must be session).  A session counts in one step of one
-    change, so its cost is never summed twice: one already tagged anywhere is refused, unless both tags have a window
-    and the windows share no moment.  The window, since (from) and until, timestamps with a time zone, either of which
-    may be left out, holds the entries that count here.  A window that holds no entry of the transcript is refused,
-    and so is a step recorded as needing no work."""
-    folder = _folder(root, change)
+    step of change (or, with target instead, of the fuzz target <project>/<harness>), with its transcript (whose own
+    session id must be session).  A session counts in one step of one change, so its cost is never summed twice: one
+    already tagged anywhere is refused, unless both tags have a window and the windows share no moment.  The change
+    ledgers and the target ledgers are separate axes, each with that rule inside it.  The window, since (from) and
+    until, timestamps with a time zone, either of which may be left out, holds the entries that count here.  A
+    window that holds no entry of the transcript is refused, and so is a target this repository does not have, and
+    a step recorded as needing no work.
+
+    It answers (TAGGED_NOW, None), or (ALREADY_TAGGED, where) when this fuzz target already counts this session in
+    a window that shares a moment with this one: nothing is written then and it is no error, so a settle step may
+    run again, from another machine (another host, another VM list, the transcript at another path) or after the
+    session grew.  `where` names the row that already stands.  A window apart from every other tag of the session
+    is a second stretch of its work and is recorded.  It writes one local file and reads no repository, so it runs
+    with no credential."""
+    led = ledger_of(root, change=change, target=target)
     _word("step", step)
     for machine in (host,) + tuple(vms):
         _word("host or VM", machine)
     if not session or any(c in session for c in "\t\n"):
         raise LedgerError("%r is not a session id" % session)
     path = os.path.abspath(transcript)
-    t = _own(path, session, change)
+    t = _own(path, session, led.rel)
     row = {"step": step, "session": session, "host": host, "vms": ",".join(vms) or NOT_APPLICABLE,
            "transcript": _stored(path),
            "from": NOT_APPLICABLE if since is None else _moment(since, "--from"),
@@ -387,17 +603,27 @@ def tag(root, change, step, session, host, transcript, vms=(), since=None, until
     if window != (None, None) and not any(e.get("timestamp") is not None and _inside(window, _time(
             e["timestamp"], "%s, entry %d" % (path, no))) for no, e in enumerate(t.entries, 1)):
         raise LedgerError("the window from %s until %s holds no entry of %s" % (row["from"], row["until"], path))
-    problem = _idle_problem(change, _idle(folder), [row], []) or _tag_problem(_tagged(root), change, row)
+    others = list(_tagged(root, led.kind))
+    if led.kind == "target":
+        # the session, not the whole row, is the key: a settle step that runs again from another machine names the
+        # same session with another host, VM list or transcript path, and that adds no work to count
+        standing = [r for name, r in others
+                    if name == led.name and r["session"] == session and not _apart(r, row)]
+        if standing:
+            return ALREADY_TAGGED, _where(led.kind, led.name, standing[0])
+    problem = (_idle_problem(led.name, _idle(led.folder), [row], [])
+               or _tag_problem(others, led.kind, led.name, row))
     if problem:
         raise LedgerError(problem)
-    _append(os.path.join(folder, "sessions.tsv"), SESSION_COLUMNS, row)
+    _append(os.path.join(led.folder, "sessions.tsv"), SESSION_COLUMNS, row)
+    return TAGGED_NOW, None
 
 
 def no_work(root, change, step, why):
     """`oft change-ledger no-work`: record that step of change needed no work, and why (what shows it, such as oft
     prove's report that the upstream commits change no binary): its row then reads 0 where a step with no record
     reads `not measured`.  A step with a tagged session or a check log did work, and is refused; so is a step
-    recorded already."""
+    recorded already.  A change's alone: a fuzz target's ledger records only its sessions."""
     folder = _folder(root, change)
     _word("step", step)
     if not (why or "").strip() or any(c in why for c in "\t\n"):
@@ -406,15 +632,37 @@ def no_work(root, change, step, why):
     if step in idle:
         raise LedgerError("step %s of %s is already recorded as needing no work (no-work.tsv: %s)"
                           % (step, change, idle[step]))
-    problem = _idle_problem(change, {step: why}, [r for c, r in _tagged(root) if c == change],
+    problem = _idle_problem(change, {step: why}, [r for c, r in _tagged(root, "change") if c == change],
                             _read_tsv(os.path.join(folder, "checks.tsv"), CHECK_COLUMNS))
     if problem:
         raise LedgerError(problem)
     _append(os.path.join(folder, "no-work.tsv"), NO_WORK_COLUMNS, {"step": step, "why": why})
 
 
+def _farm(path):
+    """Whether path is a farm run's directory as `ossv-job fetch` writes it: its record and its log."""
+    return os.path.isdir(path) and os.path.isfile(os.path.join(path, FARM_RECORD))
+
+
+def _farm_record(path):
+    try:
+        with open(os.path.join(path, FARM_RECORD), encoding="utf-8") as f:
+            record = json.load(f)
+    except (OSError, ValueError) as e:
+        raise LedgerError(f"cannot read the farm run's record {os.path.join(path, FARM_RECORD)}: {e}") from None
+    if not isinstance(record, dict):
+        raise LedgerError(f"the farm run's record {os.path.join(path, FARM_RECORD)} is not a JSON object")
+    return record
+
+
 def elapsed(path):
-    """The seconds of every `Elapsed (wall clock) time` line of the GNU `time -v` log at path, summed."""
+    """The seconds of a check: for a farm run's directory, its record's `duration_s`; for a file, every
+    `Elapsed (wall clock) time` line of the GNU `time -v` log, summed."""
+    if _farm(path):
+        seconds = _farm_record(path).get("duration_s")
+        if not _number(seconds) or seconds < 0:
+            raise LedgerError(f"the farm run's record {os.path.join(path, FARM_RECORD)} holds no duration_s")
+        return float(seconds)
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             found = ELAPSED.findall(f.read())
@@ -429,11 +677,49 @@ def elapsed(path):
     return total
 
 
-def check(root, change, step, log):
-    """`oft change-ledger check`: record the GNU `time -v` log of a check run for step of change."""
+def verdict(path):
+    """What a check found, read from its own output: `passed`, `failed` or `not read`, then the statements it proved
+    (and, when any, those it refuted: a refutation shows its statement false, which is no proof of it), its steps
+    passed and failed, and its exit status.  A check passed only when it exited 0, its last `oft check:` line says no
+    step failed, and it proved or refuted at least one statement: an exit status alone is not a verdict.  Only the
+    check's own lines count, not those it quotes from the processes it ran (each `  | `)."""
+    try:
+        if _farm(path):
+            status = _farm_record(path).get("exit_code")
+            with open(os.path.join(path, FARM_LOG), encoding="utf-8", errors="replace") as f:
+                text = f.read()
+        else:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+            found = EXIT_STATUS.findall(text)
+            status = int(found[-1]) if found else None
+    except (OSError, LedgerError) as e:
+        return f"not read: {e}"
+    summary = SUMMARY.findall(text)
+    if not _number(status) or not summary:
+        return "not read: " + ("no exit status" if not _number(status) else "no `oft check:` summary line")
+    passed, failed = (int(n) for n in summary[-1])
+    settled = {verb: {s for v, s in PROVES.findall(text) if v == verb} for verb in ("proves", "refutes")}
+    proved, refuted = len(settled["proves"]), len(settled["refutes"])
+    ok = status == 0 and failed == 0 and proved + refuted > 0
+    return (f"{'passed' if ok else 'failed'}: {proved} statement(s) proved"
+            + (f", {refuted} refuted" if refuted else "")
+            + f", {passed} step(s) passed, {failed} failed, exit {int(status)}")
+
+
+def check(root, change, step, log, farm=False):
+    """`oft change-ledger check`: record a check run for step of change, by its GNU `time -v` log or, with farm, by
+    the directory `ossv-job fetch` wrote for its farm run; each is refused as the other, so the source the caller
+    named is the one read.  A change's alone: a fuzz target's ledger records only its sessions, and its check_seconds
+    is `not measured`."""
     folder = _folder(root, change)
     _word("step", step)
     path = os.path.abspath(log)
+    if farm and not _farm(path):
+        raise LedgerError(f"{path} is no farm run's directory: `ossv-job fetch farm/RUN DIR` writes {FARM_RECORD} "
+                          f"and {FARM_LOG} there")
+    if not farm and os.path.isdir(path):
+        raise LedgerError(f"{path} is a directory, not a GNU time -v log (a farm run's directory is --farm-run)")
     elapsed(path)
     stored = _stored(path)
     for row in _read_tsv(os.path.join(folder, "checks.tsv"), CHECK_COLUMNS):
@@ -932,34 +1218,50 @@ def _git_figures(root, folder, unit, base, head):
 # -------------------------------------------------------------------------------------------- the sum
 
 
-def summarize(root, change, unit=None, base=None, head="HEAD", samples=(), deletions=(), out=None):
-    """`oft change-ledger sum`: read change's records and write ledger.tsv, session-totals.tsv, gaps.tsv, inputs.tsv,
-    contracts.tsv (with a saved prediction) and, when it is missing, journal.md.  With unit, the git figures are
-    unit's between the commits base and head; samples are the VM sample files, and deletions the compute inventories
-    that record VM deletions (read_deletions).  Every record is read before the first file is written."""
-    folder = _folder(root, change)
+def summarize(root, change, unit=None, base=None, head="HEAD", samples=(), deletions=(), out=None, target=None):
+    """`oft change-ledger sum`: read the records of change (or, with target instead, of the fuzz target
+    <project>/<harness>) and write ledger.tsv, session-totals.tsv, gaps.tsv, inputs.tsv, contracts.tsv (with a saved
+    prediction) and, when it is missing, journal.md.  With unit, the git figures are unit's between the commits base
+    and head; a target's sum with base and no unit takes the target as the unit, since that is the one it is about.
+    samples are the VM sample files, and deletions the compute inventories that record VM deletions
+    (read_deletions).  Every record is read before the first file is written.
+
+    A target with no tagged session is refused and nothing is written: an empty target ledger read as 0 hours would
+    make a settled target look free.  A change with none is written as before, with `not measured` in every agent
+    column and `no session is tagged` in gaps.tsv."""
+    led = ledger_of(root, change=change, target=target)
+    folder = led.folder
+    if led.kind == "target" and unit is None and base is not None:
+        unit = led.name
     if (unit is None) != (base is None):
         raise LedgerError("--unit and --base go together: the git figures are a unit's between two commits")
     # the rules tag applies, again: a transcript may be replaced, or a sessions.tsv edited, after tag
-    everything = list(_tagged(root))
-    tagged = [row for c, row in everything if c == change]
+    everything = list(_tagged(root, led.kind))
+    tagged = [row for c, row in everything if c == led.name]
+    if led.kind == "target" and not tagged:
+        raise LedgerError("no session is tagged for target %s (oft change-ledger tag --target %s): nothing is "
+                          "written, because an empty ledger read as 0 hours would make a settled target look free"
+                          % (led.name, led.name))
     for i, (c, row) in enumerate(everything):
-        problem = c == change and _tag_problem([x for j, x in enumerate(everything) if j != i], change, row)
+        problem = c == led.name and _tag_problem([x for j, x in enumerate(everything) if j != i], led.kind,
+                                                 led.name, row)
         if problem:
             raise LedgerError(problem)
     logs = _read_tsv(os.path.join(folder, "checks.tsv"), CHECK_COLUMNS)
     idle = _idle(folder)
-    problem = _idle_problem(change, idle, tagged, logs)
+    problem = _idle_problem(led.name, idle, tagged, logs)
     if problem:
         raise LedgerError(problem)
     # the fragments of one session (and the tags of one transcript, each with its window), each read after those it
     # began before, share the ids of the entries counted; the sessions are then kept in the order they were tagged
-    read = [(n, r, _own(os.path.expanduser(r["transcript"]), r["session"], change)) for n, r in enumerate(tagged)]
+    read = [(n, r, _own(os.path.expanduser(r["transcript"]), r["session"], led.rel)) for n, r in enumerate(tagged)]
     seen, built = collections.defaultdict(set), {}
     for n, r, t in sorted(read, key=lambda nrt: (_logical(nrt[1]["transcript"]), _began(nrt[2]), nrt[0])):
         built[n] = Session(r, t, seen[_logical(r["transcript"])])
     sessions = [built[n] for n in sorted(built)]
     checks = [(r["step"], elapsed(os.path.expanduser(r["log"]))) for r in logs]
+    results = [{"step": r["step"], "log": r["log"], "seconds": f"{seconds:.2f}",
+                "result": verdict(os.path.expanduser(r["log"]))} for r, (_s, seconds) in zip(logs, checks)]
     vms = (read_samples(samples), read_deletions(deletions)) if samples else None
     git, contracts, foresight, commits = (_git_figures(root, folder, unit, base, head) if unit is not None
                                           else ({c: NOT_APPLICABLE for c in GIT}, None, None,
@@ -970,10 +1272,15 @@ def summarize(root, change, unit=None, base=None, head="HEAD", samples=(), delet
     steps = list(dict.fromkeys([r["step"] for r in tagged] + [step for step, _s in checks] + list(idle)))
     gaps = []
     logged = {step for step, _x in checks}
+    # what gaps.tsv says where a row has no check log: `oft change-ledger check` takes a CHANGE, so telling a fuzz
+    # target's reader to run it would send them to a command that refuses them
+    no_log = ("no check log is recorded (oft change-ledger check)" if led.kind == "change" else
+              "no check log is recorded (a fuzz target's ledger records only its sessions: oft change-ledger "
+              "check takes a CHANGE)")
     ledger = [_row(step, [s for s in sessions if s.step == step], [x for st, x in checks if st == step], False,
-                   step in idle, vms, gaps, {c: NOT_APPLICABLE for c in GIT}) for step in steps]
+                   step in idle, vms, gaps, {c: NOT_APPLICABLE for c in GIT}, no_log) for step in steps]
     ledger.append(_row(TOTAL, sessions, [x for _st, x in checks], bool(set(steps) - logged - set(idle)),
-                       bool(steps) and set(steps) <= set(idle), vms, gaps, git))
+                       bool(steps) and set(steps) <= set(idle), vms, gaps, git, no_log))
     totals = []
     for s in sessions:
         totals.append(dict(s.row, requested=s.requested or NOT_APPLICABLE,
@@ -983,23 +1290,30 @@ def summarize(root, change, unit=None, base=None, head="HEAD", samples=(), delet
                            **_agent_cells([s])))
         gaps += [{"step": s.step, "session": s.id, "column": column, "what": why}
                  for column in AGENT for why in s.partial.get(column, ())]
+    gaps += _unclaimed(sessions, everything, led.name, KIND_WORD[led.kind])
     os.makedirs(folder, exist_ok=True)
     _write_tsv(os.path.join(folder, "ledger.tsv"), COLUMNS, ledger)
     _write_tsv(os.path.join(folder, "session-totals.tsv"), TOTALS_COLUMNS, totals)
     _write_tsv(os.path.join(folder, "gaps.tsv"), GAP_COLUMNS, gaps)
     _write_tsv(os.path.join(folder, "inputs.tsv"), INPUT_COLUMNS, [dict(zip(INPUT_COLUMNS, i)) for i in inputs])
     written = ["ledger.tsv", "session-totals.tsv", "gaps.tsv", "inputs.tsv"]
+    if results:
+        _write_tsv(os.path.join(folder, "check-results.tsv"), CHECK_RESULT_COLUMNS, results)
+        written.append("check-results.tsv")
+    elif os.path.exists(os.path.join(folder, "check-results.tsv")):
+        # no check is recorded any more: an earlier sum's verdicts would read as this one's
+        os.remove(os.path.join(folder, "check-results.tsv"))
     if contracts is not None:
         _write_tsv(os.path.join(folder, "contracts.tsv"), CONTRACT_COLUMNS, contracts)
         written.append("contracts.tsv")
     journal = os.path.join(folder, "journal.md")
     if not os.path.exists(journal):
         with open(journal, "w", encoding="utf-8") as f:
-            f.write(render.fill("journal.md.tmpl", "file", change=change) + "\n")
+            f.write(render.fill("journal.md.tmpl", "file", name=led.name, what=KIND_WORD[led.kind]) + "\n")
         written.append("journal.md")
     if out is not None:
-        print("oft change-ledger: wrote %s in changes/%s/ (%d sessions, %d check logs, %d gaps)"
-              % (", ".join(written), change, len(sessions), len(checks), len(gaps)), file=out)
+        print("oft change-ledger: wrote %s in %s/ (%d sessions, %d check logs, %d gaps)"
+              % (", ".join(written), led.rel, len(sessions), len(checks), len(gaps)), file=out)
         if foresight:
             print("oft change-ledger: %s" % foresight, file=out)
     return ledger
@@ -1022,12 +1336,12 @@ def _agent_cells(sessions, idle=False):
     return out
 
 
-def _row(step, sessions, seconds, unlogged, idle, vms, gaps, git):
+def _row(step, sessions, seconds, unlogged, idle, vms, gaps, git, no_log):
     """One row of ledger.tsv; each figure not read in full adds its gap to gaps.  seconds are the elapsed times of the
     row's check logs; unlogged, whether a step in the row has none and needed work (the total row's steps); idle,
     whether each step of the row is recorded as needing no work (no-work.tsv), when the row has no session and no
     check log and its agent, VM and check figures are 0; vms, (samples, deletions) or None when no sample file was
-    given."""
+    given; no_log, what gaps.tsv says where the row has no check log, which differs by the ledger's kind."""
     row = dict(git, step=step, sessions=len({s.logical for s in sessions}))
     if idle:
         row.update(wall_start=NOT_APPLICABLE, wall_end=NOT_APPLICABLE, vcpu_hours="%.2f" % 0,
@@ -1058,8 +1372,7 @@ def _row(step, sessions, seconds, unlogged, idle, vms, gaps, git):
                  for name, lo, hi, why in missing]
     row["check_seconds"] = _cell(sum(seconds), "%.2f", unlogged, measured=bool(seconds))
     if not seconds:
-        gaps.append({"step": step, "session": NOT_APPLICABLE, "column": "check_seconds",
-                     "what": "no check log is recorded (oft change-ledger check)"})
+        gaps.append({"step": step, "session": NOT_APPLICABLE, "column": "check_seconds", "what": no_log})
     return row
 
 
@@ -1067,24 +1380,45 @@ def _row(step, sessions, seconds, unlogged, idle, vms, gaps, git):
 
 
 def cli(root, a, out):
-    """`oft change-ledger tag|check|no-work|sum`; 0, or 1 with the reason on out."""
+    """`oft change-ledger tag|check|no-work|sum`.  A command that names a fuzz target says what it did on one line
+    and in its exit status: 0 and `tagged now` (or what a sum wrote); ALREADY_TAGGED_STATUS and `already tagged`,
+    a session this target already counts, which writes nothing and is no error; 1 and `FAIL oft change-ledger:
+    refused: <reason>` when it changed nothing (a target this repository does not have, no tagged session, a rule
+    broken).  A command that names a change prints and returns what it always has.  `tag` writes one local file
+    and reads no repository, so it runs with no credential; `sum` with --base reads this checkout's git history
+    for the unit's figures."""
+    target = getattr(a, "target", None)
+    # a command that meant to name a fuzz target answers `refused: <reason>`: one that named none at all meant to,
+    # since a change is the positional argument and leaving it out is how --target is given
+    refusing = target is not None or (a.ledger_cmd in ("tag", "sum") and a.change is None)
     try:
         if a.ledger_cmd == "tag":
-            tag(root, a.change, a.step, a.session, a.host, a.transcript, vms=a.vm, since=a.since, until=a.until)
+            outcome, where = tag(root, a.change, a.step, a.session, a.host, a.transcript, vms=a.vm, since=a.since,
+                                 until=a.until, target=target)
             window = "" if (a.since, a.until) == (None, None) else " (from %s until %s)" % (a.since or NOT_APPLICABLE,
                                                                                             a.until or NOT_APPLICABLE)
-            print("oft change-ledger: tagged session %s%s as step %s of %s" % (a.session, window, a.step, a.change),
-                  file=out)
-        elif a.ledger_cmd == "check":
-            check(root, a.change, a.step, a.time_log)
-            print("oft change-ledger: recorded %s for step %s of %s" % (a.time_log, a.step, a.change), file=out)
+            if target is None:
+                print("oft change-ledger: tagged session %s%s as step %s of %s" % (a.session, window, a.step,
+                                                                                   a.change), file=out)
+                return 0
+            if outcome == TAGGED_NOW:
+                print("oft change-ledger: tagged now: session %s%s as step %s of target %s"
+                      % (a.session, window, a.step, target), file=out)
+                return 0
+            print("oft change-ledger: already tagged: target %s counts session %s in %s; nothing written"
+                  % (target, a.session, where), file=out)
+            return ALREADY_TAGGED_STATUS
+        if a.ledger_cmd == "check":
+            log = a.time_log or a.farm_run
+            check(root, a.change, a.step, log, farm=a.farm_run is not None)
+            print(f"oft change-ledger: recorded {log} for step {a.step} of {a.change}", file=out)
         elif a.ledger_cmd == "no-work":
             no_work(root, a.change, a.step, a.why)
             print("oft change-ledger: recorded step %s of %s as needing no work" % (a.step, a.change), file=out)
         else:
             summarize(root, a.change, unit=a.unit, base=a.base, head=a.head, samples=a.vm_samples,
-                      deletions=a.vm_deletions, out=out)
+                      deletions=a.vm_deletions, out=out, target=target)
     except LedgerError as e:
-        print("FAIL oft change-ledger: %s" % e, file=out)
+        print("FAIL oft change-ledger: %s%s" % ("refused: " if refusing else "", e), file=out)
         return 1
     return 0

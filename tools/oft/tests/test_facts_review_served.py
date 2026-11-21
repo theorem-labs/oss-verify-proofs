@@ -622,10 +622,10 @@ class Run(StandIn):
         self.assertEqual(code, 4, err)
 
     def test_the_model_gateway_is_its_one_base_url(self):
-        """ossv-gateway, the OSS Verify model gateway, is reached at REVIEW_GATEWAY_URL and no other URL: plain http,
+        """model-gateway, the model gateway, is reached at REVIEW_GATEWAY_URL and no other URL: plain http,
         another port, another host, or Anthropic's own API do not start the agent, and neither does a missing or
         malformed REVIEW_GATEWAY_URL."""
-        gateway, url = "ossv-gateway/model-a-1", "https://gateway.example"
+        gateway, url = "model-gateway/model-a-1", "https://gateway.example"
         ok = dict(REVIEW_GATEWAY_URL=url, ANTHROPIC_AUTH_TOKEN="t", ANTHROPIC_BASE_URL=url)
         code, err, _ = self.run_agent([init()] + turn(1) + [result()], asked=gateway, **ok)
         self.assertEqual(code, 0, err)
@@ -958,7 +958,10 @@ class Comment(StandIn):
         path = os.path.join(self.dir, "review.md")
         with open(path, "w") as f:
             f.write(review)
-        env = child_environment(self.dir, HEAD_SHA="a" * 40, BASE_REF="main")
+        # PATH names this interpreter first, so the script's `env python3` is not a version manager's shim, which
+        # would read the person's own configuration under this HOME (test_facts_review_scripts.Scripts).
+        env = child_environment(self.dir, HEAD_SHA="a" * 40, BASE_REF="main",
+                                PATH=os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"])
         if record is not None:
             env["SERVED"] = record
         r = subprocess.run(["bash", COMMENT, path, why], env=env, capture_output=True, text=True)

@@ -1,0 +1,10 @@
+# The Actions secret HELD_CONTENT_RULES, pinned: `<sha256-hex> <row count>`. The digest is of the
+# secret's text with CRLF turned into LF and exactly one final newline
+# (.github/held/held_content_scan.py, load_detectors). Both numbers are checked before anything is
+# scanned, and a mismatch is exit 2, never a pass: a secret that was edited outside a pull request
+# is a change to what this repository checks for, made where nobody reviews it.
+#
+# To change the private table, change this line on main of the internal repository first. Set the
+# new secret on theorem-labs/oss-verify-proofs right after the release that publishes this line.
+# Until then the two differ, and held-content-private.yml posts `error` on each pull request.
+6132d36b04af67bbf4e6bf62254127704ff82dc506fa9753c887adeb4bc2f1f4 10

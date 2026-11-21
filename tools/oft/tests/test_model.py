@@ -95,9 +95,9 @@ class Model(unittest.TestCase):
         with self.assertRaises(model.ModelError):
             model.required_tree(self.origin.root, "f" * 40, data)
 
-    def test_the_data_names_the_public_model_and_the_hash_the_dockerfile_pins(self):
+    def test_every_model_line_has_the_lps_core_paths_cut_and_other_has_the_package_cut(self):
         data = model.load()
-        self.assertEqual([l["cut"] for l in data["lines"]], ["toolchain/lps-core.paths"])
+        self.assertEqual({l["cut"] for l in data["lines"]}, {"toolchain/lps-core.paths"})
         self.assertEqual(data["other"]["cut"], "package/")
 
     def test_the_branches_and_tags_that_hold_a_commit(self):

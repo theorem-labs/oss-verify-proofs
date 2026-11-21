@@ -8,8 +8,10 @@ import unittest
 
 from oft import disclosure, facts, generate, rules, schema
 from oft.rules import counts as rules_counts
-from oft.tests.helpers import (HELD_PATCH, HELD_PAYLOAD, Tree, add_findings, alias_patch, build_record, folded,
-                               patch_copies, port_built, public_patch, recount, tree)
+from oft.tests.helpers import (HELD_PATCH, HELD_PAYLOAD, UNPATCHED, Tree, add_findings, alias_patch,
+                               align_unpatched_pins, build_record, folded, patch_copies, port_built, public_patch,
+                               recount, tree)
+from oft.tests import test_classifier_images as classifier_images
 from oft.tests.test_oss_verify import PORT, PORT_ASSET
 from oft.tests.test_release_tree import (APPROVED, PACKAGE, RELEASED, UNAPPROVED, add_proof, approve,
                                          assert_ported_cut, enrolled, entry, index_status, make_private, release,
@@ -19,7 +21,6 @@ FINDING = "findings/zlib/checksum_fuzzer/stand-in-abort"
 SLUG, PATCH = "stand-in-abort", "0001-stand-in.patch"
 # the encodings the shipped-text search reads a file's bytes in (disclosure.canonical), without a byte order mark
 ENCODINGS = ("utf-8", "utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be")
-UNPATCHED = "findings/zlib/unpatched.yaml"
 # the driver's header of every input of these tests: no config, so the harness is called once
 HEADER = b"\0" * 6
 
@@ -41,16 +42,6 @@ def add_asan_halts_counterexample(t):
     t.write(cx + "/control.bin", "y")
 
 
-def align_unpatched_pins(t, project="zlib"):
-    """Pin the project's published binaries to the ones its findings run on: an enrolled project with an open finding
-    publishes no patched build, so the statement hold applies (facts.hold)."""
-    u = t.yaml(UNPATCHED)
-    for harness, pins in u["harnesses"].items():
-        for b, rec in t.yaml("projects/%s/%s/harness.yaml" % (project, harness))["builds"].items():
-            pins[b].update(bytes=rec["bytes"], sha256=rec["sha256"])
-    t.put_yaml(UNPATCHED, u)
-
-
 def hold(t):
     return facts.hold(facts.load(t.root))
 
@@ -70,6 +61,57 @@ class Hold(unittest.TestCase):
             make_private(t, "json")
             self.assertEqual(hold(t), facts.Hold(set(), {"json"}, {}))
             self.assertEqual(hold(t).whole, {"json"})
+
+    def test_the_held_fuzz_targets_are_the_names_of_each_project_s_private_harnesses(self):
+        """Hold.harnesses: each project whose private_harnesses names a fuzz target, its names sorted and each one
+        time, whatever else holds the project.  An empty field holds none, and so does a Hold made of the first three
+        values alone, as tools/publish/verify makes one."""
+        with tree(render=False) as t:
+            self.assertEqual(hold(t).harnesses, {})
+            make_private(t, "json")
+            for project, field in (("zlib", ["minigzip_fuzzer", "held_target", "minigzip_fuzzer"]),
+                                   ("json", ["fuzzer-parse_bjdata"]), ("abseil-py", [])):
+                rel = "projects/%s/project.yaml" % project
+                t.put_yaml(rel, dict(t.yaml(rel), private_harnesses=field))
+            self.assertEqual(hold(t), facts.Hold(set(), {"json"}, {}, {"zlib": ("held_target", "minigzip_fuzzer"),
+                                                                        "json": ("fuzzer-parse_bjdata",)}))
+            self.assertEqual(facts.Hold(set(), {"json"}, {}).harnesses, {})
+
+    def test_the_cut_of_the_facts_drops_each_held_fuzz_target_and_names_the_internal_port_none(self):
+        """facts.cut and a held fuzz target (Dispatch issue OSSV-424, R11): zlib holds api-driver and enrolled through
+        this repository.  The cut's facts have no api-driver (its harness, its entry, its proof and its build record go,
+        though shipped lists the proof), no field private_harnesses, and the port repository `none` with the port's
+        commit and path.  json holds a name that no harness has: it loses the field alone, and its facts keep no port
+        it never had."""
+        with tree(render=False) as t:
+            port_built(t, "zlib")
+            rel = "projects/zlib/project.yaml"
+            t.put_yaml(rel, dict(t.yaml(rel), private_harnesses=["api-driver"]))
+            y = t.yaml(rel)
+            y["build"]["oss_verify"]["repository"] = schema.INTERNAL_PORT_REPOSITORY
+            t.put_yaml(rel, y)
+            json = "projects/json/project.yaml"
+            t.put_yaml(json, dict(t.yaml(json), private_harnesses=["fuzzer_unheld"]))
+            sids = (APPROVED + "/plain_halts", UNAPPROVED + "/ubsan_agrees")
+            for sid in sids:
+                add_proof(t, sid)
+                t.write("proofs/%s/provenance/PROVENANCE.yaml" % sid.rsplit("/", 1)[0],
+                        "schema: oss-verify-proofs build record v1\nport:\n  repository: %s\n  commit: %s\n"
+                        "  path: projects/zlib\n" % (schema.INTERNAL_PORT_REPOSITORY, "d" * 40))
+            loaded = facts.load(t.root)
+            json_data = loaded.projects["json"].data
+            pages = facts.cut(loaded, set(sids), facts.hold(loaded))
+        zlib = loaded.projects["zlib"]
+        self.assertEqual(pages, [])
+        self.assertEqual(sorted(zlib.harnesses), ["checksum_fuzzer"])
+        self.assertEqual([e["name"] for e in zlib.entries()], ["checksum_fuzzer", "minigzip_fuzzer"])
+        self.assertNotIn("private_harnesses", zlib.data)
+        self.assertEqual(facts.port(zlib), {"repository": "none", "commit": "d" * 40, "path": "projects/zlib"})
+        self.assertEqual(sorted(loaded.proofs), [APPROVED + "/plain_halts"])
+        self.assertEqual(sorted(loaded.records_at), [("zlib", "checksum_fuzzer")])
+        self.assertNotIn(UNAPPROVED, loaded.unit_kinds)
+        self.assertNotIn(UNAPPROVED, loaded.unit_layouts)
+        self.assertEqual(loaded.projects["json"].data, {k: v for k, v in json_data.items() if k != "private_harnesses"})
 
 
 class HeldFixture:
@@ -647,8 +689,9 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
 
     def test_a_private_enrolled_project_is_held_whole_by_its_finding(self):
         """A private project is held whole, so the open findings of an enrolled one
-        hold it whole too (Hold.held), as any finding of a project that is not enrolled does.  So it may build from the
-        port's internal copy, and the cut says a finding holds it back."""
+        hold it whole too (Hold.held), as any finding of a project that is not enrolled does.  It may build from the
+        port's internal copy, as any project held back whole may, finding or not, and the cut says a finding holds it
+        back."""
         make_private(self.t, "zlib")
         port_built(self.t, "zlib")
         rel = "projects/zlib/project.yaml"
@@ -700,6 +743,34 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
+    def test_a_published_classifier_or_original_holds_the_whole_project(self):
+        """A classifier of a held pair rejects the finding's input whatever any statement says, and an original is a
+        build without the patches: a project that publishes either is held whole (facts.hold)."""
+        pins = self.t.yaml(UNPATCHED)["harnesses"]["checksum_fuzzer"]
+
+        def as_pinned(y):
+            # an original is the unpatched binary the findings run on (rules.py)
+            for b in ("plain", "asan"):
+                y["originals"][b].update(bytes=pins[b]["bytes"], sha256=pins[b]["sha256"])
+        classifier_images.with_images(self.t, as_pinned)
+        self.assertHeldWhole()
+
+    def test_a_held_agreement_holds_the_classifier_statements_of_its_pair(self):
+        """A withheld classifier or original is not published, so the statement hold stands; and a held agreement
+        holds every classifier statement of its pair with it, as it holds the pair's bound and decidability."""
+        def withheld(y):
+            recs = [y["classifiers"]["asan"][r] for r in ("a", "b")] + list(y["originals"].values())
+            for rec in recs:
+                for k in ("bytes", "sha256", "segments"):
+                    rec.pop(k)
+                rec["withheld"] = "not-yet-published"
+            for name in classifier_images.eight():
+                y["statements"][name].update(status="withheld", withheld="not-yet-published")
+        classifier_images.with_images(self.t, withheld)
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertEqual(hold(self.t), facts.Hold(set(), set(), {"zlib": {
+            "checksum_fuzzer/" + s for s in HELD_WITH_PAIR + tuple(classifier_images.eight())}}))
+
     def test_a_build_record_that_says_a_held_statement_was_written_here_holds_the_whole_project(self):
         """A build record ships whole: proofs.written_here naming a held statement would leave that name in the
         release's PROVENANCE.yaml, where the cut's facts no longer have the statement (rules._written_here)."""
@@ -739,10 +810,38 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertNotIn("asan_halts", self.t.yaml("projects/%s/harness.yaml" % APPROVED)["statements"])
         self.assertNotIn(APPROVED + "/asan_halts", index_status(self.t))
 
+    def test_a_held_statement_holds_its_twins(self):
+        """A twin goes with its first statement (rules._twin), so the cut keeps no twin without its first.  The
+        recorded asan run exits 1: asan_halts (exits 0 or 2) is false and its twin asan_halts_any_exit (any exit) is
+        not, and the finding names asan_agrees, beside its twin asan_agrees_alloc_forced_only.  Each twin is held
+        with its first, and oft release-tree ships the rest."""
+        twins = {"asan_halts_any_exit": {"kind": "halts", "builds": ["asan"], "reading": "budget", "exits": "any",
+                                         "twin": "any-exit", "status": "open"},
+                 "asan_agrees_alloc_forced_only": {"kind": "agreement", "builds": ["plain", "asan"],
+                                                   "reading": "alloc-forced-only", "budgets": "asan",
+                                                   "twin": "alloc-forced-only", "status": "open"}}
+        rel = "projects/%s/harness.yaml" % APPROVED
+        h = self.t.yaml(rel)
+        h["statements"].update(twins)
+        self.t.put_yaml(rel, h)
+        y = self.t.yaml(FINDING + "/finding.yaml")
+        y["input"]["asan"] = dict(y["input"]["asan"], exit=1)
+        self.t.put_yaml(FINDING + "/finding.yaml", y)
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        held = HELD_WITH_PAIR + ("asan_halts",) + tuple(twins)
+        self.assertEqual(hold(self.t).statements, {"zlib": {"checksum_fuzzer/" + s for s in held}})
+        out = self.release()
+        for s in twins:
+            self.assertIn("held back by an open finding: %s/%s\n" % (APPROVED, s), out)
+        self.assertEqual(sorted(set(held) & set(self.t.yaml(rel)["statements"])), [])
+        self.assertEqual(rules.check(facts.load(self.t.root)), [])
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+
     def test_a_hold_after_the_enrollment_merge_does_not_stop_the_cut(self):
         """An enrollment entry is a ceiling (the approvals plan): after both projects' enrollment merges, json turns
         private and an open finding of enrolled zlib holds asan_halts (its recorded asan run exits 77, as above).  The
-        facts have no error, and the cut leaves out json whole and zlib's held statements, and keeps the rest."""
+        facts have no error, and the cut leaves out json whole and zlib's held statements, and keeps the rest:
+        api-driver's proof, which no entry lists, among it."""
         # the enrollment merges: each entry lists the statements its enrollment facts pull requests wrote, here every
         # statement of its fuzz target, as for a project enrolled from scratch
         approve(self.t, *(enrolled(u, sorted(self.t.yaml("projects/%s/harness.yaml" % u)["statements"]))
@@ -767,9 +866,10 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
             self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, s, "Proof.v")), s)
         for s in ("asan_halts", "asan_agrees"):
             self.assertFalse(os.path.lexists(self.t.path("proofs", APPROVED, s)), s)
-        self.assertFalse(os.path.lexists(self.t.path("proofs", UNAPPROVED)))
+        self.assertTrue(os.path.isfile(self.t.path("proofs", UNAPPROVED, "ubsan_agrees", "Proof.v")))
         st = index_status(self.t)
         self.assertEqual((st[APPROVED + "/plain_halts"], st[APPROVED + "/ubsan_agrees"]), ("proved", "proved"))
+        self.assertEqual(st[UNAPPROVED + "/ubsan_agrees"], "proved")
         self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
 

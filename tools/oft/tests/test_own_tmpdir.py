@@ -190,6 +190,7 @@ class OwnTmpdir(unittest.TestCase):
         self.assertIn(run, out)
         self.assertTrue(os.path.isfile(os.path.join(work, "dune.log")))
 
+    @unittest.skipIf(os.geteuid() == 0, "root removes an entry whatever its directory's mode forbids")
     def test_what_could_not_be_removed_is_reported(self):
         """The one entry that cannot go is named, and it does not save the entries beside it.
 

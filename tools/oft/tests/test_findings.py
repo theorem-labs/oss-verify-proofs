@@ -1,5 +1,6 @@
 """findings/: the record of a library bug found while proving, the unpatched binaries it runs on, and its rules; and
 the patches entries that ship a public finding's patch."""
+import hashlib
 import io
 import os
 import shutil
@@ -525,8 +526,6 @@ class Rules(unittest.TestCase):
 
     def test_only_a_held_project_builds_from_the_internal_port_or_attaches_to_its_findings_release(self):
         zlib, json = "projects/zlib/project.yaml", "projects/json/project.yaml"
-        internal = zlib + (": build.oss_verify.repository is %s: only a project a finding holds "
-                           "back whole builds from %s" % (INTERNAL, INTERNAL))
 
         def attach(rel, release):
             return "%s: assets.bin is attached to %s: only a project a finding holds back whole attaches to " \
@@ -551,7 +550,47 @@ class Rules(unittest.TestCase):
             self.assertEqual(finding_errors(t), [attach(json, "findings-zlib")])
             edit(t, json, lambda y: y["assets"]["bin"].update(release="v2026.11.0"))
             public_patch(t)
-            self.assertEqual(finding_errors(t), [internal, attach(zlib, "findings-zlib")])
+            # the rules refuse zlib's internal port: the error names the file and the field, whatever its wording
+            errors = finding_errors(t)
+            internal = [e for e in errors if e.startswith(zlib + ": build.oss_verify.repository is ")]
+            self.assertEqual((len(internal), [e for e in errors if e not in internal]),
+                             (1, [attach(zlib, "findings-zlib")]), errors)
+            # a private project, a library whose repository is private among them (OSSV-618), builds from the
+            # internal port with no finding; it still attaches to no findings release, which is a held one's
+            edit(t, zlib, lambda y: y.update(release="private"))
+            self.assertEqual(finding_errors(t), [attach(zlib, "findings-zlib")])
+
+    def test_a_project_with_a_held_fuzz_target_builds_from_the_internal_port(self):
+        """Decision 19 of Dispatch issue OSSV-424: a project with a held fuzz target (private_harnesses) enrolls
+        through this repository, so it may name the port's internal copy although no finding holds it back.  It
+        attaches no asset to a findings-<project> release: only a project that a finding holds back whole does.  A
+        project whose project.yaml says `release: private` is held back whole, so it may name the internal copy with
+        no finding too (Dispatch issue OSSV-377 took this rule from Dispatch issue OSSV-618 on 2026-11-15).  It too
+        attaches no asset to a findings-<project> release.  A public project (no release key) that holds no fuzz target,
+        and that no finding holds back, may not name the internal copy."""
+        zlib = "projects/zlib/project.yaml"
+        internal = zlib + (": build.oss_verify.repository is %s: only a project held back whole (a finding holds it, "
+                           "or it is release: private), or a project with a held fuzz target (private_harnesses), "
+                           "builds from %s" % (INTERNAL, INTERNAL))
+        attach = (zlib + ": assets.bin is attached to findings-zlib: only a project a finding holds back whole "
+                  "attaches to findings-<project>, its own")
+        with tree(render=False) as t:
+            port_built(t, "zlib")
+            edit(t, zlib, lambda y: y["build"]["oss_verify"].update(repository=INTERNAL))
+            self.assertNotIn("release", t.yaml(zlib))
+            self.assertEqual(finding_errors(t), [internal], "no finding holds zlib back, and it holds no fuzz target")
+            edit(t, zlib, lambda y: y.update(release="private"))
+            self.assertEqual(finding_errors(t), [], "release: private alone")
+            edit(t, zlib, lambda y: y["assets"]["bin"].update(release="findings-zlib"))
+            self.assertEqual(finding_errors(t), [attach], "release: private attaches to no findings release")
+            edit(t, zlib, lambda y: (y.pop("release"), y["assets"]["bin"].update(release="v2026.11.0"),
+                                     y.update(private_harnesses=["api-driver"])))
+            self.assertEqual(finding_errors(t), [], "zlib holds a fuzz target")
+            edit(t, zlib, lambda y: y["assets"]["bin"].update(release="findings-zlib"))
+            self.assertEqual(finding_errors(t), [attach])
+            # an empty field holds no fuzz target
+            edit(t, zlib, lambda y: (y["assets"]["bin"].update(release="v2026.11.0"), y.update(private_harnesses=[])))
+            self.assertEqual(finding_errors(t), [internal])
 
     ZLIB = "projects/zlib/project.yaml"
     OWN = "enroll-zlib-0123456789ab"
@@ -790,7 +829,8 @@ class PatchEntries(unittest.TestCase):
             t.write(record + "0002-build-only.patch", build_only, "wb")
             t.write(record + "series", "0001-stand-in.patch\n0002-build-only.patch\n")
             self.assertEqual(errors(t), [record + "series: lists 0002-build-only.patch, and no patches entry of zlib "
-                                         "has its text"])
+                                         "has its text, nor does the build record's port.patches name it with its "
+                                         "sha256"])
             entry_patch(t, "zlib", "build-only", "0002-build-only.patch", build_only,
                         summary="A stand-in build patch for these tests; no finding shows its bug.",
                         upstream="fixed-upstream", url="https://git.example.org/zlib/commit/1")
@@ -798,7 +838,8 @@ class PatchEntries(unittest.TestCase):
             self.assertEqual(errors(t), [])
             t.write(record + "0002-build-only.patch", b"not the patch the port carries\n", "wb")
             self.assertEqual(errors(t), [record + "series: lists 0002-build-only.patch, and no patches entry of zlib "
-                                         "has its text"])
+                                         "has its text, nor does the build record's port.patches name it with its "
+                                         "sha256"])
             t.write(record + "0002-build-only.patch", build_only, "wb")
             self.assertIn("[*build-only*](../../patches/zlib/0002-build-only.patch): A stand-in build patch for "
                           "these tests; no finding shows its bug ([fixed upstream](https://git.example.org/zlib/commit/1))",
@@ -899,7 +940,19 @@ class PatchEntries(unittest.TestCase):
                 record + "0001-unlisted.patch: a patch of the port record that its series does not list"])
             t.write(record + "series", "0001-unlisted.patch\n")
             self.assertEqual([e for e in errors(t) if e.startswith("projects/json/fuzzer")], [
-                record + "series: lists 0001-unlisted.patch, and no patches entry of json has its text"])
+                record + "series: lists 0001-unlisted.patch, and no patches entry of json has its text, nor does the "
+                         "build record's port.patches name it with its sha256"])
+            # a build-only patch the build record's own port.patches names, by file and sha256: the record names every
+            # patch that reaches the build, so the rule accepts it; another sha256 is not the patch the port carries,
+            # and the rule refuses it again
+            prov = "projects/json/fuzzer-parse_bjdata/proofs/provenance/PROVENANCE.yaml"
+            digest = hashlib.sha256(b"--- a/x.c\n+++ b/x.c\n@@ -1 +1 @@\n-x\n+y\n").hexdigest()
+            for sha, refused in ((digest, False), ("0" * 64, True)):
+                with self.subTest(sha=sha):
+                    t.write(prov, "port:\n  patches:\n  - file: 0001-unlisted.patch\n    sha256: %s\n"
+                                  "    harness: fuzzer-parse_bjdata\n" % sha)
+                    found = [e for e in errors(t) if "0001-unlisted.patch" in e]
+                    self.assertEqual(len(found), int(refused), found)
 
     def test_a_build_record_behind_a_symbolic_link_is_refused_and_not_read(self):
         """The deep review's finding 3: os.walk follows a link at its top, and a no-follow open guards only the last

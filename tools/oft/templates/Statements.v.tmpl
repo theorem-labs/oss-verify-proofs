@@ -8,7 +8,7 @@ comes from harness.yaml; the Rocq terms come from tools/oft/shapes.py.
 $header *)
 
 From Stdlib Require Import QArith.
-From $namespace.Core Require Import Shapes.
+From $namespace.Core Require Import Shapes$classifier_shapes.
 From $rocq Require Images$distribution_require.
 $sections
 (** ** Proving a statement
@@ -77,7 +77,7 @@ $live_note
 ($letter) $what [$stops; $live]
 
 @@ checks_none
-$summary  The $who makes no check of its own beyond not crashing, so a statement about it says only that the code it calls $claim.
+$summary  The $who makes no check of its own beyond not crashing.  $claim
 
 @@ live_all
 Each check was confirmed in the binary: its assertion text or message is in the binary's bytes.
@@ -104,11 +104,26 @@ Agreement of each sanitizer build with the plain build
 How often the builds disagree
 @@ title_decidability
 Deciding where the builds agree
+@@ title_classifier-total
+Each classifier answers yes, no or maybe
+@@ title_classifier-sound
+Each classifier is sound
+@@ title_classifier-maybe
+How often each classifier answers maybe
+@@ title_classifier-bound
+How much each classifier does not accept
 
 @@ doc_halts_budget
-On every input on which the $build build is never refused memory for exceeding $budget, and when the environment refuses nothing it is not forced to, every execution of the $build build exits with $exits.  It never crashes, fails an assertion, hangs, or leaves the model.$rejected$binds$note
+On every input on which the $build build is never refused memory for exceeding $budget, and when the environment refuses nothing it is not forced to, every execution of the $build build exits with $exits.$never$rejected$binds$note
 
 Not claimed: anything about what the program writes; anything about other compilers, architectures or $library_name commits.
+
+@@ never
+  It never crashes, fails an assertion, hangs, or leaves the model.
+@@ never_any_rust
+  It never crashes, hangs, or leaves the model.  A panic, a failed assertion included, exits with status 79, which this statement allows: it says nothing about one.
+@@ never_any_python
+  It never crashes, hangs, or leaves the model.  In a call of the harness, an uncaught Python exception other than MemoryError (status 2) and SystemExit (status 77), a failed check included, exits with status 79, which this statement allows: it says nothing about one.
 
 @@ doc_halts_may_fail
 Every execution of the $build build exits, with $exits, on every input and whatever the environment refuses (any allocation, open or read may fail at any time).$rejected$stronger$binds$note$no_asan
@@ -120,6 +135,8 @@ Not claimed: anything about what the program writes.
 
 @@ stronger
   It covers every input and any refusal, unlike [$budget_name], but allows any exit status.
+@@ stronger_finite
+  It covers every input and any refusal, unlike [$budget_name].
 
 @@ rejected
   Status 78 is the driver's report that a call of the fuzz target returned a value other than 0 or -1, which this fuzz target does to turn an input away ($where).
@@ -145,6 +162,8 @@ Not claimed: anything about what the program writes.
   An ASan report aborts and a failed UBSan check traps, so a proof also shows that neither sanitizer fires, in the code they instrument, on any such input (the harness README lists the code this build links uninstrumented).
 @@ note_asan-ubsan_rust
   An ASan report aborts, a failed rustc UB check exits with status 79, which is not allowed, and a failed UndefinedBehaviorSanitizer check in C code traps, so a proof also shows that none of them fires, in the code they instrument, on any such input (the harness README lists the code this build links uninstrumented).
+@@ note_asan-ubsan_rust_any
+  An ASan report aborts and a failed UndefinedBehaviorSanitizer check in C code traps, so a proof also shows that neither fires, in the code they instrument, on any such input (the harness README lists the code this build links uninstrumented).  A failed rustc UB check exits with status 79, which this statement allows: it says nothing about those checks.
 
 @@ doc_agreement
 On every input on which the plain build is never refused memory for exceeding $plain_budget, $environment: neither build ever faults, aborts or leaves the model, and the two write the same bytes and exit with the same status.  $san_note$variant
@@ -190,6 +209,48 @@ For an input drawn from [Distribution.w] (Distribution.v), the probability that 
 
 @@ doc_decidability
 Some well-formed riscv64 program decides exactly the finite inputs on which the plain and $san builds agree ([Characterise.v] states the problem for a given program).
+
+@@ excluded
+No binary that this statement is about runs these scenarios of the upstream fuzz target:
+$items
+@@ excluded_item
+- $name: $reason
+
+@@ debug
+Each binary that this statement is about contains $library_name built with its debug configuration: $config.  The statement claims only the exact binary of each build that it is about.  It claims nothing about $library_name built without this configuration.
+@@ debug_setting
+$name
+@@ debug_additions
+The $who calls these functions, which only the debug configuration exports:
+$items
+
+The maintainers of $library_name can refuse a witness found only through these functions.
+@@ debug_item
+- [$function] in $source
+
+@@ doc_classifier_sound_a_published
+On every valid finite input, from every valid entry, when the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, answers yes, the plain and $san builds agree on it: both are error-free with equal traces at every pair of valid entries; and when they agree, it never answers no.  Maybe is allowed either way.  Agreement here is judged $environment, at 16 GiB / 512 GiB with no budget premise; the classifier's own runs are judged with the environment refusing only what it is forced to.  This harness has no patches, so each build is its own original (Core.ClassifierShapes, [classifies_good_inputs_sound]).
+
+@@ doc_classifier_sound_a_unpatched
+On every valid finite input, from every valid entry, when the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, answers yes, the originals of the plain and $san builds, the same builds without the patches ([Images.plain_original], [Images.${san_ident}_original]), agree on it: both are error-free with equal traces at every pair of valid entries; and when they agree, it never answers no.  Maybe is allowed either way.  Agreement here is judged $environment, at 16 GiB / 512 GiB with no budget premise; the classifier's own runs are judged with the environment refusing only what it is forced to (Core.ClassifierShapes, [classifies_good_inputs_sound]).
+
+@@ doc_classifier_sound_b_published
+On every valid finite input, from every valid entry, when the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, answers yes, each of the plain and $san builds agrees with itself on it: at every pair of valid entries it has the same finite traces, and reaches an error, an all-error behaviour or an unmodelled step from one entry exactly when from the other; and when both do, it never answers no.  Maybe is allowed either way.  So on an input it answers yes to, what each build does does not depend on where execve put the process.  Agreement here is judged $environment, at 16 GiB / 512 GiB with no budget premise; the classifier's own runs are judged with the environment refusing only what it is forced to.  This harness has no patches, so each build is its own original (Core.ClassifierShapes, [classifies_patch_diff_sound]).
+
+@@ doc_classifier_sound_b_unpatched
+On every valid finite input, from every valid entry, when the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, answers yes, each of the plain and $san builds agrees on it with its original, the same build without the patches ([Images.plain_original], [Images.${san_ident}_original]): at every pair of valid entries the two have the same finite traces, and one reaches an error, an all-error behaviour or an unmodelled step exactly when the other does; and when both agree, it never answers no.  Maybe is allowed either way.  Agreement here is judged $environment, at 16 GiB / 512 GiB with no budget premise; the classifier's own runs are judged with the environment refusing only what it is forced to (Core.ClassifierShapes, [classifies_patch_diff_sound]).
+
+@@ doc_classifier_total
+Every execution of the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, answers: on every valid finite input and from every valid entry, every run exits 0, every run exits 1, or every run exits 2.  It never runs forever, crashes or leaves the model (Core.ClassifierShapes, [classifier_total3]).
+
+@@ doc_classifier_maybe_bound
+For an input drawn from [Distribution.w] (Distribution.v), the probability that the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, gives it no firm answer, that is neither yes from every valid entry nor no from every valid entry, is at most [b].  A crash, a hang and mixed answers count as no firm answer.  Smaller [b] is stronger; [b = 1] holds trivially (Core.ClassifierShapes, [maybe_at_most]).
+
+@@ doc_classifier_maybe_empty
+Every valid finite input gets a firm answer from the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe: yes from every valid entry, or no from every valid entry.  A crash, a hang and mixed answers are not firm answers (Core.ClassifierShapes, [maybe_empty]).
+
+@@ doc_classifier_bound
+For an input drawn from [Distribution.w] (Distribution.v), the probability that the program $classifier (classifier $role of the plain and $san pair), which exits 0 for yes, 1 for no and 2 for maybe, does not answer yes from every valid entry (it answers no or maybe, or gives no answer) is at most [b].  Smaller [b] is stronger; [b = 1] holds trivially (Core.Shapes, [classifier_rejects_at_most]).
 
 @@ proving
 A proof is a directory named after the statement, in this fuzz target's proofs folder (docs/proving.md says where it is), whose Proof.v ends, for example, in

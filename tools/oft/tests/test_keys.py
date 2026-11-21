@@ -14,6 +14,7 @@ import unittest
 from unittest import mock
 
 from oft import check, facts, generate, keys, layout, names, pack, paths, plan, port, rules, unitpaths, yamlio
+from oft.tests import test_generate
 from oft.tests.helpers import (NEW_NAMESPACE, NEW_OPAM_STEM, REPO, add_findings, build_record, rename_namespace,
                                tree)
 from oft.tests.test_fetch_check import HAVE_ZSTD, make_release, withdraw_every_statement, withhold_checksum_fuzzer
@@ -219,6 +220,28 @@ class Keys(unittest.TestCase):
             second = commit(t)
             self.assertEqual(changed(all_keys(t, first), all_keys(t, second)), [])
 
+    def test_the_lists_of_internal_paths_change_no_key(self):
+        """lint.py's LINT_ONLY_INTERNAL and release_tree.py's INTERNAL name what only this repository has, such as
+        .github/workflows/held-refscan.yml (Dispatch issue OSSV-377).  keys.NOT_THE_CHECKER names both files, so a new
+        entry in them, and the workflow it names, re-check no fuzz target.  A change to a file of the checker still
+        moves the digest."""
+        for name in ("lint.py", "release_tree.py"):
+            self.assertTrue(keys.not_the_checker("tools/oft/" + name), name)
+        workflow = ".github/workflows/held-refscan.yml"
+        with tree() as t:
+            t.write("tools/oft/release_tree.py", 'INTERNAL = ("dev/enroll/",)\n')
+            first = repo(t)
+            before = all_keys(t, first)
+            t.write("tools/oft/lint.py", 'LINT_ONLY_INTERNAL = ("dev/enroll/**", "%s")\n' % workflow)
+            t.write("tools/oft/release_tree.py", 'INTERNAL = ("dev/enroll/", "%s")\n' % workflow)
+            t.write(workflow, "on:\n  schedule:\n    - cron: '0 6 * * *'\n")
+            second = commit(t)
+            self.assertEqual(changed(before, all_keys(t, second)), [])
+            self.assertEqual(keys.checker(t.root, first), keys.checker(t.root, second))
+            t.write("tools/oft/check.py", "check, changed\n")
+            third = commit(t)
+            self.assertNotEqual(keys.checker(t.root, second), keys.checker(t.root, third))
+
     def test_the_enrollment_scripts_change_no_key(self):
         """tools/enroll/ is the enrollment pipeline enroll.yml and enroll-build.yml run, and `oft release-tree`
         removes it from a release: keys.NOT_THE_CHECKER names the directory, so adding a file to it or changing
@@ -234,6 +257,26 @@ class Keys(unittest.TestCase):
             t.write("tools/enroll/build", "build, changed\n")
             third = commit(t)
             self.assertEqual(changed(before, all_keys(t, third)), [])
+
+    def test_the_witness_generator_changes_no_key(self):
+        """tools/budgetwit/ is the budget-premise witness generator: it writes candidate proof text for a person to
+        finish, and no check job opens it.  keys.NOT_THE_CHECKER names the directory, so adding a file to it or
+        changing one re-checks no fuzz target.  A change to a file of the checker still moves the digest."""
+        self.assertTrue(keys.not_the_checker("tools/budgetwit/gen_v.py"))
+        self.assertTrue(keys.not_the_checker("tools/budgetwit/lean/emitter.py"))
+        with tree() as t:
+            first = repo(t)
+            t.write("tools/budgetwit/gen_v.py", "generate\n")
+            t.write("tools/budgetwit/carriers/YK15.v.in", "(* carrier *)\n")
+            second = commit(t)
+            before = all_keys(t, first)
+            self.assertEqual(changed(before, all_keys(t, second)), [])
+            t.write("tools/budgetwit/gen_v.py", "generate, changed\n")
+            third = commit(t)
+            self.assertEqual(changed(before, all_keys(t, third)), [])
+            t.write("tools/oft/check.py", "check, changed\n")
+            fourth = commit(t)
+            self.assertNotEqual(keys.checker(t.root, third), keys.checker(t.root, fourth))
 
     def test_a_change_to_port_layout_changes_no_key(self):
         """port.py and ci/port-check.sh move a tree to the per-project layout and check the moved tree; no check opens
@@ -966,6 +1009,28 @@ class Checker(unittest.TestCase):
             third = commit(t)
             self.assertNotEqual(keys.checker(t.root, first), keys.checker(t.root, third))
 
+    def test_the_deviation_reader_is_not_the_checker(self):
+        """tools/oft/deviation.py reads a fuzz target's deviation record again for oft lint and the enrolment writer
+        (OSSV-484 plan t2); no check opens it, so a fix to it leaves keys.checker as it was and re-checks no fuzz
+        target.  That holds only while no check opens it: oft.check, oft.rules, oft.facts and oft.fetch do not import
+        it (rules.check leaves it out, as it leaves out symbols.py).  A change to a file of the checker still moves
+        the key."""
+        self.assertTrue(keys.not_the_checker("tools/oft/deviation.py"))
+        self.assertFalse(keys.not_the_checker("tools/oft/deviation.pyc"))
+        done = subprocess.run([sys.executable, "-c", "import sys, oft.check, oft.rules, oft.facts, oft.fetch; "
+                               "print('oft.deviation' in sys.modules)"],
+                              capture_output=True, text=True, env=dict(os.environ, PYTHONPATH=TOOLS))
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "False\n", ""))
+        with tree() as t:
+            t.write("tools/oft/deviation.py", "deviation\n")
+            first = repo(t)
+            t.write("tools/oft/deviation.py", "deviation, with a fix\n")
+            second = commit(t)
+            self.assertEqual(keys.checker(t.root, first), keys.checker(t.root, second))
+            t.write("tools/oft/check.py", "check, with a fix\n")
+            third = commit(t)
+            self.assertNotEqual(keys.checker(t.root, first), keys.checker(t.root, third))
+
 
 class Layout(unittest.TestCase):
     """A key holds what a check reads, not where it lies, so that the layout move of every proof, counterexample and
@@ -1131,6 +1196,74 @@ class Layout(unittest.TestCase):
                 with self.assertRaisesRegex(keys.NoKey, "^%s: in both layouts$" % up[0]):
                     keys.keys(t.root, [up], c, c, c)
 
+    def test_a_name_that_is_no_fuzz_target_has_no_key(self):
+        """A name that names no fuzz target is refused, in every part and in either layout: its statement folder is
+        a fuzz target's folder at neither commit, so there is nothing to key (OSSV-457).  Before this, each of these
+        names answered a distinct well-formed key, which a marker could carry and a reader compare with the real
+        unit's.  A name that lands on a file of the project (projects/<p>/README.md, projects/<p>/project.yaml) and
+        one of the names layout.NOT_A_HARNESS keeps for the project's own folders are refused too: the path is
+        there, and it is no unit.  projects/zlib/patches is such a folder in the per-project layout, so the ported
+        case keys it as a path that exists.  A name that is no <project>/<harness> pair is refused by name too."""
+        bad = {"a typo": "zlib/checksum-fuzzer", "a harness nobody enrolled": "zlib/nonexistent_fuzzer",
+               "a misspelled project": "zlib-ng/checksum_fuzzer", "the project's readme": "zlib/README.md",
+               "the project's facts": "zlib/project.yaml"}
+        bad.update({"the reserved name " + n: "zlib/" + n for n in layout.NOT_A_HARNESS})
+        for ported in (False, True):
+            with tree() as t:
+                c = old_layout_repo(t)
+                if ported:
+                    c = port_layout(t)
+                # the counter-case: a real fuzz target's folder keys in every part it has
+                self.assertEqual(len(keys.keys(t.root, [(UNIT, p) for p in ("build", "findings")], c, c, c)), 2)
+                self.assertTrue(os.path.isfile(t.path("projects/zlib/README.md")))
+                self.assertEqual(os.path.isdir(t.path("projects/zlib/patches")), ported)
+                for why, unit in bad.items():
+                    for part in keys.PARTS:
+                        with self.subTest(ported=ported, unit=why, part=part):
+                            want = (r"^no unit %s: projects/%s is no fuzz target's statement folder at %s$"
+                                    % (unit, unit, c))
+                            with self.assertRaisesRegex(keys.NoKey, want):
+                                keys.keys(t.root, [(unit, part)], c, c, c)
+                # a name that is no <project>/<harness> pair at all names no folder to look for, and is refused by
+                # name rather than by an IndexError on its missing "/"
+                for unit in ("zlib", "", "zlib/", "/checksum_fuzzer", "zlib/a/b"):
+                    with self.subTest(ported=ported, unit="no pair: %r" % unit):
+                        want = "^no unit %s: a unit name is <project>/<harness>$" % re.escape(repr(unit))
+                        with self.assertRaisesRegex(keys.NoKey, want):
+                            keys.keys(t.root, [(unit, "build")], c, c, c)
+
+    def test_a_harness_a_change_enrols_keys_against_a_base_that_has_it_not(self):
+        """The other side of the refusal: a pull request that enrols a fuzz target is planned on the base's
+        statements, where its harness folder is not yet, and it often brings no proofs, so both components read "-"
+        and the key stands.  1,346 of the 2,216 units main's enrolling commits add read "-" for both at their base,
+        so the refusal asks where the harness folder is, not what the components say."""
+        with tree() as t:
+            base = old_layout_repo(t)
+            shutil.copytree(t.path("projects/zlib/api-driver"), t.path("projects/zlib/enrolled_fuzzer"))
+            head = commit(t)
+            up = ("zlib/enrolled_fuzzer", "build")
+            key, comp = keys.keys(t.root, [up], base, head, base)[up]
+            self.assertRegex(key, "^[0-9a-f]{64}$")
+            self.assertEqual((comp["harness"], comp["proofs"]), ("-", "-"))
+            # the same unit, keyed over commits that have it not, is still refused, and the refusal names both
+            with self.assertRaisesRegex(keys.NoKey, "^no unit zlib/enrolled_fuzzer: projects/zlib/enrolled_fuzzer "
+                                        "is no fuzz target's statement folder at %s$" % base):
+                keys.keys(t.root, [up], base, base, base)
+            bad = ("zlib/enrolled-fuzzer", "build")
+            with self.assertRaisesRegex(keys.NoKey, "^no unit zlib/enrolled-fuzzer: projects/zlib/enrolled-fuzzer "
+                                        "is no fuzz target's statement folder at %s or %s$" % (base, head)):
+                keys.keys(t.root, [bad], base, head, base)
+
+    def test_a_real_units_absent_proofs_and_allowed_axioms_still_key(self):
+        """The inputs of a real unit that are legitimately absent are no refusal: a fuzz target with no proofs (2,084
+        of the 2,191 parts of main on 2026-11-09) and a tree with no toolchain/allowed-axioms.txt keep their keys."""
+        with tree() as t:
+            c = repo(t)
+            comps = all_comps(t, c)
+            self.assertEqual(comps[(UNIT, "build")]["proofs"], "-")
+            self.assertEqual(comps[(UNIT, "build")]["allowed-axioms"], "-")
+            self.assertEqual(sorted(all_keys(t, c)), sorted(keys.wanted(facts.load(t.root))))
+
     def test_a_hand_written_dune_file_in_a_changes_new_layout_proofs_gives_no_key(self):
         """A dune file under projects/<p>/<h>/proofs/ is the change's, as one under proofs/<p>/<h>/ is: the plan
         reads it from the change, not from the base."""
@@ -1156,6 +1289,46 @@ class Layout(unittest.TestCase):
                 self.assertEqual(changed(all_keys(t, first), all_keys(t, commit(t))), [])
 
 
+def reach_step_problems(run):
+    """What keeps run, the text of pr.yml's reach step, from holding the partial-checkout guard's pattern and skips
+    (test_generate.py) word for word, as a list of problems: [] when it holds them.  The step must have one sparse=
+    line, whose value is SPARSE_COMMAND; one `grep -vE` command, whose -e patterns are GUARD_SKIPS, in order; and a
+    grep command that searches the changed files with -e "$sparse"."""
+    problems = []
+    sparse = re.findall(r"^[ \t]*sparse=(.*)$", run, re.M)
+    if len(sparse) != 1:
+        problems.append("the step has %d sparse= lines, not one: %r" % (len(sparse), sparse))
+    else:
+        try:
+            value = shlex.split(sparse[0])
+        except ValueError as err:
+            value = "unreadable (%s)" % err
+        if value != [test_generate.SPARSE_COMMAND]:
+            problems.append("$sparse is %r, not [SPARSE_COMMAND] %r" % (value, [test_generate.SPARSE_COMMAND]))
+    # the step's commands, with their line continuations joined as the shell joins them
+    lines = run.replace("\\\n", "").split("\n")
+    filters = [line for line in lines if "grep -vE" in line]
+    if len(filters) != 1:
+        problems.append("the step has %d grep -vE commands, not one: %r" % (len(filters), filters))
+    else:
+        try:
+            words = shlex.split(filters[0])
+        except ValueError:
+            words = []
+        words = words[words.index("-vE") + 1:] if "-vE" in words else []
+        skips = []
+        while len(words) > 1 and words[0] == "-e":
+            skips.append(words[1])
+            words = words[2:]
+        if skips != list(test_generate.GUARD_SKIPS):
+            problems.append("the grep -vE patterns are %r, not GUARD_SKIPS %r"
+                            % (skips, list(test_generate.GUARD_SKIPS)))
+    if not any(re.search(r"\bgrep\b", line) and '-e "$sparse"' in line
+               for line in lines if not line.lstrip().startswith("#")):
+        problems.append('no grep command of the step searches the changed files with -e "$sparse"')
+    return problems
+
+
 class Plan(unittest.TestCase):
     def plan(self, t, **kw):
         buf = io.StringIO()
@@ -1164,6 +1337,38 @@ class Plan(unittest.TestCase):
 
     def checked(self, p):
         return sorted((r["unit"], r["part"]) for r in p["parts"] if r["check"])
+
+    def test_a_hosted_plan_leaves_out_a_unit_no_hosted_job_can_check_and_names_it(self):
+        """pack.HOSTED_CAP, through `oft plan --hosted`: a unit the sweep measured above the cap is in no job,
+        in no part and not in units, and the plan carries one sentence about it for the run's summary with the
+        farm check of record that still stands for it.  Without --hosted the same tree plans it as usual, and a
+        unit under the cap is planned either way."""
+        over = {UNIT: (400, "finished"), CX_UNIT: (10, "finished")}
+        checks = {UNIT: ("farm/20261107t222300z-b2f735", "2026-11-07")}
+        with tree() as t:
+            head = repo(t)
+            with mock.patch.object(plan.pack, "sweep", return_value=over), \
+                    mock.patch.object(plan.pack, "farm_checks", return_value=checks):
+                packed = self.plan(t, change=head)
+                self.assertIn(UNIT, packed["units"])
+                self.assertEqual(packed["skipped"], [])
+                skipped = self.plan(t, change=head, hosted=True)
+            self.assertNotIn(UNIT, skipped["units"])
+            self.assertNotIn(UNIT, [r["unit"] for r in skipped["parts"]])
+            self.assertEqual([j for j in skipped["jobs"] if UNIT in j["units"].split()], [])
+            # the unit under the cap is planned as before
+            self.assertIn(CX_UNIT, skipped["units"])
+            self.assertEqual(skipped["skipped"],
+                             ["%s: not checked this week -- 400 minutes on a 16-core runner, over the "
+                              "240-minute hosted cap; last passing farm check of record "
+                              "farm/20261107t222300z-b2f735 (2026-11-07)." % UNIT])
+
+    def test_a_skipped_unit_with_no_farm_check_says_so_and_a_floor_says_at_least(self):
+        """The sentence's two other shapes: a floor rather than a time, and a unit the farm register has no
+        passing check for, which is a different thing from an old one and is never written as one."""
+        self.assertEqual(plan.hosted_skips([UNIT], {UNIT: (400, "cut")}, {}),
+                         ["%s: not checked this week -- at least 400 minutes on a 16-core runner, over the "
+                          "240-minute hosted cap; no farm check found." % UNIT])
 
     def test_a_change_is_checked_on_what_it_changes(self):
         with tree() as t:
@@ -1237,6 +1442,26 @@ class Plan(unittest.TestCase):
             self.assertTrue(p["all"])
             self.assertEqual(self.checked(p), keys.wanted(facts.load(t.root)))
             self.assertEqual({r["why"] for r in p["parts"]}, {"no recorded pass"})
+
+    def test_a_change_that_enrols_a_harness_plans_it_against_a_base_that_has_it_not(self):
+        """The base has no key for a unit the change brings, and keys() refuses a unit at neither of its commits
+        (OSSV-457), so the plan asks the base only for the units the base has.  Without that, every pull request
+        that enrols a fuzz target would end in NoKey."""
+        for kind in ("release", "maintainer", "contributor"):
+            with self.subTest(kind=kind), tree() as t:
+                base = repo(t)
+                new = "zlib/enrolled_fuzzer"
+                shutil.copytree(t.path("projects/zlib/api-driver"), t.path("projects/%s" % new))
+                head = commit(t)
+                p = self.plan(t, change=head, base=base, kind=kind)
+                row = next(r for r in p["parts"] if r["unit"] == new)
+                self.assertEqual((row["check"], row["why"]), (True, "the base has not this unit"))
+                self.assertRegex(row["key"], "^[0-9a-f]{64}$")
+                # the units the base has keep a base key to be compared with: for a maintainer or contributor
+                # change, whose facts are the base's, nothing of zlib/checksum_fuzzer moved; for a release, the new
+                # harness.yaml is in its project's id
+                self.assertEqual(next(r for r in p["parts"] if r["unit"] == UNIT and r["part"] == "build")["why"],
+                                 "changed: project" if kind == "release" else "unchanged from the base")
 
     def test_a_harness_whose_every_statement_is_withdrawn_has_no_build_to_check(self):
         """Its builds are published, but its Statements.v defines no statement, so no check job builds it."""
@@ -1373,8 +1598,12 @@ class Plan(unittest.TestCase):
         tmp = tempfile.mkdtemp(dir=d)
         with open(os.path.join(tmp, "plan.sh"), "w") as f:
             f.write(step["run"])
+        # GITHUB_REPOSITORY is a stand-in, as in pr_job: the plan step plans no part for a push on
+        # theorem-labs/oss-verify-proofs (test_workflow_verdicts.PublicPushTest), and a CI run of a push to main there
+        # has that name and GITHUB_EVENT_NAME=push in its environment.  A caller's env still sets either.
         env = dict(GIT_ENV, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=tmp,
-                   GITHUB_OUTPUT=os.path.join(tmp, "output"), GITHUB_STEP_SUMMARY=os.path.join(tmp, "summary"), **env)
+                   GITHUB_OUTPUT=os.path.join(tmp, "output"), GITHUB_STEP_SUMMARY=os.path.join(tmp, "summary"),
+                   **{"GITHUB_REPOSITORY": "example/repository", **env})
         r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", os.path.join(tmp, "plan.sh")],
                            cwd=cwd, env=env, capture_output=True, text=True)
         self.said = r.stdout + r.stderr
@@ -1416,6 +1645,23 @@ class Plan(unittest.TestCase):
             self.assertEqual((got["units"], "units=1\n" in output), ([UNIT], True), output)
             key = next(r["key"] for r in got["parts"] if r["check"])
             self.record(t, remote, head, [(UNIT, "build", key)])
+            got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base, ROUTED="true")
+            self.assertEqual((got["units"], "units=1\n" in output), ([UNIT], True), output)
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_run_step_lets_a_caller_set_the_repository(self):
+        """run_step's stand-in repository name gives way to one a caller passes, so a caller can still run the plan
+        step as a push on the public repository, where it plans no part."""
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            base = repo(t)
+            t.write("proofs/%s/plain_halts/Proof.v" % UNIT, "Theorem x : True. Proof. exact I. Qed.\n")
+            commit(t)
+            self.workflow(t, d)
+            os.makedirs(os.path.join(d, "base"))
+            os.symlink(TOOLS, os.path.join(d, "base", "tools"))
+            got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base, ROUTED="true",
+                                        GITHUB_REPOSITORY="theorem-labs/oss-verify-proofs", GITHUB_EVENT_NAME="push")
+            self.assertEqual((got["units"], "units=0\n" in output), ([], True), output)
             got, output = self.run_step(d, "pr.yml", d, KIND="maintainer", BASE=base, ROUTED="true")
             self.assertEqual((got["units"], "units=1\n" in output), ([UNIT], True), output)
 
@@ -1564,27 +1810,249 @@ class Plan(unittest.TestCase):
                              {"routed": "true", "units": "0", "repository_lint": "false", "tests": "true",
                               "controls": "true"}, output)
 
-    # The files the farm suites of pr.yml's reach step read (the farm runner's tests and the N6 driver's), a tool under
-    # dev/stream/ neither reads, and a stand-in for the head's checker, which the reach step runs for the hunk rows of a
-    # change under dev/stream/: this one writes none.
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_a_push_that_changes_a_partial_checkout_outside_tools_runs_the_tests(self):
+        """The partial-checkout guard (test_generate.py, partial_checkouts) reads each file outside the facts trees that
+        holds a partial checkout, Markdown and tests aside.  So a change to such a file runs the tools' tests: one that
+        adds the line, and one that takes it out, since the line at the base can be one of the guard's UNREAD entries.
+        A change to a script that never held one does not, nor does the same line under projects/ or in a Markdown
+        file, beside a script without one."""
+        script, line = "#!/bin/sh\necho lane\n", "git sparse-checkout set --no-cone '/*'\n"
+        other = {"dev/lane/y.sh": script + "echo done\n"}
+        cases = (
+            # (case, the files at the base, the files the change writes, tests)
+            ("a script outside tools/ gains the line", {"dev/lane/x.sh": script},
+             {"dev/lane/x.sh": script + line}, "true"),
+            ("the change takes the line out of the script", {"dev/lane/x.sh": script + line},
+             {"dev/lane/x.sh": script + "echo done\n"}, "true"),
+            ("a script that never held the line", {"dev/lane/x.sh": script},
+             {"dev/lane/x.sh": script + "echo done\n"}, "false"),
+            ("the line under projects/", {}, dict(other, **{"projects/zlib/fetch.sh": script + line}), "false"),
+            ("the line in a Markdown file", {}, dict(other, **{"dev/lane/x.md": line}), "false"),
+        )
+        for name, before, after, tests in cases:
+            with self.subTest(case=name), tree() as t, tempfile.TemporaryDirectory() as d:
+                for rel, text in before.items():
+                    t.write(rel, text)
+                base = self.released(t)
+                for rel, text in after.items():
+                    t.write(rel, text)
+                commit(t)
+                rc, output, got, _plan_json = self.pr_plan_job(t, d, "push", base)
+                self.assertEqual(rc, 0, output)
+                self.assertEqual((got.get("routed"), got.get("tests")), ("true", tests), output)
+
+    def test_the_reach_step_holds_the_partial_checkout_guard_s_pattern_and_skips(self):
+        """pr.yml's reach step runs the tools' tests for the lines that the partial-checkout guard (test_generate.py,
+        partial_checkouts) reads.  This test holds the step's pattern and skips equal to the guard's, word for word
+        (reach_step_problems), so an edit of one side alone fails.  Each control edits one of them in the step alone,
+        and must be found."""
+        path = os.path.join(REPO, ".github", "workflows", "pr.yml")
+        if not os.path.exists(path):
+            self.skipTest("no .github/workflows/pr.yml beside tools/oft")
+        run = next(s for s in yamlio.load_file(path)["jobs"]["plan"]["steps"] if s.get("id") == "reach")["run"]
+        self.assertEqual(reach_step_problems(run), [])
+        controls = (
+            # (what the edit changes, the text it replaces, the text it puts in its place)
+            ("the facts-tree skip", "findings|", ""),
+            ("the Markdown skip", r"'\.md$'", r"'\.md'"),
+            ("the tests skip", "'(^|/)(tests|testdata)/'", "'(tests|testdata)/'"),
+            ("the test_ skip", "'(^|/)test_[^/]*$'", "'(^|/)test_'"),
+            ("$sparse's value", "sparse='sparse-checkout", "sparse='sparse_checkout"),
+            ("the search with $sparse", '-e "$sparse"', '-e "$other"'),
+        )
+        for name, old, new in controls:
+            with self.subTest(control=name):
+                edited = run.replace(old, new)
+                self.assertNotEqual(edited, run)
+                self.assertNotEqual(reach_step_problems(edited), [])
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_a_push_that_changes_what_oft_check_reads_runs_the_controls(self):
+        for rel, controls in (("tools/oft/check.py", "true"), ("tools/oft/yamlio.py", "true"),
+                              ("tools/oft/phrasebook.yaml", "true"),
+                              ("tools/oft/requirements.txt", "true"), ("tools/oft/lint.py", "false")):
+            with self.subTest(rel=rel), tree() as t, tempfile.TemporaryDirectory() as d:
+                base = self.released(t)
+                t.write(rel, "# changed\n")
+                commit(t)
+                rc, output, got, _plan_json = self.pr_plan_job(t, d, "push", base)
+                self.assertEqual(rc, 0, output)
+                self.assertEqual(got.get("controls"), controls, output)
+
+    # Run in a fresh interpreter: the modules `import oft.check` loads, one line, and then every file under tools/oft/
+    # that is not Python source and that the import opens (builtins.open and io.open, which pathlib uses), the other.
+    IMPORT_READS = r"""
+import builtins, io, os, sys
+seen, real = set(), io.open
+def spy(file, *a, **k):
+    if isinstance(file, (str, bytes, os.PathLike)):
+        seen.add(os.path.abspath(os.fsdecode(file)))
+    return real(file, *a, **k)
+builtins.open = io.open = spy
+import oft.check
+here = os.path.abspath("oft")
+print(" ".join(sorted(m for m in sys.modules if m == "oft" or m.startswith("oft."))))
+print(" ".join(sorted(os.path.relpath(p, here) for p in seen if p.startswith(here + os.sep) and not p.endswith(".py"))))
+"""
+
+    def test_the_controls_rule_names_each_module_oft_check_imports(self):
+        path = os.path.join(REPO, ".github", "workflows", "pr.yml")
+        if not os.path.exists(path):
+            self.skipTest("no .github/workflows/pr.yml beside tools/oft")
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+        modules = re.search(r"\n *checker='\^tools/oft/\(([a-z_|]+)\)\\\.py\$'\n", text)
+        data = re.search(r"\n *checker\+='\|\^tools/oft/\(([a-z_./\\|]+)\)\$'\n", text)
+        self.assertIsNotNone(modules, "no checker= line in pr.yml")
+        self.assertIsNotNone(data, "no checker+= line in pr.yml")
+        imported, read = subprocess.run(
+            [sys.executable, "-c", self.IMPORT_READS], cwd=TOOLS, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+            capture_output=True, text=True, check=True).stdout.split("\n")[:2]
+        self.assertEqual(sorted(modules.group(1).split("|")),
+                         sorted("__init__" if m == "oft" else m[len("oft."):] for m in imported.split()))
+        self.assertIn("phrasebook.yaml", read.split())
+        self.assertEqual(sorted(data.group(1).split("|")),
+                         sorted([re.escape(f) for f in read.split()] + [r"requirements\.txt"]))
+
+    # The files the farm suites of pr.yml's reach step read (the farm runner's tests and the N6 driver's), and a tool
+    # under dev/stream/ neither reads.  Every path a pattern of the table names belongs here, or the case below cannot
+    # exercise it; what each path then routes is read from the table and never written again (farm_routing).  The
+    # reach step runs no code of the change, so the head's checker is not among them (test_workflow_verdicts,
+    # PlanRunsNoChangeCodeTest).
     FARM_TREE = {"dev/stream/bin/ossv-job": "# the route\n", "dev/stream/bin/ossv-job-farm": "# the runner\n",
+                 # the module the runner imports from beside itself, which both rows of the table name
+                 "dev/stream/bin/gcs_key.py": "# the key module\n",
                  "dev/stream/bin/test_ossv_job_farm.py": "# its tests\n", "dev/stream/conftest.py": "# conftest\n",
                  "dev/stream/pyproject.toml": "# project\n", "dev/stream/uv.lock": "# lock\n",
                  "dev/stream/bin/ossv-n6-farm": "# the N6 driver\n", "dev/stream/bin/ossv-n6-pod": "# its pod\n",
                  "dev/stream/bin/ossv-n6-shards": "# its shards\n", "dev/stream/bin/test_ossv_n6.py": "# its tests\n",
-                 "dev/stream/bin/ossv-say": "# a tool no farm suite runs\n",
-                 "dev/stream/bin/ossv-tools-check": "import sys\n"}
+                 # the farm runner's tests read these two as DATA -- the stream's one credential scan, and the
+                 # command line the N6 driver submits -- so the table names them and the files they name with
+                 # `$here/...` in turn (pull request 2513)
+                 "dev/stream/bin/ossv-gate-suite": "# the gate suite\n",
+                 "dev/stream/bin/ossv-gate-job": "# the gate job\n", "dev/stream/bin/ossv-vm": "# the VM tool\n",
+                 # the store client the runner sends with a rocq-kit submit, the peaks reader the N6 driver runs,
+                 # and the sizing note the N6 driver's tests read (Dispatch issue OSSV-831)
+                 "dev/stream/bin/ossv-store": "# the store client\n",
+                 "dev/stream/bin/ossv-n6-peaks-index": "# the peaks reader\n",
+                 "dev/stream/docs/n6-sizing.md": "# the sizing note\n",
+                 "dev/stream/bin/ossv-say": "# a tool no farm suite runs\n"}
     FARM_WORKFLOW = ("# the workflow\njobs:\n  farm_tests:\n    runs-on: ubuntu-24.04\n"
                      "  stream_tools:\n    runs-on: ubuntu-24.04\n")
     JOB_FARM = {"test_ossv_job_farm.py": 6}
     N6 = {"test_ossv_n6.py": 1}
     BOTH = dict(JOB_FARM, **N6)
 
+    def farm_table(self):
+        """{file: (legs, pattern)} of pr.yml's own farm suites table, the one the reach step reads."""
+        path = os.path.join(REPO, ".github", "workflows", "pr.yml")
+        if not os.path.exists(path):
+            self.skipTest("no .github/workflows/pr.yml beside tools/oft")
+        with open(path, encoding="utf-8") as stream:
+            text = stream.read()
+        table = re.search(r"\n *# farm suites\n(.*?)\n *# end of farm suites\n", text, re.S)
+        self.assertIsNotNone(table, "no farm suites table in pr.yml")
+        rows = re.findall(r"^ +'(test_[a-z0-9_]+\.py) ([0-9]+) (\S+)'$", table.group(1), re.M)
+        self.assertTrue(rows, table.group(1))
+        return {file: (int(legs), re.compile(pattern)) for file, legs, pattern in rows}
+
+    def farm_routing(self, table, rel):
+        """What the TABLE routes `rel` to, as {file: legs}. The table is the router, so an expectation is read
+        from it and not written beside it: a second copy of a routing rule drifts, and the one that stood here
+        failed the day the router gained a file the suite reads (pull request 2513)."""
+        return {file: legs for file, (legs, pattern) in table.items() if pattern.match(rel)}
+
+    # The escapes a path pattern may carry, each standing for the character after the backslash. Anything
+    # else -- `\b`, `\w`, `\d` -- is a character CLASS and no literal, and reading it as the letter would
+    # expand a pattern into paths it does not match (the reviewer of #2513, round 10).
+    PATH_ESCAPES = ".-/"
+
+    def expand_alternation(self, text, index=0, depth=0):
+        """(the strings this part of a pattern matches, the index after it).  A row's pattern is literal paths
+        in groups of alternatives and nothing else, so expanding it is exact; any other regular-expression
+        operator fails the case rather than being half-read, which is the honest answer for a table nobody
+        can enumerate.  A `|` outside a group fails too: the patterns are anchored with ^ and $, and a
+        top-level alternation would put those anchors on one branch only, which is not the shape this
+        reads."""
+        strings, alternatives = [""], []
+        while index < len(text):
+            char = text[index]
+            if char == "(":
+                inner, index = self.expand_alternation(text, index + 1, depth + 1)
+                strings = [start + piece for start in strings for piece in inner]
+            elif char == ")":
+                self.assertGreater(depth, 0, "%s: a bracket closes what nothing opened" % text)
+                return alternatives + strings, index + 1
+            elif char == "|":
+                self.assertGreater(depth, 0, "%s: an alternation outside a group" % text)
+                alternatives += strings
+                strings, index = [""], index + 1
+            elif char == "\\":
+                self.assertLess(index + 1, len(text), text)
+                self.assertIn(text[index + 1], self.PATH_ESCAPES,
+                              "%s: \\%s is no literal character" % (text, text[index + 1]))
+                strings, index = [start + text[index + 1] for start in strings], index + 2
+            else:
+                self.assertNotIn(char, "[]{}*+?.^$", "%s: not a pattern of literal paths" % text)
+                strings, index = [start + char for start in strings], index + 1
+        self.assertEqual(depth, 0, "%s: a group nothing closes" % text)
+        return alternatives + strings, index
+
+    def table_paths(self, pattern):
+        """Every path PATTERN names, by expanding its alternations -- and each one read back THROUGH the
+        pattern, so an expansion that drifted from what the regular expression means fails here rather than
+        quietly naming paths the router does not route."""
+        text = pattern.pattern
+        self.assertTrue(text.startswith("^") and text.endswith("$"), text)
+        paths, index = self.expand_alternation(text[1:-1])
+        self.assertEqual(index, len(text) - 2, text)
+        self.assertTrue(paths, text)
+        for path in paths:
+            self.assertIsNotNone(pattern.fullmatch(path),
+                                 "%s expands to %r, which it does not match" % (text, path))
+        return paths
+
+    def test_the_farm_table_pattern_reader_refuses_what_it_cannot_expand(self):
+        """table_paths names the paths a row's pattern routes, and the routing case asserts the fixture holds
+        every one of them.  A pattern it READ WRONGLY would make that assertion name paths the router does
+        not route, or miss one it does, so each shape it cannot read exactly is refused here rather than
+        guessed at: an escape that is a character class, an alternation outside a group, a bracket that does
+        not close, and any other operator.  The shapes it CAN read are run first, so a reader that refused
+        everything would not pass either."""
+        for text, want in (
+            (r"^dev/stream/bin/ossv\-job$", ["dev/stream/bin/ossv-job"]),
+            (r"^a/(b|c)\.py$", ["a/b.py", "a/c.py"]),
+            (r"^(a|b)/(c|d)$", ["a/c", "a/d", "b/c", "b/d"]),
+            (r"^x/(y(1|2)|z)$", ["x/y1", "x/y2", "x/z"]),
+        ):
+            with self.subTest(pattern=text):
+                self.assertEqual(sorted(self.table_paths(re.compile(text))), sorted(want))
+        for text, says in ((r"^a\wb$", "is no literal character"),
+                           (r"^a\bb$", "is no literal character"),
+                           (r"^a\)b$", "is no literal character"),
+                           (r"^a|b$", "an alternation outside a group"),
+                           (r"^a.b$", "not a pattern of literal paths"),
+                           (r"^ab?$", "not a pattern of literal paths"),
+                           (r"^a[bc]$", "not a pattern of literal paths")):
+            with self.subTest(refused=text):
+                with self.assertRaises(AssertionError) as raised:
+                    self.table_paths(re.compile(text))
+                self.assertIn(says, str(raised.exception))
+        # A bracket that opens or closes nothing never reaches the reader: `re` itself refuses it, so no row
+        # of the table can carry one. The reader keeps its own guard for that shape all the same, since it
+        # walks the text and not the compiled pattern.
+        for text in (r"^a(b$", r"^a)b$"):
+            with self.subTest(uncompilable=text):
+                with self.assertRaises(re.error):
+                    re.compile(text)
+
     def farm_answer(self, event, change, tree_files=None, workflow=None):
         """The reach step's answers for a push or merge queue group that writes `change` (path: text) over a released
         tree holding FARM_TREE (or `tree_files`) and `workflow` (FARM_WORKFLOW) as its pr.yml: farm_tests, the legs as
         {file: count} (each file's legs checked to be indices 0 to count - 1 of that count), stream_tools, and the
-        output."""
+        output.  The text of the stream-changed.txt the step wrote for the stream_tools job, or None when it wrote
+        none, is in self.stream_changed: the call removes its runner's temporary directory before it returns."""
         with tree() as t, tempfile.TemporaryDirectory() as d:
             for rel, text in dict(self.FARM_TREE if tree_files is None else tree_files,
                                   **{".github/workflows/pr.yml": workflow or self.FARM_WORKFLOW}).items():
@@ -1595,6 +2063,11 @@ class Plan(unittest.TestCase):
             commit(t)
             rc, output, got, _plan_json = self.pr_plan_job(t, d, event, base)
             self.assertEqual(rc, 0, output)
+            stream_changed = os.path.join(d, "runner-temp", "stream-changed", "stream-changed.txt")
+            self.stream_changed = None
+            if os.path.exists(stream_changed):
+                with open(stream_changed) as f:
+                    self.stream_changed = f.read()
             legs = {}
             for leg in json.loads(got["farm_legs"]):
                 legs.setdefault(leg["file"], []).append((leg["index"], leg["count"]))
@@ -1605,28 +2078,38 @@ class Plan(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_each_farm_suite_runs_when_a_file_it_reads_changes_and_only_then(self):
-        """Each file a farm suite reads runs that suite's legs, on a push and on a merge queue group alike: the N6
-        driver's own files the N6 suite, the farm runner's tests the farm runner's, and the route, the runner and
-        pytest's files both -- bin/ossv-job is the submitter both drivers run, and the N6 driver reaches it as its
-        own sibling.  Another tool under dev/stream/ runs the stream tools' check and no suite."""
-        cases = {"dev/stream/bin/ossv-job": self.BOTH, "dev/stream/bin/test_ossv_job_farm.py": self.JOB_FARM,
-                 "dev/stream/bin/ossv-job-farm": self.BOTH, "dev/stream/conftest.py": self.BOTH,
-                 "dev/stream/pyproject.toml": self.BOTH, "dev/stream/uv.lock": self.BOTH,
-                 "dev/stream/bin/ossv-n6-farm": self.N6, "dev/stream/bin/ossv-n6-pod": self.N6,
-                 "dev/stream/bin/ossv-n6-shards": self.N6, "dev/stream/bin/test_ossv_n6.py": self.N6}
-        for rel, want in cases.items():
+        """Each file a farm suite reads runs that suite's legs, on a push and on a merge queue group alike, and a
+        file no suite reads runs neither.  WHAT each path routes is read from pr.yml's own farm suites table
+        (farm_routing) rather than written again here: this case is about the reach step AGREEING with that
+        table, and a second copy of the routing is what drifts -- the copy that stood here said the N6 driver's
+        files route the N6 suite alone, and failed the day the farm runner's tests began reading them (2513).
+        The table is held to three shapes first, so a table that routed everything, or nothing, would not pass
+        by agreeing with itself, and EVERY path its patterns name must be in FARM_TREE: a path the fixture
+        does not hold is a row of the router this case silently never exercises."""
+        table = self.farm_table()
+        for path in sorted({path for _legs, pattern in table.values() for path in self.table_paths(pattern)}):
+            self.assertIn(path, self.FARM_TREE, "the farm suites table names %s and FARM_TREE does not hold "
+                                                "it: this case would never exercise that path" % path)
+        routing = {rel: self.farm_routing(table, rel) for rel in sorted(self.FARM_TREE)}
+        self.assertTrue(any(len(want) > 1 for want in routing.values()), routing)
+        self.assertTrue(any(len(want) == 1 for want in routing.values()), routing)
+        self.assertTrue(any(not want for want in routing.values()), routing)
+        for rel, want in routing.items():
             with self.subTest(path=rel):
                 farm, legs, stream, output = self.farm_answer("push", {rel: "# changed\n"})
-                self.assertEqual((farm, legs, stream), ("true", want, "true"), output)
+                self.assertEqual((farm, legs, stream), ("true" if want else "false", want, "true"), output)
                 for file in want:
                     self.assertIn("the tests of bin/%s run in %d leg(s) (a file they read changed)"
                                   % (file, want[file]), output)
-        farm, legs, stream, output = self.farm_answer("merge_group", {"dev/stream/bin/ossv-n6-pod": "# changed\n"})
-        self.assertEqual((farm, legs, stream), ("true", self.N6, "true"), output)
-        self.assertIn("nothing the tests of bin/test_ossv_job_farm.py read changed: they do not run", output)
-        farm, legs, stream, output = self.farm_answer("push", {"dev/stream/bin/ossv-say": "# changed\n"})
-        self.assertEqual((farm, legs, stream), ("false", {}, "true"), output)
-        self.assertIn("nothing the tests of bin/test_ossv_n6.py read changed: they do not run", output)
+                for file in sorted(set(table) - set(want)):
+                    self.assertIn("nothing the tests of bin/%s read changed: they do not run" % file, output)
+        # a merge queue group routes as a push does; the path is one the table sends to ONE suite, so the line
+        # about the other suite not running is read on a real difference
+        alone = next(rel for rel, want in routing.items() if len(want) == 1)
+        farm, legs, stream, output = self.farm_answer("merge_group", {alone: "# changed\n"})
+        self.assertEqual((farm, legs, stream), ("true", routing[alone], "true"), output)
+        for file in sorted(set(table) - set(routing[alone])):
+            self.assertIn("nothing the tests of bin/%s read changed: they do not run" % file, output)
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_a_change_to_pr_yml_runs_every_farm_suite_only_when_it_changes_their_job_or_table(self):
@@ -1665,6 +2148,35 @@ class Plan(unittest.TestCase):
         farm, legs, stream, output = self.farm_answer("push", {".github/workflows/pr.yml": farm_changed},
                                                       tree_files=only_farm)
         self.assertEqual((farm, legs, stream), ("true", self.JOB_FARM, "false"), output)
+
+    # The four files of tools/publish/ that the stream tools' tests read out of the checkout (pr.yml's reach step,
+    # `held`): dev/stream/bin/test_held_match.py reads all four, held-match-cases.tsv and release_pins.py itself, and
+    # withheld.yaml and private-harnesses.txt through the gate's reader of the held list (read_held).
+    STREAM_HELD_FILES = ("tools/publish/held-match-cases.tsv", "tools/publish/withheld.yaml",
+                         "tools/publish/private-harnesses.txt", "tools/publish/release_pins.py")
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_a_tools_publish_file_the_stream_tests_read_runs_the_stream_tools_job_with_no_row(self):
+        """Each of STREAM_HELD_FILES, changed alone, runs the stream_tools job: the reach step answers
+        stream_tools=true and writes stream-changed.txt, which that job downloads with `if-no-files-found: error`.
+        The file holds the rows under dev/stream/ alone, so here it holds none: the grep that finds no such row
+        exits 1 under `set -euo pipefail`, and that must not end the step.  With a path under dev/stream/ beside
+        it, the list holds that path's row and no other.  Another file of tools/publish/ runs nothing, and nor does
+        a name that only begins with one of the four: each path must match whole."""
+        for rel in self.STREAM_HELD_FILES:
+            with self.subTest(path=rel):
+                farm, legs, stream, output = self.farm_answer("push", {rel: "# changed\n"})
+                self.assertEqual((farm, legs, stream), ("false", {}, "true"), output)
+                self.assertEqual(self.stream_changed, "", output)
+        farm, legs, stream, output = self.farm_answer(
+            "push", {"tools/publish/withheld.yaml": "# changed\n", "dev/stream/bin/ossv-say": "# changed\n"})
+        self.assertEqual((farm, legs, stream), ("false", {}, "true"), output)
+        self.assertEqual(self.stream_changed, "dev/stream/bin/ossv-say\n", output)
+        for rel in ("tools/publish/verify", "tools/publish/withheld.yaml.orig"):
+            with self.subTest(path=rel):
+                farm, legs, stream, output = self.farm_answer("push", {rel: "# changed\n"})
+                self.assertEqual((farm, legs, stream), ("false", {}, "false"), output)
+                self.assertIsNone(self.stream_changed, output)
 
     @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
     def test_the_lint_job_takes_the_plan_job_s_base_and_lists_the_same_paths(self):
@@ -2188,12 +2700,17 @@ class Plan(unittest.TestCase):
                                        "QUEUE_RUNS": "${{ needs.plan.outputs.queue_runs }}",
                                        "PLAN_RESULT": "${{ needs.plan.result }}",
                                        "CHECK_RESULT": "${{ needs.check.result }}",
+                                       "LPS_PIN": "${{ needs.plan.outputs.lps_pin }}",
+                                       "LPS_PIN_RESULT": "${{ needs.lps_pin.result }}",
                                        "DRAFTS_LISTED": "${{ needs.plan.outputs.draft_legs != '[]' }}",
                                        "DRAFTS_RESULT": "${{ needs.fetch-drafts.result }}"})
 
         def verdict(**env):
-            # no draft listed, so fetch-drafts was skipped, as the step's own fetch-drafts check requires
+            # no draft listed, so fetch-drafts was skipped, as the step's own fetch-drafts check requires; and
+            # no release.yaml, toolchain/ or theories/ file changed, so the LPS pin job was skipped (its own cases are
+            # in test_workflow_verdicts.LpsPinTest)
             base = dict(UNITS="0", FULL="false", DEFERRED="false", CHECK_OF_RECORD="", QUEUE_RUNS="",
+                        LPS_PIN="false", LPS_PIN_RESULT="skipped",
                         PLAN_RESULT="success", CHECK_RESULT="skipped", DRAFTS_LISTED="false", DRAFTS_RESULT="skipped",
                         GITHUB_SERVER_URL="https://github.com", GITHUB_REPOSITORY="example/repository")
             base.update(env)
@@ -2211,7 +2728,9 @@ class Plan(unittest.TestCase):
                            dict(DEFERRED="true", CHECK_OF_RECORD="a VM run of every part")),
                           # the release line's drafts: listed and fetched
                           ("a draft listed and fetched", dict(UNITS="3", CHECK_RESULT="success", DRAFTS_LISTED="true",
-                                                              DRAFTS_RESULT="success"))):
+                                                              DRAFTS_RESULT="success")),
+                          # a change to the pins or theories/ the LPS pin job held to them
+                          ("the pins or theories/ changed and held", dict(LPS_PIN="true", LPS_PIN_RESULT="success"))):
             with self.subTest(case=name):
                 rc, out = verdict(**env)
                 self.assertEqual(rc, 0, out)
@@ -2238,7 +2757,14 @@ class Plan(unittest.TestCase):
                           ("a garbled run list", dict(QUEUE_RUNS="11 x")),
                           ("a draft listed, its fetch failed", dict(DRAFTS_LISTED="true", DRAFTS_RESULT="failure")),
                           ("a draft listed, its fetch did not run", dict(DRAFTS_LISTED="true", DRAFTS_RESULT="skipped")),
-                          ("no draft listed, yet fetch-drafts ran", dict(DRAFTS_RESULT="success"))):
+                          ("no draft listed, yet fetch-drafts ran", dict(DRAFTS_RESULT="success")),
+                          ("no lps_pin answer", dict(LPS_PIN="")),
+                          # #2360's shape on the push path: a theories/ change no job compiled
+                          ("the pins or theories/ changed, nothing held them", dict(LPS_PIN="true")),
+                          ("the pins or theories/ changed, the LPS pin job failed", dict(LPS_PIN="true",
+                                                                                         LPS_PIN_RESULT="failure")),
+                          ("no release.yaml, toolchain/ or theories/ change, yet the LPS pin job ran",
+                           dict(LPS_PIN_RESULT="success"))):
             with self.subTest(case=name):
                 self.assertEqual(verdict(**env)[0], 1)
 
@@ -2428,9 +2954,13 @@ class VmEvidence(unittest.TestCase):
     a change to them re-checks no fuzz target (test_a_change_to_the_planner_changes_no_key)."""
 
     HARMLESS = ["projects/zlib/checksum_fuzzer/proofs/sum/Proof.v", "projects/zlib/checksum_fuzzer/proofs/lib/Lib.v",
-                "proofs/curl/fuzz_url/url/Proof.v", "CHANGELOG.md", "tools/oft/lint.py",
+                "proofs/json/fuzzer-parse_bjdata/parse/Proof.v", "CHANGELOG.md", "tools/oft/lint.py",
                 "tools/oft/tests/test_lint.py", "tools/oft/README.md", "tools/enroll/upload",
-                "tools/publish/release.py", "dev/enroll/upload",
+                "tools/publish/release.py", "dev/enroll/upload", "dev/licence/made_from.py",
+                "dev/licence/test_made_from.py", "dev/gateway-model/theories/Json.v",
+                ".github/workflows/gateway-model.yml", "dev/evals/paired-run/runner.py",
+                ".github/workflows/paired-run.yml", ".github/workflows/rocq-release.yml",
+                ".github/theorem-rule-classes.tsv", "dev/stream/bin/x.py", "dev/stream/README.md",
                 # the generated pages a proof re-renders with its statement's new status: no key holds either
                 "projects/zlib/checksum_fuzzer/README.md", "projects/zlib/README.md"]
 
@@ -2448,7 +2978,11 @@ class VmEvidence(unittest.TestCase):
                      "projects/zlib/patches/README.md", "docs/README.md",
                      "findings/zlib/checksum_fuzzer/f/finding.yaml",
                      "projects/zlib/checksum_fuzzer/counterexamples/sum/x.bin",
-                     "counterexamples/zlib/checksum_fuzzer/sum/x.bin", "proofs/lib/Shared.v"):
+                     "counterexamples/zlib/checksum_fuzzer/sum/x.bin", "proofs/lib/Shared.v", "dev/licences/x.py",
+                     "dev/evalsx/x.py", ".github/workflows/paired-run.yml.bak",
+                     ".github/workflows/rocq-release.yml.bak", ".github/workflows/rocq-release.yaml",
+                     ".github/theorem-rule-classes.tsv.bak", ".github/x/theorem-rule-classes.tsv",
+                     "dev/streamx/x.py", "dev/stream", "tools/stream/x.py"):
             with self.subTest(path=path):
                 self.assertEqual(plan.paths_a_check_reads(self.HARMLESS + [path]), [path])
 
@@ -2470,6 +3004,11 @@ class VmEvidence(unittest.TestCase):
     def line(self, comp):
         return "%s %s" % (comp["unit"], self.key_of(comp))
 
+    def part_line(self, comp, part):
+        """The evidence line PART of this unit carries, under the name plan.evidence_unit gives it: the unit
+        alone for its build, `<unit>:<part>` for any other handled part."""
+        return "%s %s" % (plan.evidence_unit(comp["unit"], part), self.key_of(comp))
+
     # keys.checker of the tree a group checks, and the id its pull requests' markers name.  Every call that is
     # not about the checker takes these, so that what each of those tests measures is the key rules alone.
     CHECKER = "e" * 64
@@ -2481,7 +3020,7 @@ class VmEvidence(unittest.TestCase):
                                      ["1 " + self.CHECKER] if checker_lines is None else checker_lines)
 
     def test_every_planned_part_with_the_key_its_check_of_record_ran_on(self):
-        a, b = self.comp("zlib/checksum_fuzzer"), self.comp("curl/fuzz_url")
+        a, b = self.comp("zlib/checksum_fuzzer"), self.comp("json/fuzzer-parse_bjdata")
         ok, why = self.keys_of([self.part(a), self.part(b), self.part(self.comp("x/y"), check=False)],
                                [self.line(a), self.line(b)])
         self.assertEqual((ok, why), (True, "2 part(s), each with the key its check of record ran on"))
@@ -2514,6 +3053,39 @@ class VmEvidence(unittest.TestCase):
         self.assertEqual(self.keys_of([], []), (False, "the plan marks no part to check"))
         self.assertEqual(self.keys_of([self.part(a, check=False)], [self.line(a)]),
                          (False, "the plan marks no part to check"))
+
+    UNIT_WITH_COUNTEREXAMPLES = "ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_VIMA_fuzzer"
+
+    def test_a_counterexamples_part_carries_its_own_evidence_line(self):
+        """OSSV-373: the eight FFmpeg decoder targets of OSSV-367 are planned [build,
+        counterexamples].  Until 2026-11-11 a plan with such a part left the group its checks whatever the
+        marker said, and #2479's queue check was refused after 41,043 s and 2,042 farm jobs.  Each planned part
+        now carries a line of its own, and both must match."""
+        a = self.comp(self.UNIT_WITH_COUNTEREXAMPLES)
+        cx = self.comp(self.UNIT_WITH_COUNTEREXAMPLES, part="counterexamples")
+        ok, why = self.keys_of([self.part(a), self.part(cx, part="counterexamples")],
+                               [self.line(a), self.part_line(cx, "counterexamples")])
+        self.assertEqual((ok, why), (True, "2 part(s), each with the key its check of record ran on"))
+
+    def test_a_counterexamples_part_with_no_line_of_its_own_is_refused_by_name(self):
+        """The over-correction the fix above must not make: accepting the part because the UNIT has a line.  The
+        build's line says nothing about the counterexamples part's key, and the refusal names the part."""
+        a = self.comp(self.UNIT_WITH_COUNTEREXAMPLES)
+        cx = self.comp(self.UNIT_WITH_COUNTEREXAMPLES, part="counterexamples")
+        ok, why = self.keys_of([self.part(a), self.part(cx, part="counterexamples")], [self.line(a)])
+        self.assertEqual((ok, why), (False, "%s:counterexamples has no key line in its pull request's evidence "
+                                            "comment" % self.UNIT_WITH_COUNTEREXAMPLES))
+
+    def test_a_counterexamples_key_that_differs_is_refused_by_name(self):
+        """A line for the part whose key is not the one at this head: the part's content key holds what its
+        check reads, so this says the counterexamples moved between the two trees."""
+        a = self.comp(self.UNIT_WITH_COUNTEREXAMPLES)
+        cx = self.comp(self.UNIT_WITH_COUNTEREXAMPLES, part="counterexamples")
+        was = self.comp(self.UNIT_WITH_COUNTEREXAMPLES, part="counterexamples", harness="h1")
+        ok, why = self.keys_of([self.part(a), self.part(cx, part="counterexamples")],
+                               [self.line(a), self.part_line(was, "counterexamples")])
+        self.assertFalse(ok)
+        self.assertIn("%s:counterexamples: its key at this group head is" % self.UNIT_WITH_COUNTEREXAMPLES, why)
 
     def test_the_checker_the_marker_names_is_the_one_the_tree_holds(self):
         """A key says nothing about the tools that computed it: on 2026-11-06 a lane posted markers whose keys

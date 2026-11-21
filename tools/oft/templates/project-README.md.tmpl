@@ -100,7 +100,7 @@ Builder image: `$builder`. These binaries cannot yet be rebuilt from this releas
 @@ builder_unpublished
 Builder image: not published yet, so these binaries cannot yet be rebuilt from this release ([docs/reproducing.md](../../docs/reproducing.md)).
 @@ builder_port
-Builder image: `$builder`. The OSS Verify port `$port_path` at `$port_commit` in $port_repository built every binary of this project instead of a build recipe. Its archive [`$port_file`]($port_url) holds the port's `tools/check`, which builds them again on this image with Docker: it fetches the project's source trees over the network, at the commits and SHA-256s the port pins, and does not read `$src_file` ([docs/reproducing.md](../../docs/reproducing.md)).
+Builder image: `$builder`. The OSS Verify port `$port_path` at `$port_commit` in $port_repository built every binary of this project instead of a build recipe. Its archive [`$port_file`]($port_url) holds the port's checker, which builds them again on this image with Docker: it fetches the project's source trees over the network, at the commits and SHA-256s the port pins, and does not read `$src_file` ([docs/reproducing.md](../../docs/reproducing.md)).
 @@ builder_port_no_archive
 Builder image: `$builder`. The OSS Verify port `$port_path` at `$port_commit` in $port_repository built every binary of this project instead of a build recipe. This release does not attach the port's archive, which holds its build scripts ([docs/reproducing.md](../../docs/reproducing.md)).
 
@@ -128,7 +128,17 @@ Not included: $items.
 **$name** ($reason)
 
 @@ family_halts
-- **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with $exits, without crashing, failing an assertion, hanging or tripping its sanitizer.
+- **`<build>_halts`**: on every input on which the build is never refused memory for exceeding 16 GiB (a premise: an input that needs more is not covered), and when the environment refuses nothing it is not forced to, every execution exits with $exits, $without.$any_note
+@@ family_halts_without
+without crashing, failing an assertion, hanging or tripping its sanitizer
+@@ family_halts_without_any_rust
+without crashing or hanging, and without an ASan report or a failed UBSan check in C code
+@@ family_halts_without_any_python
+without crashing, hanging or tripping its sanitizer
+@@ family_halts_any_rust
+ A statement that allows any status allows status 79 too, which a panic (a failed assertion included) and a failed rustc UB check exit with, so it does not rule them out.
+@@ family_halts_any_python
+ In a call of the harness, an uncaught Python exception other than MemoryError (status 2) and SystemExit (status 77), a failed check included, exits with status 79, which a statement that allows any status allows: such a statement says nothing about one.
 @@ family_halts_may_fail
 - **`<build>_halts_may_fail`**: with no memory premise, and even if any request is refused at any point, every execution exits, with $exits. Stated for the plain and UBSan builds only.
 @@ family_agreement
@@ -139,6 +149,14 @@ Not included: $items.
 - **`<build>_disagrees_at_most b`**: for inputs drawn from the harness's `Distribution.v`, the plain and sanitizer builds disagree with probability at most *b*.
 @@ family_decidability
 - **`<build>_agreement_decidable`**: some riscv64 program decides exactly the finite inputs on which the two builds agree. A program that does so, with a bound on how often it rejects, is a route to a disagreement bound (docs/statements.md).
+@@ family_classifier-total
+- **`<build>_ca_total`, `<build>_cb_total`**: a published riscv64 program of the harness, its classifier A or B for the pair, answers yes (exit 0), no (exit 1) or maybe (exit 2) on every valid finite input; a crash or a hang is not an answer.
+@@ family_classifier-sound
+- **`<build>_ca_sound`, `<build>_cb_sound`**: that classifier is sound: a yes means the two builds without the patches agree on the input (A), or each build agrees with its build without the patches (B), and where they do it never says no. A harness with no patches names its own builds.
+@@ family_classifier-maybe
+- **`<build>_maybe_good`, `<build>_maybe_diff` b**: for inputs drawn from the harness's `Distribution.v`, that classifier gives no firm answer with probability at most *b* (with no `Distribution.v`: on no valid input).
+@@ family_classifier-bound
+- **`<build>_bound_good`, `<build>_bound_diff` b**: for inputs drawn from the harness's `Distribution.v`, that classifier does not answer yes with probability at most *b*.
 
 @@ binding
 The harnesses with a check whose failure ends the process with a status that a halts statement excludes, so that a proof of that statement implies the check on every input it covers:
@@ -157,8 +175,10 @@ $rows
 
 @@ patch_item
   - [*$id*]($file): $summary ($upstream)
-@@ patch_unlisted
-  - $n$more, whose text is not in this release yet (it ships in the source bundle)
+@@ patch_unlisted_none
+  - $n$more, whose text is not in this repository, and no published archive holds it
+@@ patch_unlisted_recipe
+  - $n$more, whose text is not in this repository: it is in `$recipe_file` in release [$recipe_release]($recipe_url), under `patches/`, in the order `patches/series.tsv` gives
 
 @@ proofs_none
 None yet. See [docs/proving.md](../../docs/proving.md).
@@ -182,7 +202,7 @@ Corresponding source, in release [$src_release]($src_url): `$src_file`, the upst
 @@ recipe_apart
 the build recipe these binaries were built with (the build scripts, pins and patches), `$recipe_file` in release [$recipe_release]($recipe_url)
 @@ source_with_port
-Corresponding source, in release [$src_release]($src_url): `$src_file`, the upstream source trees exactly as upstream publishes them; `$manifest_file`, which says where the build lays each one down; and [`$port_file`]($port_url), the port archive at `$port_commit` holding its `infra/`, `tools/` and `$port_path/` files: the build scripts, and the source of the driver linked into these binaries.
+Corresponding source, in release [$src_release]($src_url): `$src_file`, the upstream source trees exactly as upstream publishes them; `$manifest_file`, which says where the build lays each one down; and [`$port_file`]($port_url), the port archive at `$port_commit` holding its checker, its `infra/` and its `$port_path/` files: the build scripts, and the source of the driver linked into these binaries.
 @@ copyleft_sources
 $who under a GPL-family licence, so their corresponding source also takes `$toolchain_file`, the source of the toolchain they were built with$sysroot, in release [$sources_release]($sources_url).
 @@ copyleft_who_all

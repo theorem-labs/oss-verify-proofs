@@ -46,7 +46,7 @@ Every proof here proves one or more agreement statements, halts statements, or b
 
 So an agreement proof rules out every error that the sanitizer build detects, on every input that the statement covers.
 
-A halts statement is about one build alone. It says that on every covered input, every execution of that build ends, and that it ends with a status the statement allows: status 0 or 2 for most harnesses, status 0, 2 or 78 for a harness that lists the inputs it turns away (`rejects`), and any status for espeak-ng's `ssml-fuzzer`. Its premises are its own: the build is never refused memory for exceeding 16 GiB, and the environment refuses nothing that the process's state does not force. A `_halts_may_fail` statement drops both premises and allows any status.
+A halts statement is about one build alone. It says that on every covered input, every execution of that build ends, and that it ends with a status the statement allows: status 0 or 2 for most harnesses, status 0, 2 or 78 for a harness that lists the inputs it turns away (`rejects`), and any status for espeak-ng's `ssml-fuzzer`. Its premises are its own: the build is never refused memory for exceeding 16 GiB, and the environment refuses nothing that the process's state does not force. A `_halts_may_fail` statement drops both premises and $may_fail_exits.
 
 If the harness checks a property with `assert()`, `abort()` or a trap, and the check is in the binary, an agreement proof shows that the property holds on every covered input. A halts proof shows it only for the checks that the fuzz target's page names: a check seen in the binary, of a fuzz target whose linked code installs no handler that could end a failed check with a status of its own (`failure_handlers: none`). A failed check of these kinds then kills the process, which no halts statement allows. A check that ends the process with `exit()` instead is shown only when the call reaches the driver's exit guard (`exit_reaches_guard: true`), which ends the process with status 77 whatever status the source passes, and only by a halts statement whose allowed statuses leave out 77 ([docs/facts.md](docs/facts.md), [docs/exploring.md](docs/exploring.md), [docs/statements.md](docs/statements.md)).
 
@@ -63,7 +63,7 @@ The Rocq definitions are in [theories/Shapes.v](theories/Shapes.v). Each agreeme
 | item | version |
 |---|---|
 | Rocq | $rocq_version, the official release (opam package `rocq-core`). The proofs load their libraries with plain `Require`. |
-| checker image | `$checker_image`. It holds Rocq, LPS with its `elf-snapshot` tool, the Rocq libraries that the proofs use, dune and Python 3, and no proof automation ([toolchain/checker.Dockerfile](toolchain/checker.Dockerfile)). |
+| checker image | `$checker_image`. It holds Rocq, LPS with its `elf-snapshot` tool, the Rocq libraries that the proofs use, dune and Python 3, and LPS's proof library `LinuxProcessSemantics.Common` with its tactics ([toolchain/checker.Dockerfile](toolchain/checker.Dockerfile), [toolchain/lps-core.paths](toolchain/lps-core.paths)). |
 | LPS | [rocq-linux-process-semantics](https://github.com/theorem-labs/rocq-linux-process-semantics) $lps_version, for every statement and every proof ([docs/semantics.md](docs/semantics.md)) |
 | static AddressSanitizer | [static-asan](https://github.com/theorem-labs/static-asan) commit [`b0506135`](https://github.com/theorem-labs/static-asan/commit/b05061352064fa2be1813ac5429149f3de5f057d): the published source of the static AddressSanitizer that built every ASan binary of this release ([docs/building.md](docs/building.md#the-addresssanitizer-runtime)) |
 | OSS-Fuzz | [`$oss_fuzz_commit8`](https://github.com/google/oss-fuzz/tree/$oss_fuzz_commit) |
@@ -98,7 +98,7 @@ This repository also states theorems about many OSS-Fuzz fuzz targets, proved or
 
 In this release: $status_counts. [analyses/known-issues.md](analyses/known-issues.md) lists every statement that is not open or proved, with the reason.
 
-There are four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable ([docs/statements.md](docs/statements.md)). One example:
+There are $statement_kinds ([docs/statements.md](docs/statements.md)). One example:
 
 $example
 
@@ -137,12 +137,17 @@ $counterexamples_row
 [CITATION.cff](CITATION.cff). A statement is cited as `project/harness/statement@r<revision>`, for example `$example_id@r$example_revision`. Until LPS is released, revisions are provisional ([docs/versioning.md](docs/versioning.md)).
 
 ## Licence
-What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the tools, the documentation and our proofs. Proofs that we made from proofs that Anthropic licensed under the Apache License 2.0 or the MIT licence, at the recipient's option, keep those licences. The licence texts are [LICENSES/anthropic-proofs-LICENSE](LICENSES/anthropic-proofs-LICENSE) and [LICENSES/anthropic-proofs-LICENSE-MIT](LICENSES/anthropic-proofs-LICENSE-MIT) and the notices are [LICENSES/anthropic-proofs-NOTICE](LICENSES/anthropic-proofs-NOTICE); the build record of each such proof names these three files ([docs/licensing.md](docs/licensing.md)). The binaries, the source archives and the harness copies keep their own licences ([NOTICE](NOTICE)). This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.
+What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the tools, the documentation and our proofs. Proofs that we made from proofs that Anthropic licensed under the Apache License 2.0 or the MIT licence, at the recipient's option, keep those licences. The licence texts are [LICENSES/anthropic-proofs-LICENSE](LICENSES/anthropic-proofs-LICENSE) and [LICENSES/anthropic-proofs-LICENSE-MIT](LICENSES/anthropic-proofs-LICENSE-MIT) and the notices are [LICENSES/anthropic-proofs-NOTICE](LICENSES/anthropic-proofs-NOTICE); the build record of each such proof names these three files ([docs/licensing.md](docs/licensing.md)). The proof files that come from coq-community/huffman keep the licence of that project, LGPL-2.1-or-later. [tools/oft/third-party-proofs.yaml](tools/oft/third-party-proofs.yaml) lists each of them, and their licence text, `LICENSES/coq-community-huffman-LICENSE`, comes into this repository with them. The binaries, the source archives and the harness copies keep their own licences ([NOTICE](NOTICE)). The classifiers and the originals that a harness publishes are under the licences of the code that they are built from, as its builds are. This project is not affiliated with or endorsed by Google or the OSS-Fuzz project.
 
 @@ not_checkable
 
 
 **Nothing here can be checked from outside yet.** LPS ([rocq-linux-process-semantics](https://github.com/theorem-labs/rocq-linux-process-semantics)) and the checker image that carries it are not published yet, so `./oft check` cannot be run by a reader today. This release candidate is for reading and review; [Check a proof](#check-a-proof) works once they are published.
+
+@@ statement_kinds
+four kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; and the inputs on which they agree are decidable
+@@ statement_kinds_classifier
+five kinds of statement: a build halts; a sanitizer build agrees with the plain build; the two builds disagree on at most a fraction *b* of a stated input distribution; the inputs on which they agree are decidable; and a classifier program of a pair always answers yes, no or maybe, is right when it answers yes or no, and gives no firm answer, or an answer other than yes, on at most a fraction *b* of the stated input distribution
 
 @@ example
 [`$example_id`]($example_path): $example_words
@@ -153,7 +158,11 @@ What we wrote is under the MIT licence ([LICENSE](LICENSE)): the statements, the
 @@ example_binds
 on every input on which the $build build is never refused memory for exceeding $budget, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with $exits. The harness `$harness` asserts that $whats, so a proof shows that these hold on every input it covers.
 @@ example_plain
-on every input on which the $build build is never refused memory for exceeding $budget, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with $exits: it never crashes, fails an assertion or hangs.
+on every input on which the $build build is never refused memory for exceeding $budget, and when the environment refuses nothing that it is not forced to (both are premises), every execution exits with $exits: $never.
+@@ example_never
+it never crashes, fails an assertion or hangs
+@@ example_never_any
+it never crashes or hangs; a failed assertion in a call of the fuzz target exits with status 79, which it allows
 
 @@ example_none
 No statement is available in this release yet.
@@ -179,6 +188,11 @@ One of the proved statements is a halts statement; [index/PROOFS.md](index/PROOF
 
 @@ halts_some
 $n_halts of the proved statements are halts statements; [index/PROOFS.md](index/PROOFS.md) lists them.
+
+@@ may_fail_any
+allows any status
+@@ may_fail_named
+allows the statuses its exit set names: any status, or a finite set that its harness page gives
 
 @@ not_in_oss_fuzz
  It also has $project_directories for $projects; OSS-Fuzz has no project for $pronoun.

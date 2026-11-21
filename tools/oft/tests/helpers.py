@@ -18,8 +18,47 @@ FIXTURE = os.path.join(HERE, "fixtures", "tree")
 FINDINGS = os.path.join(HERE, "fixtures", "findings")
 RECORD = os.path.join(HERE, "fixtures", "record")
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))   # tools/oft/tests -> the repository
+# ./theorem, the wrapper at the root of a checkout.  tools/oft alone, as the runner image carries it, has no such
+# file: a test that runs it says so and is skipped there, rather than ending in FileNotFoundError or in `./theorem:
+# exec: /opt/oss-fuzz-theorems/theorem: not found` (images.yml run 42574457306, 2026-11-09).
+THEOREM = os.path.join(REPO, "theorem")
+HAVE_THEOREM = os.path.exists(THEOREM)
+NO_THEOREM = "no ./theorem: tools/oft without the checkout around it"
 KEY = "zlib/checksum_fuzzer/stand-in-abort"
 FINDING = "findings/" + KEY      # the fixture finding add_findings lays down
+# A step of pr.yml whose whole `run:` is SCRIPT_CALL runs .github/scripts/pr/<name>.sh, which holds that step's text
+# byte for byte (Dispatch issue OSSV-841 moved the long ones there, so that pr.yml stays under GitHub's 500 KB limit).
+# A test of a step's text reads the script through with_scripts, so it tests the text the step runs.
+SCRIPT_CALL = re.compile(
+    r'exec bash --noprofile --norc -eo pipefail "\$GITHUB_WORKSPACE/head/(\.github/scripts/pr/[a-z0-9-]+\.sh)"')
+
+
+def with_scripts(doc, root=REPO):
+    """DOC, a loaded workflow, with the `run` of each step that is SCRIPT_CALL replaced by its script's text (the
+    script under ROOT); a step whose script is not there keeps its call, so a test of its text fails on it."""
+    for job in ((doc or {}).get("jobs") or {}).values():
+        for step in (job or {}).get("steps") or []:
+            m = SCRIPT_CALL.fullmatch(step.get("run")) if isinstance(step.get("run"), str) else None
+            if m and os.path.isfile(os.path.join(root, m.group(1))):
+                with open(os.path.join(root, m.group(1)), encoding="utf-8") as f:
+                    step["run"] = f.read()
+    return doc
+
+
+def inline_scripts(text, root=REPO):
+    """TEXT, a workflow file's text, with each step's `run:` line that is SCRIPT_CALL written back as the `run: |` block
+    of its script's text (the script under ROOT), as the step held it before the move: a test of a workflow's whole
+    text reads the text its steps run.  A call whose script is not there stays as it is."""
+    def block(m):
+        path = os.path.join(root, m.group(2))
+        if not os.path.isfile(path):
+            return m.group(0)
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines(keepends=True)
+        return m.group(1) + "run: |\n" + "".join(m.group(1) + "  " + line if line.strip() else line
+                                                 for line in lines).removesuffix("\n")
+    return re.sub(r"(?m)^( *)run: %s$" % SCRIPT_CALL.pattern, block, text)
+
 
 # Git's automatic maintenance (gc --auto, maintenance run --auto) starts detached after a commit and can still be
 # writing into a test repository's .git/objects while the test deletes that repository (seen in CI:
@@ -272,6 +311,20 @@ def add_findings(t):
     findings/zlib/checksum_fuzzer/stand-in-abort, whose input makes both ASan builds abort, so it shows asan_agrees and
     asan_ubsan_agrees false, and the unpatched binaries it runs on."""
     shutil.copytree(FINDINGS, t.path("findings"))
+
+
+UNPATCHED = "findings/zlib/unpatched.yaml"
+
+
+def align_unpatched_pins(t, project="zlib"):
+    """Set each pin of findings/zlib/unpatched.yaml (the binaries zlib's findings run on) to the build that PROJECT's
+    harness.yaml of that fuzz target publishes: an enrolled project with an open finding then publishes no patched
+    build, so the statement hold applies (facts.hold)."""
+    u = t.yaml(UNPATCHED)
+    for harness, pins in u["harnesses"].items():
+        for b, rec in t.yaml("projects/%s/%s/harness.yaml" % (project, harness))["builds"].items():
+            pins[b].update(bytes=rec["bytes"], sha256=rec["sha256"])
+    t.put_yaml(UNPATCHED, u)
 
 
 def recount(t):

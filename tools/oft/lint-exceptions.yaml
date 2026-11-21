@@ -299,42 +299,6 @@ exceptions:
   count: 1
   reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
     copied as it is into the build record
-- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/Dockerfile
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
-    the build record
-- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/build.sh
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
-    the build record
-- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/project.yaml
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
-    copied as it is into the build record
-- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/Dockerfile
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
-    the build record
-- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/build.sh
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
-    the build record
-- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/project.yaml
-  rule: private-data
-  key: 903e818207c85212
-  count: 1
-  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
-    copied as it is into the build record
 - path: proofs/libdiginet/fuzz_codec/provenance/port/projects/libdiginet/Dockerfile
   rule: private-data
   key: 903e818207c85212
@@ -624,6 +588,42 @@ exceptions:
   reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
     the build record
 - path: proofs/reac-repacer/fuzz_wire/provenance/port/projects/reac-repacer/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/project.yaml
   rule: private-data
   key: 903e818207c85212
   count: 1

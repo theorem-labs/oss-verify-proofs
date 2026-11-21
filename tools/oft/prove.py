@@ -253,10 +253,15 @@ def _place(s):
     return None if s is None else {"address": "0x%x" % s.address, "size": s.size}
 
 
+# the shape of as_json's data: a reader refuses any other (the theorem CLI's prove plug-in reads it from the check run)
+SCHEMA = "oss-verify/prove/1"
+
+
 def as_json(r):
-    """The Report r as JSON data: every function of every build with its class, names, source lines and address and
-    size in each build, and each contract as Report says."""
-    return {"unit": r.unit, "base": r.base, "head": r.head, "counts": r.counts, "contracts": r.contracts,
+    """The Report r as JSON data, of the shape SCHEMA names: every function of every build with its class, names,
+    source lines and address and size in each build, and each contract as Report says."""
+    return {"schema": SCHEMA, "unit": r.unit, "base": r.base, "head": r.head, "counts": r.counts,
+            "contracts": r.contracts,
             "functions": [{"build": b, "class": row.cls, "names": list(row.names),
                            "lines": (row.head or row.base).lines, "base": _place(row.base), "head": _place(row.head)}
                           for b, row in r.rows]}

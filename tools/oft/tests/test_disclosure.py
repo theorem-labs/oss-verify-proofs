@@ -1,18 +1,26 @@
 """disclosure: the canonical forms a release's files are compared in, and the needles no file it keeps may hold.
 
 The table is the probe list of this check's reviews, each form one row."""
+import base64
+import datetime
+import email.message
 import hashlib
 import html
+import io
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import unicodedata
 import unittest
+import urllib.error
 import urllib.parse
 
-from oft import disclosure, facts, lint, yamlio
-from oft.tests.helpers import HELD_PATCH, HELD_PAYLOAD, HERE, Tree, add_findings, folded, patch_copies
+from oft import disclosure, facts, lint, schema, yamlio
+from oft.tests import public_before_hold_rows as rows_check
+from oft.tests.helpers import (HELD_PATCH, HELD_PAYLOAD, HERE, OWN_RECIPE, Tree, add_findings, edit, folded, git,
+                               git_commit, git_repo, own_recipe, patch_copies)
 
 FINDING = "findings/zlib/checksum_fuzzer/stand-in-abort"
 HEADER = b"\0" * 6
@@ -929,6 +937,727 @@ class StatementHold(unittest.TestCase):
                 ("docs/notes.md", "In OssFuzzTheorems.zlib.checksum_fuzzer_v2, Statements.asan_agrees holds.")):
             with self.subTest(rel=rel, text=text):
                 self.assertEqual(self.found(text, rel), set())
+
+
+class HeldFuzzTarget(Finds, unittest.TestCase):
+    """The needles of a fuzz target that private_harnesses holds while its project publishes, zlib/held_target (a name
+    that no harness of the fixture has yet: a hold may come first), and the name of this internal repository, which is
+    a needle of every cut (Dispatch issue OSSV-424, R11 and decision 15)."""
+
+    HELD = "zlib/held_target"
+    LABEL = "zlib/held_target, a held fuzz target (private_harnesses of zlib)"
+    MODULE = "OssFuzzTheorems.zlib.held_target, the Rocq module of held fuzz target zlib/held_target"
+
+    @classmethod
+    def setUpClass(cls):
+        with Tree() as t:
+            tree = facts.load(t.root)
+            cls.needles = disclosure.needles(tree, facts.Hold(set(), set(), {}, {"zlib": ("held_target",)}))
+            cls.nothing = disclosure.needles(tree, hold())
+        # repo_name, not a shorter attribute name: a name and the suffix `internal` with a dot between them read as a
+        # private host name to oft lint's private-data rule (lint.PRIVATE_HOST_NAME)
+        cls.repo_name = schema.INTERNAL_PORT_REPOSITORY
+        cls.repository = "%s, the name of this internal repository, which no release names" % cls.repo_name
+
+    def test_each_form_of_the_held_entry_is_found_in_the_text_and_in_the_path(self):
+        """The three forms of disclosure.held_match: the folder, the entry and the bare name, in a file's text in each
+        reading of its bytes, and in its path."""
+        for text in ("zlib/held_target", "see projects/zlib/held_target/harness.yaml", "held_target.c",
+                     "make held_target\n", "zlib-held_target.tar.zst"):
+            for data in (text.encode(), text.encode("utf-16-le")):
+                with self.subTest(data=data):
+                    self.assertIn(self.LABEL, self.found(data))
+        for rel in ("docs/held_target.md", "projects/zlib/held_target/README.md"):
+            with self.subTest(rel=rel):
+                self.assertEqual(self.found("a text that names nothing held\n", rel), {self.LABEL})
+
+    def test_a_name_that_continues_the_held_name_is_another_one(self):
+        for text in ("held_target_v2", "zlib/held_target2", "json/held_target_other", "unheld_target", "zlib/held"):
+            with self.subTest(text=text):
+                self.assertEqual(self.found(text), set())
+
+    def test_the_rocq_module_of_the_held_fuzz_target_is_a_name_in_any_case(self):
+        for text in ("From OssFuzzTheorems Require zlib.held_target.Statements.", "OSSFUZZTHEOREMS.ZLIB.HELD_TARGET"):
+            with self.subTest(text=text):
+                self.assertIn(self.MODULE, self.found(text))
+
+    def test_the_name_of_this_repository_is_a_needle_whatever_is_held(self):
+        """In any case, and with each dash read as `_` (a Name needle); not its bare name, which a kept test names, nor
+        a longer name that begins with it."""
+        for text in (self.repo_name, self.repo_name.upper(), self.repo_name.replace("-", "_"),
+                     "https://github.com/%s/pull/52" % self.repo_name):
+            for needles in (self.nothing, self.needles):
+                with self.subTest(text=text):
+                    self.assertIn(self.repository, disclosure.found("CHANGELOG.md", text.encode(), needles))
+        for text in (self.repo_name.split("/")[1], self.repo_name + "-mirror", self.repo_name.rsplit("-", 1)[0]):
+            with self.subTest(text=text):
+                self.assertEqual(disclosure.found("CHANGELOG.md", text.encode(), self.nothing), set())
+
+
+# the reviewed record of the fuzz targets, and statements, public releases carried before their project's hold
+# (disclosure's docstring), and a unit row of it for the fixture's zlib/checksum_fuzzer
+RECORD = "tools/publish/public-before-hold.tsv"
+ROW = "zlib/checksum_fuzzer\tv2026.10.0\t#12\n"
+
+
+def statement_row(st, release="v2026.10.0", hold="#12"):
+    """A statement row of the fixture's zlib/checksum_fuzzer."""
+    return "zlib/checksum_fuzzer/%s\t%s\t%s\n" % (st, release, hold)
+
+
+# what names zlib/checksum_fuzzer: as <project>/<harness>, and by its Rocq module
+CHECKSUM_FUZZER = {
+    "see zlib/checksum_fuzzer\n": "zlib/checksum_fuzzer, a fuzz target of held project zlib",
+    "zlib/checksum-fuzzer": "zlib/checksum_fuzzer, a fuzz target of held project zlib",
+    "From OssFuzzTheorems Require zlib.checksum_fuzzer.Statements.":
+        "OssFuzzTheorems.zlib.checksum_fuzzer, the Rocq module of held fuzz target zlib/checksum_fuzzer"}
+
+
+def statement_forms(st):
+    """{(text, the file it is in): label} of each form that names statement st of zlib/checksum_fuzzer as a held
+    statement: its id, its folders in the per-project layout, its three Rocq names, <harness>/<statement>, and its
+    short names in a file about the fuzz target (the project's notes)."""
+    sid = "zlib/checksum_fuzzer/" + st
+    rocq = "the Rocq name of held statement " + sid
+    return {("see %s\n" % sid, "docs/notes.md"): "%s, a statement of held project zlib that no public release carried "
+                                                 "before its hold" % sid,
+            ("see projects/zlib/checksum_fuzzer/proofs/%s/Proof.v\n" % st, "docs/notes.md"):
+                "zlib/checksum_fuzzer/proofs/%s, the proofs folder of held statement %s" % (st, sid),
+            ("see projects/zlib/checksum_fuzzer/counterexamples/%s/\n" % st, "docs/notes.md"):
+                "zlib/checksum_fuzzer/counterexamples/%s, the counterexamples folder of held statement %s" % (st, sid),
+            ("OssFuzzTheorems.zlib.checksum_fuzzer.Statements.%s" % st, "docs/notes.md"):
+                "OssFuzzTheorems.zlib.checksum_fuzzer.Statements.%s, %s" % (st, rocq),
+            ("Check zlib.checksum_fuzzer.%s." % st, "docs/notes.md"):
+                "OssFuzzTheorems.zlib.checksum_fuzzer.%s, %s" % (st, rocq),
+            ("Proofs.zlib.checksum_fuzzer.%s" % st, "docs/notes.md"):
+                "OssFuzzTheorems.Proofs.zlib.checksum_fuzzer.%s, %s" % (st, rocq),
+            ("checksum_fuzzer/%s is open.\n" % st, "docs/notes.md"):
+                "checksum_fuzzer/%s, held statement %s without its project" % (st, sid),
+            ("%s is open.\n" % st, "notes/zlib.md"):
+                "%s, held statement %s in a file about its fuzz target" % (st, sid),
+            ("%s_holds\n" % st, "notes/zlib.md"):
+                "%s_holds, held statement %s in a file about its fuzz target" % (st, sid)}
+
+
+def record_needles(record=ROW, held=("zlib",), hold=None, before=None):
+    """(disclosure.needles, the finding's finding.yaml or None) of a fixture copy whose projects of held say `release:
+    private` and whose RECORD holds record (text or bytes; no such file when None), under hold (facts.hold of the
+    copy when None); before(t) changes the copy first."""
+    with Tree() as t:
+        for p in held:
+            edit(t, "projects/%s/project.yaml" % p, lambda y: y.update(release="private"))
+        if record is not None:
+            t.write(RECORD, record, mode="wb" if isinstance(record, bytes) else "w")
+        if before is not None:
+            before(t)
+        loaded = facts.load(t.root)
+        finding = t.yaml(FINDING + "/finding.yaml") if os.path.exists(t.path(FINDING)) else None
+        return disclosure.needles(loaded, facts.hold(loaded) if hold is None else hold), finding
+
+
+def named(needles, text, rel="docs/notes.md"):
+    return disclosure.found(rel, text.encode(), needles)
+
+
+class PublicBeforeHold(unittest.TestCase):
+    """A fuzz target of a project held whole that the record names by a unit row is no needle, as <project>/<harness>
+    and as its Rocq module, and each of its statements a statement row names is none either: a public release carried
+    them before the hold began (disclosure's docstring).  Each other statement of it keeps a held statement's
+    needles, and every other needle stays."""
+
+    def assertNamed(self, needles, cases):
+        for text, label in cases.items():
+            with self.subTest(text=text):
+                self.assertIn(label, named(needles, text))
+
+    def test_a_fuzz_target_with_a_row_is_no_needle(self):
+        needles, _ = record_needles()
+        for text in CHECKSUM_FUZZER:
+            with self.subTest(text=text):
+                self.assertEqual(named(needles, text), set())
+
+    def test_a_statement_of_it_with_no_row_stays_a_needle(self):
+        """A statement written during the hold: the fuzz target's names covered it, so it gets a held statement's
+        needles back, in every form."""
+        needles, _ = record_needles(ROW + statement_row("asan_agrees"))
+        for (text, rel), label in statement_forms("plain_halts").items():
+            with self.subTest(text=text, rel=rel):
+                self.assertIn(label, named(needles, text, rel))
+
+    def test_a_statement_with_a_row_is_no_needle(self):
+        needles, _ = record_needles(ROW + statement_row("asan_agrees") + statement_row("plain_halts"))
+        for st in ("asan_agrees", "plain_halts"):
+            for (text, rel) in statement_forms(st):
+                with self.subTest(st=st, text=text, rel=rel):
+                    self.assertEqual(named(needles, text, rel), set())
+        self.assertIn("zlib/checksum_fuzzer/ubsan_halts, a statement of held project zlib that no public release "
+                      "carried before its hold", named(needles, "see zlib/checksum_fuzzer/ubsan_halts\n"))
+
+    def test_a_public_statement_a_held_bug_later_shows_false_is_no_needle(self):
+        """The stated limit: the fixture's finding names asan_agrees and asan_ubsan_agrees.  asan_agrees has a
+        statement row, so its name relaxes: the bug changes its status, not its name.  asan_ubsan_agrees has none and
+        stays a needle, and so do the finding's own names and evidence."""
+        needles, finding = record_needles(ROW + statement_row("asan_agrees"), before=add_findings)
+        self.assertEqual(sorted(finding["statements"]), ["asan_agrees", "asan_ubsan_agrees"])
+        for (text, rel) in statement_forms("asan_agrees"):
+            with self.subTest(text=text, rel=rel):
+                self.assertEqual(named(needles, text, rel), set())
+        self.assertNamed(needles, {
+            "see zlib/checksum_fuzzer/asan_ubsan_agrees\n": "zlib/checksum_fuzzer/asan_ubsan_agrees, a statement of "
+                                                            "held project zlib that no public release carried before "
+                                                            "its hold",
+            "fixed stand-in-abort\n": "stand-in-abort, the slug of finding " + FINDING,
+            folded(finding["summary"], 60): "the summary of finding " + FINDING})
+
+    def test_a_unit_row_of_a_fuzz_target_with_no_facts_relaxes_nothing(self):
+        """zlib/minigzip_fuzzer is an OSS-Fuzz harness project.yaml names and the facts do not hold: its statements are
+        not known, so its names stay needles."""
+        needles, _ = record_needles("zlib/minigzip_fuzzer\tv2026.10.0\t#12\n")
+        self.assertNamed(needles, {"see zlib/minigzip_fuzzer\n": "zlib/minigzip_fuzzer, a fuzz target of held "
+                                                                 "project zlib"})
+
+    def test_a_fuzz_target_with_no_row_stays_a_needle(self):
+        """One enrolled after the hold, or one no release carried, and an OSS-Fuzz harness never enrolled."""
+        needles, _ = record_needles()
+        self.assertNamed(needles, {
+            "see zlib/api-driver\n": "zlib/api-driver, a fuzz target of held project zlib",
+            "Require OssFuzzTheorems.zlib.api_driver.Statements.":
+                "OssFuzzTheorems.zlib.api_driver, the Rocq module of held fuzz target zlib/api-driver",
+            "see zlib/minigzip_fuzzer\n": "zlib/minigzip_fuzzer, a fuzz target of held project zlib"})
+
+    def test_a_row_of_a_project_not_held_whole_relaxes_nothing(self):
+        """json/fuzzer-parse_bjdata has a row, but json is held by a statement only: the statement stays a needle, and
+        zlib, held whole with no row, keeps its."""
+        sid = "json/fuzzer-parse_bjdata/plain_halts"
+        needles, _ = record_needles("json/fuzzer-parse_bjdata\tv2026.10.0\t#12\n", hold=facts.Hold(
+            held=set(), private={"zlib"}, statements={"json": {"fuzzer-parse_bjdata/plain_halts"}}))
+        self.assertNamed(needles, dict(CHECKSUM_FUZZER, **{
+            "see %s\n" % sid: "%s, a statement an open finding of json holds back" % sid}))
+
+    def test_a_row_relaxes_no_fuzz_target_private_harnesses_holds(self):
+        """zlib is held whole, and its private_harnesses holds zlib/checksum_fuzzer, which has a unit row.  The row
+        relaxes none of its needles, since a held fuzz target fails closed (Dispatch issue OSSV-377, R4): it stays a
+        name, as <project>/<harness> (with a dash too) and as its Rocq module, and it stays a held entry."""
+        needles, _ = record_needles(hold=facts.Hold(held=set(), private={"zlib"}, statements={},
+                                                    harnesses={"zlib": ("checksum_fuzzer",)}))
+        self.assertNamed(needles, dict(CHECKSUM_FUZZER, **{
+            "make checksum_fuzzer\n": "zlib/checksum_fuzzer, a held fuzz target (private_harnesses of zlib)"}))
+
+    def test_a_holding_findings_names_and_evidence_stay_needles(self):
+        needles, finding = record_needles(before=add_findings)
+        self.assertEqual(named(needles, "see zlib/checksum_fuzzer\n"), set())
+        digest = finding["input"]["plain"]["stdout_sha256"]
+        self.assertNamed(needles, {
+            "fixed stand-in-abort\n": "stand-in-abort, the slug of finding " + FINDING,
+            "see 0001-stand-in.patch\n": "0001-stand-in.patch, a patch file name of finding " + FINDING,
+            "stdout %s\n" % digest: "%s, a digest finding %s records" % (digest, FINDING),
+            folded(finding["summary"], 60): "the summary of finding " + FINDING})
+
+    def test_a_held_statement_stays_a_needle(self):
+        """By its id, and by its folders in the per-project layout, where its id is no part of the path; a statement
+        the hold does not hold, in the same layout, is no needle."""
+        sid = "zlib/checksum_fuzzer/asan_agrees"
+        needles, _ = record_needles(hold=facts.Hold(held=set(), private=set(),
+                                                    statements={"zlib": {"checksum_fuzzer/asan_agrees"}}))
+        self.assertNamed(needles, {
+            "see %s\n" % sid: "%s, a statement an open finding of zlib holds back" % sid,
+            "see projects/zlib/checksum_fuzzer/proofs/asan_agrees/Proof.v\n":
+                "zlib/checksum_fuzzer/proofs/asan_agrees, the proofs folder of held statement %s" % sid,
+            "see projects/zlib/checksum-fuzzer/counterexamples/asan_agrees/\n":
+                "zlib/checksum_fuzzer/counterexamples/asan_agrees, the counterexamples folder of held statement "
+                "%s" % sid})
+        for text in ("see projects/zlib/checksum_fuzzer/proofs/plain_halts/Proof.v\n",
+                     "see projects/zlib/checksum_fuzzer/counterexamples/asan_ubsan_agrees/\n"):
+            with self.subTest(text=text):
+                self.assertEqual(named(needles, text), set())
+
+    def test_the_held_projects_own_recipe_stays_a_needle(self):
+        needles, _ = record_needles(before=lambda t: own_recipe(t, "zlib", OWN_RECIPE))
+        what = "of held project zlib's own recipe %s in %s" % (OWN_RECIPE["file"], OWN_RECIPE["release"])
+        self.assertEqual(named(needles, "see zlib/checksum_fuzzer\n"), set())
+        self.assertNamed(needles, {
+            "sha256 %s\n" % OWN_RECIPE["sha256"]: "%s, the SHA-256 %s" % (OWN_RECIPE["sha256"], what),
+            "see %s\n" % OWN_RECIPE["file"]: "%s, the file name %s" % (OWN_RECIPE["file"], what)})
+
+
+class RecordRefused(unittest.TestCase):
+    """With no record, or one that cannot be read, holds a line that is no row, or holds a row that does not fit the
+    others, every needle stays."""
+
+    def test_the_record_s_two_kinds_of_row(self):
+        """A statement row may come before its unit row, and a statement may first be public in a later release than
+        its fuzz target."""
+        with tempfile.TemporaryDirectory(prefix="oft-test-") as d:
+            path = os.path.join(d, "record.tsv")
+            with open(path, "w") as f:
+                f.write("# a comment\n\n" + statement_row("asan_agrees", "v2026.11.0") + ROW)
+            self.assertEqual(disclosure.public_before_hold(path), disclosure.Record(
+                {("zlib", "checksum_fuzzer"): ("v2026.10.0", 12)},
+                {("zlib", "checksum_fuzzer", "asan_agrees"): ("v2026.11.0", 12)}))
+
+    def assertNeedle(self, needles):
+        for text, label in CHECKSUM_FUZZER.items():
+            with self.subTest(text=text):
+                self.assertIn(label, named(needles, text))
+
+    def test_no_record(self):
+        self.assertNeedle(record_needles(None)[0])
+
+    def test_a_line_that_is_no_row(self):
+        for record in ("zlib/checksum_fuzzer\tv2026.10.0\n", "zlib/checksum_fuzzer\t2026.10.0\t#12\n",
+                       "zlib/checksum_fuzzer\tv2026.10.0-rc.2\t#12\n", "zlib/checksum_fuzzer\tv2026.10.0\t12\n",
+                       "zlib/checksum_fuzzer v2026.10.0 #12\n", "zlib\tv2026.10.0\t#12\n", ROW + ROW,
+                       ROW.replace("\n", "\r\n"), ROW + "a line that is no row\n", " " + ROW,
+                       # statement rows that are no row, or that do not fit their unit row
+                       ROW + "zlib/checksum_fuzzer/Asan_agrees\tv2026.10.0\t#12\n",
+                       ROW + "zlib/checksum_fuzzer/asan_agrees/x\tv2026.10.0\t#12\n",
+                       ROW + "zlib/checksum_fuzzer/\tv2026.10.0\t#12\n",
+                       statement_row("asan_agrees"),
+                       "zlib/api-driver\tv2026.10.0\t#12\n" + statement_row("asan_agrees"),
+                       ROW + statement_row("asan_agrees", hold="#13"),
+                       ROW + statement_row("asan_agrees", release="v2026.09.9"),
+                       ROW + statement_row("asan_agrees") + statement_row("asan_agrees"),
+                       ROW + statement_row("asan_agrees") + statement_row("asan_agrees", release="v2026.11.0")):
+            with self.subTest(record=record):
+                self.assertNeedle(record_needles(record)[0])
+
+    def test_a_record_that_cannot_be_read(self):
+        def link(t):
+            os.rename(t.path(RECORD), t.path(RECORD + ".real"))
+            os.symlink(os.path.basename(RECORD) + ".real", t.path(RECORD))
+
+        def folder(t):
+            os.remove(t.path(RECORD))
+            os.makedirs(t.path(RECORD))
+        for how, record, before in (("no UTF-8", b"\xff" + ROW.encode(), None), ("a symbolic link", ROW, link),
+                                    ("a folder", ROW, folder)):
+            with self.subTest(how=how):
+                self.assertNeedle(record_needles(record, before=before)[0])
+
+
+def _utc(*parts):
+    return datetime.datetime(*parts, tzinfo=datetime.timezone.utc)
+
+
+class StandInPublic:
+    """public_before_hold_rows.GitHub's methods over published ({tag: when}) and trees ({tag: {unit: {the statements
+    its harness.yaml lists}}}), or raising Unchecked(down) when down is a reason."""
+
+    def __init__(self, published, trees, down=None):
+        self._published, self.trees, self.down = published, trees, down
+
+    def published(self):
+        if self.down:
+            raise rows_check.Unchecked(self.down)
+        return self._published
+
+    def holds(self, tag, unit):
+        return unit in self.trees.get(tag, {})
+
+    def lists(self, tag, unit, statement):
+        return statement in self.trees.get(tag, {}).get(unit, ())
+
+
+class StandInHistory:
+    """public_before_hold_rows.History's methods over merges ({number: (commit, when)}) and private ({(rev, project):
+    True, False or None}), or raising Unchecked(down) when down is a reason."""
+
+    def __init__(self, merges, private, down=None):
+        self.merges, self._private, self.down = merges, private, down
+
+    def merge(self, number):
+        if self.down or number not in self.merges:
+            raise rows_check.Unchecked(self.down or "not merged")
+        return self.merges[number]
+
+    def private(self, rev, project):
+        return self._private.get((rev, project))
+
+
+class RowCheck(unittest.TestCase):
+    """public_before_hold_rows.check_row: a row holds only when its release is published, holds the fuzz target (for a
+    statement row, a harness.yaml of it that lists the statement) and is the first that does, and its pull request's
+    merge into main began the project's hold after that release came out.  What cannot be checked fails, naming the
+    row."""
+
+    MERGE = "c" * 40
+    RELEASES = {"v2026.10.0": _utc(2026, 10, 22, 21, 11, 4), "v2026.11.0": _utc(2026, 11, 2, 7, 10, 24)}
+    TREES = {"v2026.10.0": {"zlib/checksum_fuzzer": {"asan_agrees"}},
+             "v2026.11.0": {"zlib/checksum_fuzzer": {"asan_agrees", "plain_halts"}, "zlib/api-driver": set()}}
+
+    def check(self, unit="zlib/checksum_fuzzer", release="v2026.10.0", merged=_utc(2026, 11, 17, 0, 49, 52),
+              before=False, at=True, public_down=None, history_down=None, statement=None):
+        return rows_check.check_row(
+            unit, release, 12, StandInPublic(self.RELEASES, self.TREES, public_down),
+            StandInHistory({12: (self.MERGE, merged)}, {(self.MERGE, "zlib"): at, (self.MERGE + "^1", "zlib"): before},
+                           history_down), statement)
+
+    def assertProblem(self, problems, text):
+        self.assertEqual(len(problems), 1, problems)
+        self.assertTrue(problems[0].startswith("zlib/") and text in problems[0], problems)
+
+    def test_a_row_that_holds(self):
+        self.assertEqual(self.check(), [])
+        self.assertEqual(self.check(statement="asan_agrees"), [])
+        self.assertEqual(self.check(release="v2026.11.0", statement="plain_halts"), [])
+
+    def test_a_statement_the_release_s_harness_yaml_does_not_list(self):
+        problems = self.check(statement="plain_halts")
+        self.assertEqual(problems, ["zlib/checksum_fuzzer/plain_halts\tv2026.10.0\t#12: the tree of v2026.10.0 holds "
+                                    "no projects/zlib/checksum_fuzzer/harness.yaml whose `statements` lists "
+                                    "plain_halts"])
+        self.assertProblem(self.check(unit="zlib/api-driver", release="v2026.11.0", statement="asan_agrees"),
+                           "whose `statements` lists asan_agrees")
+
+    def test_a_statement_row_whose_release_is_not_the_first(self):
+        self.assertProblem(self.check(release="v2026.11.0", statement="asan_agrees"),
+                           "v2026.10.0, published before v2026.11.0, holds it already: v2026.11.0 is not the first")
+
+    def test_a_fuzz_target_the_release_does_not_hold(self):
+        self.assertProblem(self.check(unit="zlib/api-driver"),
+                           "the tree of v2026.10.0 holds no projects/zlib/api-driver/harness.yaml")
+
+    def test_a_release_published_after_the_holds_merge(self):
+        self.assertProblem(self.check(merged=_utc(2026, 10, 20)), "not before #12's merge at 2026-10-20T00:00:00+00:00")
+
+    def test_a_release_that_is_not_the_first(self):
+        self.assertProblem(self.check(release="v2026.11.0"),
+                           "v2026.10.0, published before v2026.11.0, holds it already: v2026.11.0 is not the first")
+
+    def test_a_release_that_is_not_published(self):
+        self.assertProblem(self.check(release="v2026.10.5"),
+                           "v2026.10.5 is no published release of theorem-labs/oss-verify-proofs")
+
+    def test_a_pull_request_that_did_not_begin_the_hold(self):
+        self.assertProblem(self.check(before=True), "#12 did not begin the hold")
+        self.assertProblem(self.check(before=None), "before its merge cccccccccccc is not there")
+        problems = self.check(at=False)
+        self.assertTrue(any("does not say `release: private` at #12's merge" in p for p in problems), problems)
+
+    def test_what_cannot_be_checked_fails_naming_the_row(self):
+        problems = self.check(public_down="no network", history_down="no commit names #12")
+        self.assertEqual(problems, [
+            "zlib/checksum_fuzzer\tv2026.10.0\t#12: the public release cannot be checked here: no network",
+            "zlib/checksum_fuzzer\tv2026.10.0\t#12: the hold's merge cannot be checked here: no commit names #12"])
+
+
+REPO_API = "/repos/theorem-labs/oss-verify-proofs"
+TAG_OBJECT, COMMIT, TREE = "a" * 40, "b" * 40, "d" * 40
+HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
+
+
+def not_found(message="Not Found"):
+    """GitHub's 404, with the document it sends."""
+    return urllib.error.HTTPError("u", 404, message, email.message.Message(),
+                                  io.BytesIO(json.dumps({"message": message}).encode()))
+
+
+def resolving(tag="v2026.10.0", commit=COMMIT):
+    """The answers that resolve release tag to commit, through an annotated tag object, as GitHub gives them."""
+    return {"%s/git/ref/tags/%s" % (REPO_API, tag): {"ref": "refs/tags/" + tag,
+                                                       "object": {"type": "tag", "sha": TAG_OBJECT}},
+            "%s/git/tags/%s" % (REPO_API, TAG_OBJECT): {"object": {"type": "commit", "sha": commit}},
+            "%s/git/commits/%s" % (REPO_API, commit): {"sha": commit, "tree": {"sha": TREE}}}
+
+
+def contents(path=HARNESS, commit=COMMIT):
+    return "%s/contents/%s?ref=%s" % (REPO_API, path, commit)
+
+
+def file_entry(data, path=HARNESS, sha=None):
+    """GitHub's contents entry of a file whose bytes are data: its base64 content in lines of 60, as GitHub sends it,
+    and its git blob id (or sha)."""
+    data = data if isinstance(data, bytes) else data.encode()
+    text = base64.b64encode(data).decode()
+    return {"type": "file", "path": path, "encoding": "base64",
+            "content": "".join(text[i:i + 60] + "\n" for i in range(0, len(text), 60)),
+            "sha": sha or hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()}
+
+
+HARNESS_YAML = "schema: oss-fuzz-theorems/harness/1\nstatements:\n  asan_agrees: {kind: agreement}\n  plain_halts: {}\n"
+# the git trees of a release from its root (TREE) down to projects/zlib/checksum_fuzzer/
+PROJECTS_TREE, ZLIB_TREE, UNIT_TREE = "1" * 40, "2" * 40, "3" * 40
+
+
+def blob_id(data):
+    data = data if isinstance(data, bytes) else data.encode()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def trees(entry=("100644", "blob", None), data=HARNESS_YAML):
+    """GitHub's git/trees answers of a release down to projects/zlib/checksum_fuzzer/, whose harness.yaml entry is entry
+    ((mode, type, object id); the blob of data when the id is None; no such entry when entry is None)."""
+    def tree(sha, entries):
+        return {"sha": sha, "truncated": False,
+                "tree": [{"path": p, "mode": m, "type": t, "sha": s} for p, (m, t, s) in entries.items()]}
+    unit = {"proofs": ("040000", "tree", "4" * 40)}
+    if entry is not None:
+        unit["harness.yaml"] = entry[:2] + (entry[2] or blob_id(data),)
+    return {"%s/git/trees/%s" % (REPO_API, TREE): tree(TREE, {"projects": ("040000", "tree", PROJECTS_TREE),
+                                                              "README.md": ("100644", "blob", "5" * 40)}),
+            "%s/git/trees/%s" % (REPO_API, PROJECTS_TREE): tree(PROJECTS_TREE, {"zlib": ("040000", "tree", ZLIB_TREE)}),
+            "%s/git/trees/%s" % (REPO_API, ZLIB_TREE): tree(ZLIB_TREE, {"checksum_fuzzer": ("040000", "tree",
+                                                                                           UNIT_TREE)}),
+            "%s/git/trees/%s" % (REPO_API, UNIT_TREE): tree(UNIT_TREE, unit)}
+
+
+def release(data=HARNESS_YAML, entry=("100644", "blob", None), answer=None, commit=COMMIT, tag="v2026.10.0"):
+    """The answers of a release whose harness.yaml of zlib/checksum_fuzzer is the regular file of bytes data: the tag's
+    resolution, the contents answer (answer, or GitHub's entry of data), and the trees down to it (trees)."""
+    return dict(resolving(tag, commit), **dict(trees(entry, data), **{
+        contents(commit=commit): file_entry(data) if answer is None else answer}))
+
+
+class GitHubReads(unittest.TestCase):
+    """public_before_hold_rows.GitHub over a stand-in for urlopen.  A release is read at the commit its tag resolves
+    to, with its tree; there a 404 "Not Found" of the path is an answer, and a tag that resolves to no commit, a 404 of
+    another message, an answer that is no regular file of that path, a refusal and no network are each Unchecked."""
+
+    class Response(io.BytesIO):
+        status = 200
+
+    def opener(self, answers):
+        """urlopen answering each URL by answers ({path: JSON document, or an exception}, a path ending in `*` a
+        prefix), and with a 404 "Not Found" for any other; the requests in self.requests."""
+        self.requests = []
+
+        def urlopen(req, timeout):
+            self.requests.append(req)
+            path = req.full_url[len(rows_check.API):]
+            for key, answer in answers.items():
+                if path == key or (key.endswith("*") and path.startswith(key[:-1])):
+                    if isinstance(answer, Exception):
+                        raise answer
+                    return self.Response(json.dumps(answer).encode())
+            raise not_found()
+        return urlopen
+
+    def holds(self, answers, unit="zlib/checksum_fuzzer"):
+        return rows_check.GitHub(token="", opener=self.opener(answers)).holds("v2026.10.0", unit)
+
+    def assertUnchecked(self, answers, text, unit="zlib/checksum_fuzzer"):
+        with self.assertRaises(rows_check.Unchecked) as caught:
+            self.holds(answers, unit)
+        self.assertIn(text, str(caught.exception))
+
+    def test_the_published_releases_and_their_trees(self):
+        """The listing's releases that are no draft; a tree read at the commit the tag resolves to, never at the tag."""
+        listing = [{"tag_name": "v2026.10.0", "draft": False, "published_at": "2026-10-22T21:11:04Z"},
+                   {"tag_name": "v2026.12.0", "draft": True, "published_at": None}]
+        gh = rows_check.GitHub(token="t0k3n", opener=self.opener(dict(resolving(), **{
+            REPO_API + "/releases?*": listing, contents(): file_entry(HARNESS_YAML)}, **trees())))
+        self.assertEqual(gh.published(), {"v2026.10.0": _utc(2026, 10, 22, 21, 11, 4)})
+        self.assertTrue(gh.holds("v2026.10.0", "zlib/checksum_fuzzer"))
+        self.assertFalse(gh.holds("v2026.10.0", "zlib/api-driver"))
+        self.assertEqual({r.get_header("Authorization") for r in self.requests}, {"Bearer t0k3n"})
+        reads = [r.full_url for r in self.requests if "/contents/" in r.full_url]
+        self.assertEqual(reads, [rows_check.API + contents(), rows_check.API + contents("projects/zlib/api-driver/"
+                                                                                        "harness.yaml")])
+
+    def test_an_absent_path_in_a_known_tree_is_not_an_unavailable_ref(self):
+        """A 404 "Not Found" of the path at a commit the tag resolves to says the tree does not hold it.  A tag GitHub
+        has no ref of (deleted or renamed), one that names no commit, a commit GitHub does not show with its tree, and
+        a 404 of another message ("No commit found for the ref ...", what the contents API answers a ref it cannot
+        resolve) say nothing of the tree."""
+        self.assertFalse(self.holds(resolving()))
+        ref = "%s/git/ref/tags/v2026.10.0" % REPO_API
+        for name, answers, text in (
+                ("no such tag", dict(resolving(), **{ref: not_found()}),
+                 "the tag v2026.10.0 of theorem-labs/oss-verify-proofs cannot be resolved: GitHub has no ref "
+                 "refs/tags/v2026.10.0 (HTTP 404, Not Found)"),
+                ("a ref of another name", dict(resolving(), **{ref: {"ref": "refs/tags/v2026.10.0-rc.2",
+                                                                     "object": {"type": "commit", "sha": COMMIT}}}),
+                 "cannot be resolved"),
+                ("a tag of a tree", dict(resolving(), **{ref: {"ref": "refs/tags/v2026.10.0",
+                                                               "object": {"type": "tree", "sha": TREE}}}),
+                 "names no commit (it resolves to tree %s)" % TREE),
+                ("a commit GitHub does not show", dict(resolving(), **{"%s/git/commits/%s" % (REPO_API, COMMIT):
+                                                                       not_found()}),
+                 "names the commit %s, which GitHub does not show (HTTP 404)" % COMMIT),
+                ("a commit with no tree", dict(resolving(), **{"%s/git/commits/%s" % (REPO_API, COMMIT):
+                                                               {"sha": COMMIT}}), "shows with no tree"),
+                ("a 404 of another message", dict(resolving(), **{
+                    contents(): not_found("No commit found for the ref %s" % COMMIT)}),
+                 "with 'No commit found for the ref %s', not \"Not Found\"" % COMMIT),
+                ("a 404 with no document", dict(resolving(), **{contents(): urllib.error.HTTPError(
+                    "u", 404, "Not Found", email.message.Message(), None)}), "with None, not \"Not Found\"")):
+            with self.subTest(case=name):
+                self.assertUnchecked(answers, text)
+
+    def test_an_answer_that_is_no_regular_file_of_the_path_is_unchecked(self):
+        """A directory named harness.yaml answers 200 with its listing; a symbolic link or a submodule answers with an
+        entry of its own type, or GitHub follows a link to the file it names, of another path."""
+        for name, answer, text in (
+                ("a directory", [{"type": "file", "name": "unrelated"}], "is no regular file: GitHub's answer is a "
+                                                                         "directory's listing"),
+                ("a symbolic link", {"type": "symlink", "path": HARNESS}, "an entry of type 'symlink'"),
+                ("a submodule", {"type": "submodule", "path": HARNESS}, "an entry of type 'submodule'"),
+                ("a file of another path", {"type": "file", "path": "projects/zlib/api-driver/harness.yaml"},
+                 "the file projects/zlib/api-driver/harness.yaml"),
+                ("no object", "harness.yaml", "no JSON object")):
+            with self.subTest(case=name):
+                self.assertUnchecked(dict(resolving(), **{contents(): answer}), text)
+
+    def test_a_symbolic_link_github_follows_is_no_manifest(self):
+        """GitHub's contents API follows a symbolic link in the repository to the file it names and answers `type:
+        "file"` with the link's own path and blob id and the target's bytes (libgit2's
+        tests/resources/testrepo-worktree/link_to_new.txt at 42a89d7c: blob c0528fd6, mode 120000, answered with
+        new.txt's bytes, blob a71586c1).  The bytes do not hash to the blob GitHub names, so a unit row fails as a
+        statement row does; and where they would, the release's tree gives the entry a link's mode, which fails too."""
+        link = blob_id("../api-driver/harness.yaml")
+        followed = file_entry(HARNESS_YAML, sha=link)
+        self.assertUnchecked(release(answer=followed, entry=("120000", "blob", link)),
+                             "%s at v2026.10.0 (theorem-labs/oss-verify-proofs, commit %s) is no regular file: its "
+                             "content hashes to the blob %s, not to %s" % (HARNESS, COMMIT[:12],
+                                                                            blob_id(HARNESS_YAML), link))
+        with self.assertRaises(rows_check.Unchecked):
+            rows_check.GitHub(token="", opener=self.opener(release(answer=followed))).lists(
+                "v2026.10.0", "zlib/checksum_fuzzer", "asan_agrees")
+        for name, entry, text in (
+                ("a link's mode", ("120000", "blob", None), "the release's tree gives it mode 120000"),
+                ("a submodule's mode", ("160000", "commit", None), "holds commit"),
+                ("another blob", ("100644", "blob", "6" * 40), "holds blob %s (mode 100644) there, not the blob"
+                 % ("6" * 40)),
+                ("nothing there", None, "the release's tree holds nothing there")):
+            with self.subTest(case=name):
+                self.assertUnchecked(release(entry=entry), text)
+        self.assertTrue(self.holds(release(entry=("100755", "blob", None))))
+
+    def test_a_tree_on_the_way_that_cannot_be_read_whole_is_unchecked(self):
+        cut = release()
+        cut["%s/git/trees/%s" % (REPO_API, ZLIB_TREE)]["truncated"] = True
+        self.assertUnchecked(cut, "the tree %s of projects/zlib at v2026.10.0" % ZLIB_TREE)
+        gone = release()
+        gone["%s/git/trees/%s" % (REPO_API, PROJECTS_TREE)] = not_found()
+        self.assertUnchecked(gone, "the tree %s of projects at v2026.10.0 (theorem-labs/oss-verify-proofs) cannot be "
+                                   "read whole (HTTP 404)" % PROJECTS_TREE)
+        blob = release()
+        blob["%s/git/trees/%s" % (REPO_API, PROJECTS_TREE)]["tree"][0].update(type="blob", mode="100644")
+        self.assertUnchecked(blob, "projects/zlib at v2026.10.0 (theorem-labs/oss-verify-proofs) is no directory")
+
+    def test_a_statement_row_reads_the_file_a_unit_row_reads(self):
+        """The contents entry's bytes, its base64 content checked against its blob id: one request serves the unit row
+        and each statement row of the fuzz target."""
+        answers = release()
+        gh = rows_check.GitHub(token="", opener=self.opener(answers))
+        self.assertTrue(gh.holds("v2026.10.0", "zlib/checksum_fuzzer"))
+        self.assertEqual([gh.lists("v2026.10.0", "zlib/checksum_fuzzer", st) for st in ("asan_agrees", "plain_halts",
+                                                                                         "ubsan_halts")],
+                         [True, True, False])
+        self.assertFalse(gh.lists("v2026.10.0", "zlib/api-driver", "asan_agrees"))
+        self.assertEqual([r.full_url for r in self.requests if "/contents/" in r.full_url].count(
+            rows_check.API + contents()), 1)
+
+    def test_a_harness_yaml_that_cannot_be_read_is_unchecked(self):
+        """Bytes that do not hash to the entry's blob id, an entry with no content (GitHub sends none over 1 MB), bytes
+        that are no UTF-8 or no YAML, and a file with no `statements` mapping."""
+        for name, answers, text in (
+                ("another blob id", release(answer=file_entry(HARNESS_YAML, sha="0" * 40)), "not to %s" % ("0" * 40)),
+                ("no content", release(answer=dict(file_entry(HARNESS_YAML), encoding="none", content="")),
+                 "no base64 content"),
+                ("no UTF-8", release(b"statements:\n  \xff: {}\n"), "cannot be read"),
+                ("no YAML", release("statements: [\n"), "cannot be read"),
+                ("no statements mapping", release("statements: [asan_agrees]\n"),
+                 "no mapping with a `statements` mapping")):
+            with self.subTest(case=name):
+                gh = rows_check.GitHub(token="", opener=self.opener(answers))
+                with self.assertRaises(rows_check.Unchecked) as caught:
+                    gh.lists("v2026.10.0", "zlib/checksum_fuzzer", "asan_agrees")
+                self.assertIn(text, str(caught.exception))
+
+    def test_an_older_release_whose_tag_is_gone_fails_the_row(self):
+        """The listing keeps a release whose tag was deleted, and the contents API answers 404 for it as for an absent
+        path: the later release must not pass as the first.  With the older tag resolving to a tree that lacks the
+        fuzz target, the row holds."""
+        listing = [{"tag_name": "v2026.10.0", "draft": False, "published_at": "2026-10-22T21:11:04Z"},
+                   {"tag_name": "v2026.11.0", "draft": False, "published_at": "2026-11-02T07:10:24Z"}]
+        later = "e" * 40
+        answers = dict(release(commit=later, tag="v2026.11.0"), **{REPO_API + "/releases?*": listing})
+        history = StandInHistory({12: ("c" * 40, _utc(2026, 11, 17))},
+                                 {("c" * 40, "zlib"): True, ("c" * 40 + "^1", "zlib"): False})
+        problems = rows_check.check_row("zlib/checksum_fuzzer", "v2026.11.0", 12,
+                                        rows_check.GitHub(token="", opener=self.opener(answers)), history)
+        self.assertEqual(problems, [
+            "zlib/checksum_fuzzer\tv2026.11.0\t#12: the public release cannot be checked here: the tag v2026.10.0 of "
+            "theorem-labs/oss-verify-proofs cannot be resolved: GitHub has no ref refs/tags/v2026.10.0 (HTTP 404, Not "
+            "Found)"])
+        answers.update({k.replace(TAG_OBJECT, "f" * 40): v for k, v in resolving().items()})
+        answers["%s/git/ref/tags/v2026.10.0" % REPO_API]["object"]["sha"] = "f" * 40
+        self.assertEqual(rows_check.check_row("zlib/checksum_fuzzer", "v2026.11.0", 12,
+                                              rows_check.GitHub(token="", opener=self.opener(answers)), history), [])
+
+    def test_a_refusal_or_no_network_is_unchecked(self):
+        limited = email.message.Message()
+        limited["x-ratelimit-remaining"] = "0"
+        for answer, text in ((urllib.error.HTTPError("u", 403, "Forbidden", limited, None), "no requests left"),
+                             (urllib.error.HTTPError("u", 500, "Error", email.message.Message(), None), "HTTP 500"),
+                             (urllib.error.URLError("Name or service not known"), "Name or service not known")):
+            with self.subTest(text=text):
+                self.assertUnchecked({"*": answer}, text)
+
+
+class HistoryReads(unittest.TestCase):
+    """public_before_hold_rows.History over a git repository whose main merged the hold of zlib as #12."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory(prefix="oft-test-")
+        self.root = os.path.join(self._tmp.name, "repo")
+        os.makedirs(os.path.join(self.root, "projects", "zlib"))
+        self.project = os.path.join(self.root, "projects", "zlib", "project.yaml")
+        with open(self.project, "w") as f:
+            f.write("project: zlib\n")
+        git_repo(self.root)
+        with open(self.project, "a") as f:
+            f.write("release: private\n")
+        self.hold = git_commit(self.root, "zlib: hold state (release: private set) (#12)")
+        self.later = git_commit(self.root, "docs: a later change (#13)")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_the_merge_and_the_hold_it_began(self):
+        history = rows_check.History(self.root)
+        commit, when = history.merge(12)
+        self.assertEqual(commit, self.hold)
+        self.assertEqual(when, rows_check._when(git(self.root, "log", "-1", "--format=%cI", self.hold)))
+        self.assertEqual((history.private(commit, "zlib"), history.private(commit + "^1", "zlib"),
+                          history.private(commit, "json")), (True, False, None))
+
+    def test_no_commit_or_two_commits_name_the_pull_request(self):
+        history = rows_check.History(self.root)
+        with self.assertRaisesRegex(rows_check.Unchecked, "it is not merged into the main this clone holds"):
+            history.merge(14)
+        git_commit(self.root, "Merge pull request #12 from a-contributor/again")
+        with self.assertRaisesRegex(rows_check.Unchecked, "2 commits of HEAD's first-parent line name"):
+            history.merge(12)
+
+    def test_a_shallow_clone_whose_history_stops_before_the_merge(self):
+        clone = os.path.join(self._tmp.name, "clone")
+        git(self._tmp.name, "clone", "-q", "--depth", "1", "file://" + self.root, clone)
+        with self.assertRaisesRegex(rows_check.Unchecked, "stops at %s, a shallow clone's boundary" % self.later[:12]):
+            rows_check.History(clone).merge(12)
+
+    def test_a_pull_request_s_run_reads_its_own_hold_at_head(self):
+        """GitHub's merge commit for pull request #15 names no pull request: with change=15 a row whose hold is #15
+        reads HEAD as its merge, and the project's hold began there; without it, or for another number, nothing
+        names the pull request."""
+        os.makedirs(os.path.join(self.root, "projects", "json"))
+        json_project = os.path.join(self.root, "projects", "json", "project.yaml")
+        with open(json_project, "w") as f:
+            f.write("project: json\n")
+        git_commit(self.root, "json: facts (#14)")
+        with open(json_project, "a") as f:
+            f.write("release: private\n")
+        head = git_commit(self.root, "Merge %s into %s" % ("d" * 40, "e" * 40))
+        history = rows_check.History(self.root, change=15)
+        commit, when = history.merge(15)
+        self.assertEqual(commit, head)
+        self.assertEqual(when, rows_check._when(git(self.root, "log", "-1", "--format=%cI", head)))
+        self.assertEqual((history.private(commit, "json"), history.private(commit + "^1", "json")), (True, False))
+        for history, number in ((rows_check.History(self.root), 15), (rows_check.History(self.root, change=15), 16)):
+            with self.subTest(change=history.change, number=number):
+                with self.assertRaisesRegex(rows_check.Unchecked, "not merged into the main this clone holds"):
+                    history.merge(number)
 
 
 if __name__ == "__main__":

@@ -71,6 +71,9 @@ TABLE = [
     ("hand", "LICENSES/anthropic-proofs-LICENSE"),
     ("hand", "LICENSES/anthropic-proofs-LICENSE-MIT"),
     ("hand", "LICENSES/anthropic-proofs-NOTICE"),
+    # the licence file of coq-community/huffman, whose proof files some fuzz targets carry under LGPL-2.1-or-later
+    # (tools/oft/third-party-proofs.yaml), verbatim (lint pins its bytes)
+    ("hand", "LICENSES/coq-community-huffman-LICENSE"),
     ("hand", "CITATION.cff"),
     ("hand", "CONTRIBUTING.md"),
     ("hand", "SECURITY.md"),
@@ -96,6 +99,7 @@ TABLE = [
     # directory whole (INTERNAL_DIRS), and lint.internal_only reads them as text no release carries
     ("hand", "dev/stream/**"),
     ("hand", "tools/oft/**"),
+    ("hand", "tools/budgetwit/**"),
     ("hand", "analyses/harness-checks/README.md"),
     ("hand", "analyses/failure-handlers/README.md"),
     ("hand", "analyses/failure-handlers/failure_handlers.tsv"),
@@ -119,6 +123,14 @@ TABLE = [
     # what each change cost and what it taught (oft change-ledger, tools/oft/change_ledger.py): its sessions, check
     # logs, ledger and journal, each changes/<change>/<file>; `oft release-tree` removes changes/ (INTERNAL_DIRS)
     ("hand", "changes/*/*"),
+    # what each fuzz target cost, the same records under changes/targets/<project>/<harness>/ (oft change-ledger
+    # --target): the throughput eval reads new linked kB per agent-hour from the sessions that settled the target,
+    # rather than inferring it from commit trailers.  It is under changes/ so that it is internal for the same
+    # reason a change's ledger is, and `oft change-ledger` refuses `targets` as a change's name.  The two name
+    # segments are `*`, not {project}/{harness}: a ledger is a record of work that was done, and it must stay
+    # readable after its fuzz target leaves the tree, which a placeholder (checked against the loaded facts) would
+    # turn into a lint finding.
+    ("hand", "changes/targets/*/*/*"),
     # findings: library bugs found while proving, on the proof branch until they are public; a maintainer's or a
     # release pull request changes them, since a change of state can release the hold on a project.  Each row of a
     # fuzz target's proofs, counterexamples and findings is in both layouts (tools/oft/layout.py): the old one, then
@@ -236,13 +248,15 @@ SHARED = ("README.md", "index/STATUS.md", "index/PROOFS.md", "index/*.tsv", "ana
 # row of their own (a path matches exactly one row): the script of the render of the shared generated files after a
 # merge, which only an internal line runs (index.yml); each publication renders its cut whole; the script of prove.yml's
 # job (ci/prove-pr), which posts a check on this repository's pull requests; and the tests of those scripts and of
-# prove.yml.
+# prove.yml.  The test of disclosure.py's held-entry rule goes too: it reads tools/publish/held-match-cases.tsv, which
+# the cut removes with tools/publish/.
 # INTERNAL_DIRS: the directories the cut removes whole whose files keep rows of their own (hand), so lint reads them as
 # those rows say and not as internal paths (lint.run): the change ledgers (changes/), the reference book written for
 # the people and agents who prove (docs/reference/), and the OSS Verify stream's operational tools (dev/stream/, which
 # lint.internal_only reads as text no release carries).
 INTERNAL_FILES = ("tools/oft/ci/regenerate-shared.sh", "tools/oft/tests/test_regenerate_shared.py",
-                  "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py", "tools/oft/tests/test_prove_workflow.py")
+                  "tools/oft/tests/test_held_match.py", "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py",
+                  "tools/oft/tests/test_prove_workflow.py")
 INTERNAL_DIRS = ("changes/", "docs/reference/", "dev/stream/")
 INTERNAL = (tuple(p[:-len("**")] if p.endswith("/**") else p for cls, p in TABLE if cls == "internal")
             + INTERNAL_FILES + INTERNAL_DIRS)

@@ -1,13 +1,15 @@
 """From a statement's typed fields to its Rocq text.
 
 Each statement in a harness.yaml names one definition of
-theories/Shapes.v (<namespace>.Core.Shapes) and its arguments.  This
-module is the only place that choice is made; a combination it does not
-list is an error, never a guess.
+theories/Shapes.v (<namespace>.Core.Shapes), or for a classifier statement
+of theories/ClassifierShapes.v, and its arguments.  This module is the only
+place that choice is made; a combination it does not list is an error,
+never a guess.
 """
 import re
 
-from . import names, schema
+BUILD_IDENT = {"plain": "plain", "ubsan": "ubsan", "asan": "asan", "asan-ubsan": "asan_ubsan"}
+BUILD_MODULE = {"plain": "Plain", "ubsan": "Ubsan", "asan": "Asan", "asan-ubsan": "AsanUbsan"}
 
 BUDGETS = {
     # module, plain-build bytes, sanitizer-build bytes (theories/Shapes.v's standard_budgets and asan_budgets)
@@ -24,7 +26,7 @@ DEFAULT_BUDGETS = {"undefined": "standard", "address": "asan"}
 MIN_PLAIN_BUDGET = 4096
 UNITS = {"": 1, "KiB": 1 << 10, "MiB": 1 << 20, "GiB": 1 << 30, "TiB": 1 << 40}
 # project.yaml's size grammar, from the schema that checks it; its one group is the unit
-SIZE = re.compile(schema.load_schema("project")["defs"]["size"]["pattern"])
+SIZE = re.compile(r"^[1-9][0-9]{0,15}(KiB|MiB|GiB|TiB)?$")
 
 ENV = {"may-fail": "Env.may_fail", "alloc-forced-only": "Env.alloc_forced_only"}
 
@@ -41,8 +43,9 @@ AGREEMENT = {
 
 # The driver's status when a call of the fuzz target returns a value other than 0 or -1.  libFuzzer reserves
 # those values; a libFuzzer built without assertions treats them as -1 (the input is rejected, not a crash).  A
-# harness whose fuzz target returns one to turn an input away lists where (harness.yaml `rejects`), and its halts
-# statements allow this status too.
+# harness whose fuzz target returns one to turn an input away lists where (harness.yaml `rejects`).  A halts
+# statement with a finite exit set includes this status exactly when the harness lists `rejects` (rules.py lints
+# it); a halts statement with `exits: any` allows every status.
 REJECTED = 78
 
 # The set with 78 is spelled out in the statement rather than named in Shapes.Exits: any change to the code of
@@ -61,12 +64,20 @@ class PairError(ShapeError):
     """A malformed project.yaml budgets.agrees pair: reported once, against project.yaml, not per statement."""
 
 
+def ident(name):
+    """A Rocq identifier for an OSS-Fuzz project or harness name."""
+    s = re.sub(r"[^A-Za-z0-9_]", "_", name)
+    if s[:1].isdigit():
+        s = "h_" + s
+    return s
+
+
 def exits_key(exits):
     return "any" if exits == "any" else tuple(sorted(set(exits)))
 
 
 def image(build):
-    return "Images." + names.BUILD_IDENT[build]
+    return "Images." + BUILD_IDENT[build]
 
 
 def size_bytes(text):
@@ -151,13 +162,21 @@ def default_budget_words(san_build):
     return size_words(plain), size_words(san)
 
 
-def term(st, project=None):
+def term(st, project=None, *, distribution):
     """(parameters, body) of the Definition for statement fields `st`; `project` is the statement's
-    project.yaml, whose project-level settings (`budgets`) the term depends on.
+    project.yaml, whose project-level settings (`budgets`) the term depends on, and `distribution` says whether its
+    harness.yaml has a distribution (a classifier-maybe statement is a bound with one, the empty maybe set without).
+    Every caller says which: facts.Statement.term reads it from the statement's harness.
 
     `parameters` is the text between the name and the colon ("" or
     " (b : Q)")."""
-    kind, builds, reading = st["kind"], st["builds"], st["reading"]
+    kind, builds, reading = st["kind"], st["builds"], st.get("reading")
+    if kind not in CLASSIFIER_KINDS:
+        for k in ("classifier", "originals"):
+            if k in st:
+                raise ShapeError("%s applies to classifier statements only" % k)
+        if reading is None:
+            raise ShapeError("a %s statement has a reading" % kind)
     if kind == "halts":
         if len(builds) != 1:
             raise ShapeError("a halts statement names exactly one build")
@@ -169,21 +188,17 @@ def term(st, project=None):
         if reading == "may-fail":
             return "", "halts_may_fail %s %s" % (ex, image(builds[0]))
         raise ShapeError("halts statements have the readings budget and may-fail")
-    if len(builds) != 2 or builds[0] != "plain" or builds[1] not in names.BUILD_IDENT or builds[1] == "plain":
+    if len(builds) != 2 or builds[0] != "plain" or builds[1] not in BUILD_IDENT or builds[1] == "plain":
         raise ShapeError("a pair statement names [plain, <sanitizer build>]")
     if "exits" in st:
         raise ShapeError("only halts statements have exits")
+    if kind in CLASSIFIER_KINDS:
+        return classifier_term(st, distribution=distribution)
     plain, san = image("plain"), image(builds[1])
     if kind == "agreement":
         shape = agreement_shape(st)
-        enum, plain_bytes, san_bytes = agreement_budgets(st, project)
-        if enum:
-            mod = BUDGETS[enum][0]
-            lims = "%s.lim_source %s.lim_target" % (mod, mod)
-        else:
-            lims = "0x%x%%Z 0x%x%%Z" % (plain_bytes, san_bytes)
         env = (ENV[reading] + " ") if reading == "alloc-forced-only" else ""
-        return "", "%s %s%s %s %s" % (shape, env, lims, plain, san)
+        return "", "%s %s%s %s %s %s" % ((shape, env) + agreement_limits(st, project) + (plain, san))
     for k in ("budgets", "abort"):
         if k in st:
             raise ShapeError("%s applies to agreement statements only" % k)
@@ -197,6 +212,110 @@ def term(st, project=None):
     raise ShapeError("unknown kind %r" % kind)
 
 
+def agreement_limits(st, project=None):
+    """(plain-build limit, sanitizer-build limit) of agreement statement `st` as Rocq terms: the Budgets module's two
+    limits when it uses a harness enum, else the project's own pair as literals (agreement_budgets)."""
+    enum, plain_bytes, san_bytes = agreement_budgets(st, project)
+    if enum:
+        mod = BUDGETS[enum][0]
+        return "%s.lim_source" % mod, "%s.lim_target" % mod
+    return "0x%x%%Z" % plain_bytes, "0x%x%%Z" % san_bytes
+
+
+# The classifier statements (theories/ClassifierShapes.v; docs/statements.md, "Classifier statements"), in the
+# yes / no / maybe form: each names one classifier program of the pair, classifiers.<sanitizer build>.<a or b> in
+# harness.yaml, which exits 0 for yes, 1 for no and 2 for maybe.
+CLASSIFIER_KINDS = ("classifier-total", "classifier-sound", "classifier-maybe", "classifier-bound")
+# the one classifier kind that names the builds, and so has a reading: the environment of the property it is sound for
+READING_KINDS = ("classifier-sound",)
+
+
+def takes_bound(kind, distribution):
+    """Whether a statement of `kind`, in a harness with (`distribution` true) or without an input distribution, takes
+    a bound (b : Q) first: a proof names its b (proof.yaml `bound`), and the statement depends on Distribution.v."""
+    return kind in ("bound", "classifier-bound") or (kind == "classifier-maybe" and bool(distribution))
+
+
+def classifier_ident(role, build):
+    """The Images.v identifier of classifier `role` of the pair whose sanitizer build is `build`."""
+    return "classifier_%s_%s" % (role, BUILD_IDENT[build])
+
+
+def classifier_module(role, build):
+    """The images/ module of classifier `role` of the pair whose sanitizer build is `build`."""
+    return "Classifier%s%s" % (role.upper(), BUILD_MODULE[build])
+
+
+def original_ident(build):
+    return BUILD_IDENT[build] + "_original"
+
+
+def original_module(build):
+    return BUILD_MODULE[build] + "Original"
+
+
+def classifier_image(role, build):
+    return "Images." + classifier_ident(role, build)
+
+
+def original_image(build):
+    return "Images." + original_ident(build)
+
+
+def classifier_term(st, *, distribution):
+    """(parameters, body) of classifier statement `st`, whose builds are [plain, <sanitizer build>]: its kind and
+    `classifier` (a or b) fix it, and for classifier-sound also `reading` and `originals`.  `originals: unpatched`
+    names the originals, the builds without the patches (harness.yaml `originals`); `published` names the published
+    builds in their place.  The classifier's own runs are judged with Env.forced_only (inside the shapes); `reading`
+    is the environment of the property a sound classifier is sound for, so only classifier-sound has one.  A field a
+    kind does not read is refused, so that no two spellings state one statement."""
+    kind, builds, role = st["kind"], st["builds"], st.get("classifier")
+    if role not in ("a", "b"):
+        raise ShapeError("a classifier statement names its classifier, a or b")
+    for k in ("budgets", "abort", "machine", "env"):
+        if k in st:
+            raise ShapeError("%s does not apply to a classifier statement" % k)
+    if (kind in READING_KINDS) != ("reading" in st):
+        raise ShapeError("a reading goes with a classifier-sound statement, and only there")
+    if (kind == "classifier-sound") != ("originals" in st):
+        raise ShapeError("originals goes with a classifier-sound statement, and only there")
+    c = classifier_image(role, builds[1])
+    if kind == "classifier-total":
+        return "", "classifier_total3 %s" % c
+    if kind == "classifier-maybe":
+        if distribution:
+            return " (b : Q)", "maybe_at_most %s Distribution.w Distribution.M b" % c
+        return "", "maybe_empty %s" % c
+    if kind == "classifier-bound":
+        return " (b : Q)", "classifier_rejects_at_most %s Distribution.w Distribution.M b" % c
+    reading = st["reading"]
+    if reading not in ENV:
+        raise ShapeError("classifier-sound statements have the readings may-fail and alloc-forced-only")
+    if st["originals"] not in ("published", "unpatched"):
+        raise ShapeError("originals is published or unpatched")
+    plain, san = image("plain"), image(builds[1])
+    if st["originals"] == "unpatched":
+        plain_o, san_o = original_image("plain"), original_image(builds[1])
+    else:
+        plain_o, san_o = plain, san
+    if role == "a":
+        # A is sound for agreement of the two ORIGINALS: the pair without the patches
+        return "", "classifies_good_inputs_sound %s %s %s %s" % (ENV[reading], plain_o, san_o, c)
+    return "", "classifies_patch_diff_sound %s %s %s %s %s %s" % (ENV[reading], plain_o, plain, san_o, san, c)
+
+
+def classifier_images(st):
+    """[(what, build, role)] of the images classifier statement `st` names besides its builds, each as
+    facts.Harness.image takes it: ("classifier", <its sanitizer build>, <its classifier, a or b>), and for an unpatched
+    classifier-sound, ("original", <each of its builds>, None).  The fingerprint hashes each one's SHA-256, and rules.py
+    holds harness.yaml to list each one and to list no classifier or original that no statement names."""
+    builds = st["builds"]
+    out = [("classifier", builds[-1], st.get("classifier"))]
+    if st.get("originals") == "unpatched":
+        out += [("original", b, None) for b in builds]
+    return out
+
+
 READING_ENV = {"may-fail": "may_fail", "alloc-forced-only": "alloc_forced_only", "budget": "forced_only"}
 
 
@@ -208,14 +327,15 @@ def agreement_shape(st):
     return AGREEMENT[key]
 
 
-def shape_name(st):
-    """The Shapes.v definition a statement uses."""
-    return agreement_shape(st) if st["kind"] == "agreement" else term(st)[1].split()[0]
+def shape_name(st, *, distribution):
+    """The Shapes.v (or ClassifierShapes.v) definition a statement uses; `distribution` as term() takes it, which
+    chooses a classifier-maybe statement's shape."""
+    return agreement_shape(st) if st["kind"] == "agreement" else term(st, distribution=distribution)[1].split()[0]
 
 
 def templates(reading, san, with_distribution, machine="rv64g"):
     """The Characterise.v definitions for one (plain, san) pair: [(name, params, body)]."""
-    s = names.BUILD_IDENT[san]
+    s = BUILD_IDENT[san]
     gc = "_rv64gc" if machine == "rv64gc" else ""
     out = [("%s_classifies" % s, " (C : Image)",
             "classifies%s %s %s %s C" % (gc, ENV[reading], image("plain"), image(san)))]
@@ -223,6 +343,107 @@ def templates(reading, san, with_distribution, machine="rv64g"):
         out.append(("%s_classifier_rejects_at_most" % s, " (C : Image) (b : Q)",
                     "classifier_rejects_at_most C Distribution.w Distribution.M b"))
     return out
+
+
+# The projects whose fuzz targets must carry the deviation record (harness.yaml `deviation`) and an `instance` on every
+# statement but a classifier statement, which has no instance form: lint requires both (lint.check_deviation,
+# lint.check_instances), and `oft check` fails a unit of such a project when a statement's instance has no lemma
+# (check.check_instance).  It is here, in the checker, because oft check reads it, and deviation.py, which the
+# enrolment writer and lint read, is not the checker (keys.NOT_THE_CHECKER): oft check never opens it.
+REQUIRED = ()
+
+# A statement's instance (harness.yaml statements.<s>.instance) is one process input on which every premise of the
+# statement holds together.  Its lemma, <s>_instance in Instances/<s>.v of the fuzz target's proof library, proves
+# instance_type of the input instance_input renders, named INSTANCE_INPUT (check.check_instance).
+INSTANCE_INPUT = "oft_input"
+# The argument vector of each instance path (theories/Driver.v): the driver reads the file only when argv has exactly
+# two strings; with one, the distribution's first wrong-argument-count entry, it exits 2 and does not read it.
+INSTANCE_ARGV = {"reaches-harness": "[%(prog)s; %(file)s]", "refused-by-driver": "[%(prog)s]"}
+# The input file's name an instance takes on a harness with no distribution, beside argv0 the harness's own name: the
+# names every distribution of the tree gives (input_file input.bin in each; argv0 the harness's name in most).
+INSTANCE_INPUT_FILE = "input.bin"
+
+
+def bytes_term(data):
+    """The Rocq list of bytes `data`, as Distribution.v spells one: [Z_to_bv 8 102; Z_to_bv 8 117; ...]."""
+    return "[%s]" % "; ".join("Z_to_bv 8 %d" % b for b in data)
+
+
+def instance_finite(st):
+    """Is the instance of statement `st` a finite input (FinProcInput) rather than a process input (ProcInput)?  It
+    is for the kinds whose shapes term() writes over a distribution's finite inputs: bound (disagrees_at_most) and
+    decidability (agreement_decidable)."""
+    return st["kind"] in ("bound", "decidability")
+
+
+def instance_abort(st):
+    """The abort declaration of the process input of statement `st`'s instance: true for an agreement statement with
+    abort: signal, whose shape reads valid_input_abort (agreement_premises), false for every other."""
+    return st["kind"] == "agreement" and st.get("abort") == "signal"
+
+
+def agreement_premises(st):
+    """(input predicate, whether the budget premise is over run_scfg) of agreement statement `st`'s shape
+    (theories/Shapes.v), from the fields that name the shape (agreement_shape): the predicate is valid_input, with
+    _abort for abort: signal and _hwcap_rv64gc for machine: rv64gc; the budget premise is over run_scfg under the
+    statement's environment for the reading alloc-forced-only (the agrees_in shapes), and over run for may-fail.
+    ShapeError for fields that name no shape."""
+    agreement_shape(st)
+    predicate = "valid_input" + ("_abort" if st.get("abort") == "signal" else "") + (
+        "_hwcap_rv64gc" if st.get("machine") == "rv64gc" else "")
+    return predicate, st["reading"] == "alloc-forced-only"
+
+
+def instance_input(h, st, data):
+    """The Rocq term of the input of statement `st`'s instance, `h` being its harness.yaml and `data` the bytes of
+    the instance file.  The argument vector follows the record's path (INSTANCE_ARGV), from the distribution's argv0
+    and input_file, or, on a harness with no distribution, from the harness's name and INSTANCE_INPUT_FILE; the file
+    system holds the input file with `data`.  A process input has the other fields of Premises.witness_input; a
+    finite input (instance_finite) is MeasureLib's core_input of the file_core Distribution.v builds its entries with,
+    over the file system [(input_file, [])]."""
+    d = h.get("distribution") or {"argv0": h["harness"], "input_file": INSTANCE_INPUT_FILE}
+    path = st["instance"]["path"]
+    if path not in INSTANCE_ARGV:
+        raise ShapeError("instance path %r has no input form" % (path,))
+    prog, file = bytes_term(d["argv0"].encode()), bytes_term(d["input_file"].encode())
+    argv = INSTANCE_ARGV[path] % {"prog": prog, "file": file}
+    if instance_finite(st):
+        return "core_input (file_core %s [] [(%s, [])] %s [] %s)" % (argv, file, file, bytes_term(data))
+    return ("mkProcInput %s [] [(%s, %s)] IEof (Z_to_bv 64 0) (Z_to_bv 64 0) [] net_silent default_nofile "
+            "(Z_to_bv 64 0) hwcap_rv64gc %s Sv48" % (argv, file, bytes_term(data),
+                                                     "true" if instance_abort(st) else "false"))
+
+
+def instance_type(st, project=None):
+    """The type the lemma of statement `st`'s instance proves: the hypotheses of the statement's shape, the entries
+    existential and the input INSTANCE_INPUT; `project` is the statement's project.yaml, whose budgets an agreement
+    statement's limits depend on (agreement_limits).  The form comes from the fields that choose the shape in term()
+    (kind, reading, abort, machine), and fields that choose no shape are refused there.  For the bound and
+    decidability shapes, the finite input is valid and both builds have a valid entry on it (with the RV64GC word for
+    machine: rv64gc): that the builds disagree on it is the event a bound measures, not a premise.  A classifier
+    statement has no instance form (ShapeError; rules._classifier_statement refuses its `instance`)."""
+    kind, builds, i = st["kind"], st["builds"], INSTANCE_INPUT
+    if kind in CLASSIFIER_KINDS:
+        raise ShapeError("a %s statement has no instance form" % kind)
+    term(st, project, distribution=False)   # a classifier-maybe term alone reads it, and no classifier kind is here
+    if kind == "halts":
+        img = image(builds[0])
+        entry = r"exists en, valid_entry %s en %s /\ valid_input %s" % (img, i, i)
+        if st["reading"] == "budget":
+            return entry + r" /\ ~ run_scfg_budget_refused forced_only_cfg %s %s en %s" % (img, HALTS_BUDGET[0], i)
+        return entry
+    plain, san = image("plain"), image(builds[1])
+    if kind == "agreement":
+        predicate, scfg = agreement_premises(st)
+        lim = agreement_limits(st, project)[0]
+        budget = ("run_scfg_budget_refused %s %s %s ep %s" % (ENV[st["reading"]], plain, lim, i) if scfg
+                  else "run_budget_refused %s %s ep %s" % (plain, lim, i))
+        return (r"exists ep es, valid_entry %s ep %s /\ valid_entry %s es %s /\ %s %s /\ ~ %s"
+                % (plain, i, san, i, predicate, i, budget))
+    p = "(to_proc_input %s)" % i
+    hwcap = r" /\ in_hwcap %s = hwcap_rv64gc" % p if st.get("machine") == "rv64gc" else ""
+    return (r"valid_fin_input %s%s /\ (exists ep es, valid_entry %s ep %s /\ valid_entry %s es %s)"
+            % (i, hwcap, plain, p, san, p))
 
 
 # The status a Rust or Go fuzz target exits with when it panics: the OSS Verify port's panic hook (Rust) or patched

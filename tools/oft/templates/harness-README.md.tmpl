@@ -7,7 +7,7 @@ Template for projects/<project>/<harness>/README.md.
 $intro
 
 $summary
-$modifications
+$modifications$build_section
 ## What the $who checks
 $checks
 
@@ -15,7 +15,7 @@ $checks
 $model_gap
 | statement | in one line | status |
 |---|---|---|
-$statement_rows
+$statement_rows$instances
 
 ## Builds
 Static riscv64 Linux programs, compiled for RV64G and run as `<file> <input-file>`; `oft fetch $project` downloads the published ones and checks each against its SHA-256.
@@ -57,6 +57,99 @@ $items
 ## How this program differs from a libFuzzer build of this fuzz target
 $items
 
+@@ build_section
+## The build these statements are about
+$body
+@@ deviation
+The `deviation` record in harness.yaml says what these builds are. It also says where they differ from the builds of OSS-Fuzz.
+
+$items
+@@ deviation_commit
+- `library_commit` is `$commit`: the builds use $library_name at this commit.
+@@ deviation_tls_none
+- `tls_backend` is `none`: the binaries link no TLS library.
+@@ deviation_tls
+- `tls_backend` is `$value`: the binaries link the TLS library $tls.
+@@ deviation_tls_unscanned
+- `tls_backend` is `$value`: no published build has a scan, so no check reads this value.
+@@ deviation_setting_true
+- `$field` is `true`: the builds compile $library_name with its `$setting` setting.
+@@ deviation_setting_false
+- `$field` is `false`: the builds compile $library_name without its `$setting` setting.
+@@ deviation_sanitizer
+- `sanitizer` gives the sanitizers of each build:
+$items
+@@ deviation_sanitizer_item
+  - $build: $words
+@@ deviation_origin
+- `origin` (where the fuzz target comes from) is `$value`: $definition
+@@ deviation_harness_origin
+- `harness_origin` (what the harness source is) is `$value`: $definition
+@@ deviation_architecture_riscv64
+- `architecture` is `riscv64`: the binaries are riscv64 programs.
+@@ origin_oss-fuzz
+the fuzz target is the file of OSS-Fuzz.
+@@ origin_upstream
+the fuzz target is the project's own, in its repository, and OSS-Fuzz builds it.
+@@ origin_upstream_no_oss_fuzz
+the fuzz target is the project's own, in its repository. OSS-Fuzz does not have this project and does not run the fuzz target.
+@@ origin_this-repository
+the harness is an API driver, written for this repository.
+@@ origin_oss-verify
+OSS Verify builds the fuzz target, and OSS-Fuzz does not run it.
+@@ harness_origin_upstream
+the harness source is the upstream file with no change.
+@@ harness_origin_patched
+the build applies a patch to the harness source.
+@@ harness_origin_vendored
+the harness source is a kept copy, and the target has no upstream harness source.
+@@ harness_origin_extended
+the harness source is a kept copy beside an upstream harness source of the same target.
+@@ excluded
+No binary that the statements here are about runs these scenarios of the upstream fuzz target:
+
+$items
+@@ excluded_item
+- `$name`: $reason
+@@ debug
+Each binary that the statements here are about contains $library_name built with its debug configuration: $config. Each statement claims only the exact binary of each build that it is about. It claims nothing about $library_name built without this configuration.
+@@ debug_setting
+`$name`
+@@ debug_additions
+The $who calls these functions, which only the debug configuration exports:
+
+$items
+
+The maintainers of $library_name can refuse a witness found only through these functions.
+@@ debug_item
+- `$function` in `$source`
+
+@@ instances
+## Instances
+An instance is one input file that the record of a statement names. An instance does not show that any harness code ran on the input.$notes
+
+| statement | file | bytes | sha256 | path | lemma |
+|---|---|---:|---|---|---|
+$rows
+@@ instances_proved
+For each row that names a lemma, the lemma proves that every premise of the statement holds on the file. Thus the premises of the statement can hold together.
+@@ instances_recorded
+For each row that is recorded, not yet proved, there is no lemma yet. Nothing proves that the premises of the statement hold on the file.
+@@ instances_finite
+For a bound or decidability statement, the lemma proves that the instance is a valid finite input with a valid entry on both builds. It does not show that the two builds disagree on it. A disagreement of the two builds is the event that a bound statement measures, not a premise.
+@@ instance_row
+| `$name` | `proofs/provenance/evidence/instances/$file` | $bytes | `$sha` | $path | $lemma |
+@@ instance_lemma
+`$lemma`
+@@ instance_no_lemma
+recorded, not yet proved
+@@ instance_unchecked
+not proved: `oft check` does not check the lemma of a $status statement
+@@ instance_path_refused-by-driver
+`refused-by-driver`: the driver exits with status 2 before it calls the harness
+@@ instance_path_reaches-harness
+`reaches-harness`: the driver calls the harness on the file
+
 @@ check_row
 - $what ([$lines]($file#$anchor)): $stops; $live.
 @@ checks_bind
@@ -66,7 +159,7 @@ A failure of $subject ends the process with a status that the halts statements b
 @@ checks_bind_others
 No statement here proves the other $others.
 @@ checks_none
-The $who makes no check of its own beyond not crashing, so a statement about it says only that the code it calls $claim.
+The $who makes no check of its own beyond not crashing. $claim
 @@ rejects
 The $who turns some inputs away by returning a value other than 0 or -1, which the driver reports as status $status, so its halts statements allow $status as well:
 $rows
@@ -101,6 +194,22 @@ neither ASan nor a UB check fires
 P[plain and $san disagree] <= b under [Distribution.v](Distribution.v)
 @@ line_decidability
 some program decides exactly the inputs where plain and $san agree
+@@ line_classifier_sound_a_published
+classifier $role, when it answers yes, is right that plain and $san agree, and never answers no where they do
+@@ line_classifier_sound_a_unpatched
+classifier $role, when it answers yes, is right that plain and $san without the patches agree, and never answers no where they do
+@@ line_classifier_sound_b_published
+classifier $role, when it answers yes, is right that each of plain and $san does the same at every pair of entries, and never answers no where they do
+@@ line_classifier_sound_b_unpatched
+classifier $role, when it answers yes, is right that each of plain and $san agrees with its build without the patches, and never answers no where they do
+@@ line_classifier_total
+classifier $role of the plain and $san pair always answers yes, no or maybe
+@@ line_classifier_maybe_bound
+P[classifier $role of the plain and $san pair gives no firm answer] <= b under [Distribution.v](Distribution.v)
+@@ line_classifier_maybe_empty
+classifier $role of the plain and $san pair gives every valid input a firm answer
+@@ line_classifier_bound
+P[classifier $role of the plain and $san pair does not answer yes] <= b under [Distribution.v](Distribution.v)
 
 @@ uninstrumented
 Each build also links code that no sanitizer instruments, as its link recorded it. A statement about a sanitizer build covers that code only as uninstrumented code: ASan checks no load or store made inside it, and UBSan inserts no check there.

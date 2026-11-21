@@ -1,0 +1,54 @@
+-- Lean-only: no Rocq source. A Lean-only helper of `BudgetWitness.lean`.
+import {{unit_prefix}}.BudgetWit.Rzb
+import {{package}}.Reusable.YN3f
+
+/-! `YN3f`'s `writev` loop over `Rzb.rzb` (mirrors R1's `proofs/lib/Reusable/YN3f.lean`).
+
+Each declaration here is the R1 `YN3f` declaration that produces or consumes `realizes`, with
+`realizes` written `rzb` (`rz_` is `rzb_`; a name with neither gets `_b`), the same binders in the
+same order and the same `[fx : FPState] [AM : AllocMode]` genericity, and R1's proof with the
+mirrored lemmas renamed: `rzb_writev_dep` (`YN3f.lean:243`), `rzb_writev2_wall` (`:348`),
+`rzb_writev1_wall` (`:398`), `wl_node_b` (`:1646`), `wl_done_b` (`:1742`), `wl_loop2_b`
+(`:1763`), `wl_entry_pend_b` (`:1910`), `wl_entry_b` (`:2046`). No statement takes a `node_ok`
+hypothesis, so none takes a `grant_ok` one. The one node this file builds is `rzb_writev_dep`'s
+`rzb_node` at the pending `writev`: its `grant_ok` is `grant_ok_no` from the hypothesis
+`bv_unsigned (getr regs 17) = 66` (the pending-syscall equation is `rfl`, as for R1's `node_chk`
+call). The walks' nodes are built by `Rzb.rzb_step`/`rzb_msteps`, which supply `grant_ok_instr`.
+
+Declarations that do not mention `realizes` (`t_alt_wall'`, `wl_inv`, `after_w1`, `after_w2`,
+`body_A`/`B`/`C`, the `F_`/`D_` facts, …) are R1's, opened. R1's global macros `yn3f_omega` and
+`yn3f_gr` are used as they are. Copied `private` R1 helpers (same names, still `private`):
+`yn3f_if1`, `yn3f_if2`, `yn3f_aok`. -/
+
+namespace {{unit_prefix}}.BudgetWit.WritevF
+open {{package}}.Reusable.YN3f
+open {{unit_prefix}}.BudgetWit.Rzb
+
+section Addr
+-- The section is empty: this file states no fact about the target's binary; the addresses are
+-- `YN3f`'s `section Addr` names, used through the open namespace.
+end Addr
+
+/-! Copied `private` helpers of R1's `YN3f.lean` (lines 841-844, 1102-1107). -/
+
+private theorem yn3f_if1 (x y : Int) : (if decide ((1 : Int) = 2) then x else y) = y :=
+  ite_eq_right (by decide)
+private theorem yn3f_if2 (x y : Int) : (if decide ((2 : Int) = 2) then x else y) = x :=
+  ite_eq_left (by decide)
+
+private theorem yn3f_aok (a len : Int) (ha : 0 ≤ a) (hl : 0 ≤ len ∧ len ≤ 2 ^ 47)
+    (h : a + len ≤ 2 ^ 47) : access_okb (Z_to_bv 64 a) len = true := by
+  unfold access_okb TASK_SIZE
+  rw [u_Z2bv a ha (by yn3f_omega)]
+  simp only [Bool.and_eq_true, decide_eq_true_eq]
+  yn3f_omega
+
+/-! ## R1's Section `d`: the `writev` node and its one- and two-`iovec` forms -/
+    (fun i => T i.val) (wr_full bs Hnb) ?_
+    (grant_ok_no segs (pend_at regs pc mem rom) model (getr regs 17) 66 rfl Hno
+      (by decide) (by decide) (by decide) (by decide)) ?_
+/-! ## R1's Section `a0`: the loop -/
+
+-- R1's `wl_node` (as Rocq's) keeps the section binder `TT`, which its statement does not use.
+  exact rzb_emit_nil src0segs _ _ HR
+end {{unit_prefix}}.BudgetWit.WritevF
