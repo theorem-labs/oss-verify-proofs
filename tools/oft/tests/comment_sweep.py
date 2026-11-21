@@ -135,7 +135,7 @@ of those is in both.
 What the sweep does not do, which its report names: it changes git object ids, so each swept fuzz target re-keys
 (keys.py: a path's id is a digest of its entries' object ids) and takes a new check of record on the build farm, one
 Job per fuzz target (condition 22); the released-proof index (.github/proof-index.py, rebuilt by proof-index.yml on
-the push to main), the stream's lemma and cold-heads indexes and its search corpora store path:line and
+the push to main), the stream's lemma index and its search corpora store path:line and
 harvest addresses from comments, so they are rebuilt after the merge (condition 23); a fuzz target with a
 licence-pending entry in lint-exceptions.yaml is swept after or beside its licence series (condition 25).
 """
@@ -925,7 +925,7 @@ class Plan:
             "    - the swept fuzz target re-keys (its files' object ids change) and takes a new check of record on the "
             "build farm, one Job per fuzz target (condition 22);",
             "    - after the merge, the released-proof index (.github/proof-index.py, which proof-index.yml runs on "
-            "the push to main), the stream's lemma and cold-heads indexes and its search corpora are rebuilt "
+            "the push to main), the stream's lemma index and its search corpora are rebuilt "
             "(condition 23);",
             "    - licence (condition 25): %s; a fuzz target with an entry is swept after or beside its licence "
             "series." % pending_note(u),

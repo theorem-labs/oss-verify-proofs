@@ -200,30 +200,38 @@ class Stack(unittest.TestCase):
         os.environ["PATH"] = self.old_path
         self.d.cleanup()
 
-    def rocq(self, says, bin_dir=None):
-        """A rocq first on PATH whose `dep -sort` lists the files it is given and whose `compile` of a proof's file
-        prints says and exits 1; any other call goes to the rocq already on PATH (Tools' stand-in), if any."""
+    def dune(self, says, bin_dir=None):
+        """A dune first on PATH whose build of a proof directory's .vo (_build/default/proofs/.../Proof.vo, as
+        check.build_proof_dirs asks for it) prints, for each such directory, a `File` line naming its Proof.v and then
+        says, makes no .vo, and exits 1, as dune does when the rocq it ran fails; any other call goes to the dune already
+        on PATH (Tools' stand-in), if any."""
         bin_dir = bin_dir or os.path.join(self.d.name, "overflow-bin")
         os.makedirs(bin_dir, exist_ok=True)
         with open(os.path.join(bin_dir, "says.txt"), "w") as f:
-            f.write(says)
-        path = os.path.join(bin_dir, "rocq")
+            f.write("".join(l for l in says.splitlines(True) if not l.startswith("File ")))
+        path = os.path.join(bin_dir, "dune")
         with open(path, "w") as f:
             f.write('#!/bin/sh\n'
-                    'if [ "$1" = dep ]; then for a in "$@"; do case "$a" in *.v) echo "$a" ;; esac; done; exit 0; fi\n'
-                    'case "$*" in compile*/Proof.v) cat "%s"; exit 1 ;; esac\n'
-                    'PATH="${PATH#*:}" exec rocq "$@"\n' % os.path.join(bin_dir, "says.txt"))
+                    'hit=""\n'
+                    'for a in "$@"; do case "$a" in _build/default/proofs/*/Proof.vo)\n'
+                    '  v="${a#_build/default/}"; echo "File \\"${v%%.vo}.v\\", line 1, characters 0-20:"; cat "%s"; hit=1 ;;\n'
+                    'esac; done\n'
+                    '[ -z "$hit" ] || exit 1\n'
+                    'PATH="${PATH#*:}" command -v dune >/dev/null 2>&1 && PATH="${PATH#*:}" exec dune "$@"\n'
+                    'exit 0\n' % os.path.join(bin_dir, "says.txt"))
         os.chmod(path, 0o755)
         if not os.environ["PATH"].startswith(bin_dir + os.pathsep):
             os.environ["PATH"] = bin_dir + os.pathsep + os.environ["PATH"]
 
     def check_proof_error(self, t):
-        """check_proof's CheckError for the fixture's plain_halts proof."""
+        """check_proof's CheckError for the fixture's plain_halts proof, after build_proof_dirs built its directory
+        (option D: dune compiles a proof directory, and check_proof audits what dune built)."""
         st = next(x for x in facts.load(t.root).statements() if x.id == UNIT + "/plain_halts")
         work = tempfile.mkdtemp(dir=self.d.name)
+        libs = {}
+        check.build_proof_dirs(t.root, st.harness, work, io.StringIO(), [st.proof.path], libs)
         with self.assertRaises(check.CheckError) as e:
-            # the OLD call, as the two gate-job scripts make it: no counter
-            check.check_proof(t.root, st, st.proof, set(), work, io.StringIO(), {})
+            check.check_proof(t.root, st, st.proof, set(), work, io.StringIO(), libs)
         return str(e.exception)
 
     def test_a_compile_that_overflows_is_reported_with_the_measured_size(self):
@@ -231,13 +239,13 @@ class Stack(unittest.TestCase):
         with tree() as t:
             self._proof(t)
             os.environ["OFT_STACK_USABLE"] = "7 MiB"
-            self.rocq(OVERFLOW)
+            self.dune(OVERFLOW)
             said = self.check_proof_error(t)
             self.assertIn("%s: stack exhausted at 7 MiB (see " % PROOF, said)
-            self.assertNotIn("does not compile", said)
-            self.rocq(TYPE_ERROR)
+            self.assertNotIn("dune built no", said)
+            self.dune(TYPE_ERROR)
             said = self.check_proof_error(t)
-            self.assertIn("%s: does not compile (see " % PROOF, said)
+            self.assertIn("%s: dune built no " % PROOF, said)
             self.assertNotIn("stack exhausted", said)
 
     def test_a_failure_with_no_prepared_stack_still_has_a_defined_text(self):
@@ -245,13 +253,14 @@ class Stack(unittest.TestCase):
         with tree() as t, mock.patch.object(check, "measure_stack", create=True,
                                             return_value=(None, "not measured (no cc on PATH)")):
             self._proof(t)
-            self.rocq(OVERFLOW)
+            self.dune(OVERFLOW)
             self.assertIn("stack exhausted (the stack was not measured: no cc on PATH)", self.check_proof_error(t))
             os.environ["OFT_STACK_USABLE"] = "at least 256 MiB"
             self.assertIn("stack exhausted with at least 256 MiB usable", self.check_proof_error(t))
 
     def test_a_library_build_that_overflows_is_stack_exhausted(self):
-        """compile_lib builds the library with dune, which prints what rocq said, or how it died, and exits 1."""
+        """compile_lib builds the library with dune, which prints what rocq said, or how it died, and exits 1.  It
+        builds the statement side first (in a build of its own), which passes here: only the library's build fails."""
         # today: "does not compile" for each
         bin_dir = os.path.join(self.d.name, "dune-bin")
         os.makedirs(bin_dir)
@@ -266,7 +275,8 @@ class Stack(unittest.TestCase):
                 with open(os.path.join(bin_dir, "says.txt"), "w") as f:
                     f.write(says)
                 with open(os.path.join(bin_dir, "dune"), "w") as f:
-                    f.write('#!/bin/sh\ncat "%s"\nexit 1\n' % os.path.join(bin_dir, "says.txt"))
+                    f.write('#!/bin/sh\ncase "$*" in */lib/*.vo*) cat "%s"; exit 1 ;; esac\nexit 0\n'
+                            % os.path.join(bin_dir, "says.txt"))
                 os.chmod(os.path.join(bin_dir, "dune"), 0o755)
                 h = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"]
                 with self.assertRaises(check.CheckError) as e:
@@ -274,46 +284,53 @@ class Stack(unittest.TestCase):
                 self.assertIn("%s: %s (see " % (lib, words), str(e.exception))
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
-    def test_proof_jobs_name_a_child_s_stack_failure(self):
-        """Each statement's process writes rocq's output into its own compile.log, so the parent reads the child's
-        `: stack exhausted ` line, and each child takes the parent's measure (--stack-from-parent).  Today the parent's
-        line is "its process exited 1"."""
+    def test_proof_jobs_name_a_stack_failure_and_children_take_the_parent_s_stack(self):
+        """With --proof-jobs the parent builds every proof directory once (build_proof_dirs, option D), so a directory
+        whose rocq ran out of stack fails in the parent as `stack exhausted`, and gets no process; each statement whose
+        directory built gets a process that takes the parent's measure (--stack-from-parent)."""
         real_popen = subprocess.Popen
         for library in (True, False):
-            with self.subTest(library=library), tree() as t:
-                self.d.cleanup()
-                self.d = tempfile.TemporaryDirectory()   # each case its own assets, stand-ins and logs
-                os.environ["PATH"] = self.old_path
-                self.ready(t)
-                if library:
-                    self._two_proofs_and_a_library(t)
-                else:
-                    self._proof(t)
-                    self._proof(t, "Theorem plain_halts_may_fail_holds : True. Proof. exact I. Qed.\n",
-                                s="plain_halts_may_fail")
-                self.tools()
-                self.rocq(OVERFLOW)
-                started = []
+            for overflow in (True, False):
+                with self.subTest(library=library, overflow=overflow), tree() as t:
+                    self.d.cleanup()
+                    self.d = tempfile.TemporaryDirectory()   # each case its own assets, stand-ins and logs
+                    os.environ["PATH"] = self.old_path
+                    self.ready(t)
+                    if library:
+                        self._two_proofs_and_a_library(t)
+                    else:
+                        self._proof(t)
+                        self._proof(t, "Theorem plain_halts_may_fail_holds : True. Proof. exact I. Qed.\n",
+                                    s="plain_halts_may_fail")
+                    self.tools()
+                    if overflow:
+                        self.dune(OVERFLOW)
+                    started = []
 
-                def popen(cmd, *a, **kw):
-                    if "oft.check" in cmd:
-                        started.append(cmd)
-                    return real_popen(cmd, *a, **kw)
+                    def popen(cmd, *a, **kw):
+                        if "oft.check" in cmd:
+                            started.append(cmd)
+                        return real_popen(cmd, *a, **kw)
 
-                os.environ.pop("OFT_STACK_USABLE", None)
-                with mock.patch.object(check, "measure_stack", create=True, return_value=(7 * MIB, "7 MiB")), \
-                        mock.patch.object(subprocess, "Popen", side_effect=popen):
-                    rc, out = run(check.run, t.root, [UNIT], parts="proofs", proof_jobs=2)
-                self.assertEqual(rc, 1, out)
-                fails = [line for line in out.splitlines() if line.startswith("FAIL ")]
-                self.assertEqual(len(fails), 2, out)
-                for line in fails:
-                    self.assertRegex(line, r"^FAIL proofs/zlib/checksum_fuzzer/plain_halts(_may_fail)?: stack exhausted "
-                                           r"at 7 MiB \(see .*\.log\)$")
-                self.assertEqual(len(started), 2, started)
-                self.assertTrue(all("--stack-from-parent" in cmd for cmd in started), started)
-                self.assertTrue(all(("--lib" in cmd) == library for cmd in started), started)
-                self.assertIn("  | stack: 7 MiB usable (", out)
+                    os.environ.pop("OFT_STACK_USABLE", None)
+                    with mock.patch.object(check, "measure_stack", create=True, return_value=(7 * MIB, "7 MiB")), \
+                            mock.patch.object(subprocess, "Popen", side_effect=popen):
+                        rc, out = run(check.run, t.root, [UNIT], parts="proofs", proof_jobs=2)
+                    self.assertIn("  | stack: 7 MiB usable (" if not overflow else "stack: 7 MiB usable (", out)
+                    if overflow:
+                        self.assertEqual(rc, 1, out)
+                        fails = [line for line in out.splitlines() if line.startswith("FAIL ")]
+                        self.assertEqual(len(fails), 2, out)
+                        for line in fails:
+                            self.assertRegex(line, r"^FAIL (proofs/zlib/checksum_fuzzer/plain_halts(_may_fail)?): \1: "
+                                                   r"stack exhausted at 7 MiB \(see .*\.log\)$")
+                        self.assertEqual(started, [])
+                    else:
+                        self.assertEqual(rc, 0, out)
+                        self.assertEqual(len(started), 2, started)
+                        self.assertTrue(all("--stack-from-parent" in cmd and "--no-instances" in cmd
+                                            for cmd in started), started)
+                        self.assertTrue(all(("--lib" in cmd) == library for cmd in started), started)
 
     def test_the_stack_line_is_no_oft_check_line(self):
         # today: no "stack: " line

@@ -29,7 +29,7 @@ import sys
 
 import yaml
 
-from . import facts, generate, port, release_tree, rocq, yamlio
+from . import claims, facts, generate, port, release_tree, rocq, shapes, yamlio
 
 COLUMNS = ("id", "previous_revision", "revision", "expected_revision", "statement", "proof")
 STATEMENT = ("same", "changed", "re-rendered", "model-changed", "new", "gone", "unfingerprinted")
@@ -75,7 +75,8 @@ def _definitions(code, names):
 def rerendered(tree):
     """The ids of tree's statements whose generated code in tree is not what these tools render from tree's facts:
     the code of their Definition in Statements.v, of the rest of Statements.v or of the harness's Images.v, or, for a
-    bound, of Distribution.v.  Comments and layout do not count."""
+    statement that takes a bound (a bound, a classifier bound, a classifier maybe bound), of Distribution.v.  Comments
+    and layout do not count."""
     ids = set()
     for h in tree.harnesses():
         if not h.builds():
@@ -83,11 +84,13 @@ def rerendered(tree):
         names = {st.name for st in h.statements.values()}
         rest, defs = _definitions(_code(tree.path(h.dir, "Statements.v")), names)
         new_rest, new_defs = _definitions(rocq.code(generate.statements_v(h)), names)
-        whole = rest != new_rest or _code(tree.path(h.dir, "Images.v")) != rocq.code(generate.images_v(h))
+        whole = rest != new_rest or _code(tree.path(h.dir, "Images.v")) != rocq.code(
+            claims.images_v(h.tree.namespace, h.project.name, h.name, h.data))
         bounds = "distribution" in h.data and (
-            _code(tree.path(h.dir, "Distribution.v")) != rocq.code(generate.distribution_v(h)))
+            _code(tree.path(h.dir, "Distribution.v")) != rocq.code(
+                claims.distribution_v(h.project.name, h.name, h.data, h.distribution_body())))
         for st in h.statements.values():
-            if whole or defs.get(st.name) != new_defs.get(st.name) or (bounds and st.kind == "bound"):
+            if whole or defs.get(st.name) != new_defs.get(st.name) or (bounds and shapes.takes_bound(st.kind, True)):
                 ids.add(st.id)
     return ids
 

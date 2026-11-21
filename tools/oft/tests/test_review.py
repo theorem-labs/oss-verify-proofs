@@ -13,15 +13,23 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 from oft import yamlio
 from oft.tests.helpers import REPO
 
+OFT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # tools/oft/tests -> tools/oft
 WORKFLOW = os.path.join(REPO, ".github", "workflows", "review.yml")
 HAVE_WORKFLOW = os.path.exists(WORKFLOW)
 NO_WORKFLOW = "no .github/workflows/review.yml beside tools/oft"
+# Every value of the workflow that a test reads is read while that test runs, not while this module is imported:
+# without review.yml beside tools/oft every class here is skipped, and nothing of the workflow is there to read.
+# A class body that read one (`LIMIT = int(WF["env"]["OUTSIDE_HOURLY_LIMIT"])`) ended the import in a KeyError
+# instead, and with it the runner image's build, on three days (images.yml runs 42347131869, 42454924507 and
+# 42574457306): the image carries tools/oft with no .github beside it.  ImportsWithoutTheWorkflow, at the end of
+# this file, runs that case.  A name the workflow does not set is still a KeyError that names it.
 WF = yamlio.load_file(WORKFLOW) if HAVE_WORKFLOW else {"jobs": {}, "env": {}}
 JOBS = WF["jobs"]
 APPS = WF["env"].get("APPS", "")
@@ -908,10 +916,9 @@ class RouteTest(unittest.TestCase):
 class LimitTest(Runner):
     """OUTSIDE_HOURLY_LIMIT: the runs of one account without write access that reach the screen in an hour."""
 
-    LIMIT = int(WF["env"]["OUTSIDE_HOURLY_LIMIT"])
-
     def setUp(self):
         super().setUp()
+        self.LIMIT = int(WF["env"]["OUTSIDE_HOURLY_LIMIT"])
         self.permissions(alice="write", mallory="read", eve="read")
 
     def runs(self, *runs):
@@ -1141,7 +1148,10 @@ class HoldTest(Runner):
     """The hold job's comment: fixed words, which say nothing of why, and the marker of a hold tried again."""
 
     STEP = "Label it and say that it was held"
-    TRIES = int(WF["env"]["REVIEW_TRIES"])
+
+    def setUp(self):
+        super().setUp()
+        self.TRIES = int(WF["env"]["REVIEW_TRIES"])
 
     def run_hold(self, route, outsider="mallory", review="skipped", origin="", tries="", comments=(), capped=False,
                  runs=()):
@@ -1497,10 +1507,10 @@ class Held(Runner):
     """Stand-in answers for held items: this workflow's id, the runs that holds name, and the rescreens of the hour."""
 
     WORKFLOW_ID = 99
-    LIMIT = int(WF["env"]["OUTSIDE_HOURLY_LIMIT"])
 
     def setUp(self):
         super().setUp()
+        self.LIMIT = int(WF["env"]["OUTSIDE_HOURLY_LIMIT"])
         self.permissions(alice="write", bob="write", mallory="read", eve="read")
         self.serve(f"repos/{SLUG}/actions/workflows/review.yml", {"id": self.WORKFLOW_ID})
 
@@ -1983,3 +1993,53 @@ class RescreenJobTest(Held):
         self.assertIn("rescreen_re='^rescreen #([0-9]+) of ([A-Za-z0-9-]+(\\[bot\\])?)$'",
                       step("rescreen", RESCREEN_JOB)["run"])
         self.assertIn('test("^rescreen #[0-9]+ of [A-Za-z0-9-]+(\\\\[bot\\\\])?$")', step("trust", TRUST)["run"])
+
+
+class ImportsWithoutTheWorkflow(unittest.TestCase):
+    """tools/oft with no checkout around it -- the runner image's copy, which the image's build runs these tests
+    on -- has no .github/workflows/review.yml, and this module has to import there, so that each of its classes
+    says it is skipped.  A class body that read a value of the workflow ended that import in `KeyError:
+    'OUTSIDE_HOURLY_LIMIT'`, and the image build with it, on three days (images.yml runs 42347131869,
+    42454924507 and 42574457306).  So the case is run for real: tools/oft alone in a tree of its own, this module
+    imported there, every class of it skipped but this one.  The case the skips must not catch is the second test
+    below: where the workflow is, the classes run."""
+
+    CHILD = """\
+import unittest
+from oft.tests import test_review as m
+if m.HAVE_WORKFLOW:
+    raise SystemExit("this tree has %s" % m.WORKFLOW)
+classes = [v for v in vars(m).values()
+           if isinstance(v, type) and issubclass(v, unittest.TestCase) and v.__module__ == m.__name__]
+print(len(classes))
+for c in classes:
+    if not getattr(c, "__unittest_skip__", False):
+        print(c.__name__)
+"""
+
+    def test_this_module_imports_with_tools_oft_alone_and_every_class_of_it_is_skipped(self):
+        with tempfile.TemporaryDirectory(prefix="oft-no-workflow-") as d:
+            os.mkdir(os.path.join(d, "tools"))
+            os.symlink(OFT, os.path.join(d, "tools", "oft"))   # tools/oft, and nothing else of a checkout
+            run = subprocess.run([sys.executable, "-B", "-c", self.CHILD], cwd=d, capture_output=True, text=True,
+                                 env=dict(os.environ, PYTHONPATH=os.path.join(d, "tools")))
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        found = run.stdout.split()
+        self.assertGreater(int(found[0]), 1, run.stdout)
+        self.assertEqual(found[1:], [type(self).__name__], run.stdout)
+
+    # The case the skips must not catch, in two tests, each asking for exactly what the classes it names ask for:
+    # a class that only reads the workflow needs the workflow, and one that runs the scripts needs jq and git too,
+    # so without jq this one says that rather than failing on classes jq skipped.
+    @unittest.skipUnless(HAVE_WORKFLOW, NO_WORKFLOW)
+    def test_the_classes_that_read_the_workflow_run_where_it_is(self):
+        for cls in (RouteTest, HoldingsTest):
+            with self.subTest(cls=cls.__name__):
+                self.assertFalse(getattr(cls, "__unittest_skip__", False))
+
+    @unittest.skipUnless(HAVE_WORKFLOW, NO_WORKFLOW)
+    @unittest.skipUnless(shutil.which("jq") and shutil.which("git"), "jq or git is not installed")
+    def test_the_classes_that_run_the_scripts_run_where_the_workflow_jq_and_git_are(self):
+        for cls in (Runner, LimitTest, HoldTest, Held):
+            with self.subTest(cls=cls.__name__):
+                self.assertFalse(getattr(cls, "__unittest_skip__", False))

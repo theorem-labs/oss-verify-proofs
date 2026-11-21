@@ -1,0 +1,37 @@
+[
+  {
+    "file": "RunB",
+    "total": 537,
+    "copied": 413,
+    "fragment": 124,
+    "pieces": 65
+  },
+  {
+    "file": "StartB",
+    "total": 505,
+    "copied": 450,
+    "fragment": 55,
+    "pieces": 33
+  },
+  {
+    "file": "UsageB",
+    "total": 1388,
+    "copied": 1284,
+    "fragment": 104,
+    "pieces": 91
+  },
+  {
+    "file": "WritevF",
+    "total": 712,
+    "copied": 658,
+    "fragment": 54,
+    "pieces": 11
+  },
+  {
+    "file": "WritevG",
+    "total": 660,
+    "copied": 559,
+    "fragment": 101,
+    "pieces": 38
+  }
+]

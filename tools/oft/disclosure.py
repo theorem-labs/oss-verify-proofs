@@ -1,9 +1,11 @@
 """What no file a release keeps may disclose, and the search for it.
 
 A release leaves out what facts.hold holds back: a project held whole (by a finding, or `release: private`), the
-statements open findings of an enrolled project hold back, and every finding that holds its project back.  No file the
-release keeps may name any of them or carry a holding finding's evidence, whole or in part.  `needles` builds what to
-look for, `found` judges one file and `search` judges every file the cut keeps or writes.
+statements open findings of an enrolled project hold back, each fuzz target a project's private_harnesses holds, and
+every finding that holds its project back.  No file the release keeps may name any of them (but a fuzz target a public
+release carried before its project's hold, below), name this internal repository, or carry a holding finding's
+evidence, whole or in part.  `needles` builds what to look for, `found` judges one file and `search` judges every file
+the cut keeps or writes.
 
 What it catches is a closed list (frozen on 2026-10-26: findings never
 ship, a held project is removed or cut to a held page, and every release pull request is reviewed, so this check is a
@@ -64,10 +66,37 @@ driver's header, its bytes and byte windows, its SHA-256, the windows of its hex
 payload, whole (from PAYLOAD_MIN characters) and in windows.  A digest, recorded or computed, counts by its name and the
 windows of its hex.
 
-Names (slugs, patch file names, digests, held fuzz targets and statements, and a held project's own recipe: its SHA-256,
-its file name and, when no kept fact names it, its release tag) count only at a name boundary, in the
-file's path and text with escapes decoded, case folded, every dash read as `_`, each path resolved, and each line break
-and each blank beside a `/` deleted.  A name followed by a source or header suffix (`openssl/x509.h`) is a file name.
+Names (slugs, patch file names, digests, held fuzz targets and statements, a held project's own recipe: its SHA-256,
+its file name and, when no kept fact names it, its release tag; and the name of this internal repository) count only at
+a name boundary, in the file's path and text with escapes decoded, case folded, every dash read as `_`, each path
+resolved, and each line break and each blank beside a `/` deleted.  A name followed by a source or header suffix
+(`openssl/x509.h`) is a file name.  A fuzz target of private_harnesses also counts by the rule of held_match, its three
+forms, in the file's path and in each reading of its bytes as they are.
+
+A fuzz target of a project held whole is no name when a public release carried it before the hold began, and so is
+each statement of it that a public release carried then: what went public before a hold stays public (Sami's answer
+of 2026-11-16 in Dispatch issue OSSV-142, "Keep them public", which #2769 put in the release gate's R8; the record's
+header links the ask).  The tree records no release's contents, so a reviewed record says which those are:
+PUBLIC_BEFORE_HOLD (public_before_hold reads it, from the tree root needles is given: tree.path), a unit row
+<project>/<harness> for each such fuzz target and a statement row <project>/<harness>/<statement> for each such
+statement of it, each with the first public release that carried it and the pull request whose merge began the hold.
+It lives in tools/publish/, beside withheld.yaml: keys.NOT_THE_CHECKER leaves that directory out of every key, so a
+row re-keys no unit, and `oft release-tree` removes it from every release after reading it.  The hold's pull request
+adds the rows of its project, and pr.yml's public_rows job checks each row against the public repository's release (a
+statement row against the statements of its harness.yaml there) and against the hold's merge into main
+(tools/oft/tests/public_before_hold_rows.py).  A fuzz target with a unit row, of a project held whole, is no name,
+as <project>/<harness> and as its Rocq module; each statement of it the facts hold that has no statement row (one
+written during the hold) gets back the needles of a held statement, which those two names covered: its id, its paths
+in the per-project layout, its Rocq names, <harness>/<statement> and, in a file about its fuzz target, its short
+names.  A stated limit: a statement a public release carried before the hold that a held bug later shows false has a
+row and is no name, since the bug changes its status, not its name (its finding's names and evidence stay needles);
+and a statement name the facts do not hold has no needle once its fuzz target's names are no needles.  Every other
+needle stays: a fuzz target with no unit row (one enrolled after the hold, or an OSS-Fuzz harness the project never
+enrolled, or one with no facts), a fuzz target that private_harnesses holds, with a unit row or not (a held fuzz
+target fails closed: Dispatch issue OSSV-377, R4), the held project's own recipe, each holding finding's names and
+evidence, each held statement, and the name of this internal repository.  A record that is not there (a release's own
+tree, which keeps no tools/publish/), cannot be read, or holds a line that is no row or a row that does not fit the
+others (public_before_hold) keeps every needle.
 """
 import codecs
 import collections
@@ -80,7 +109,7 @@ import stat
 import unicodedata
 import urllib.parse
 
-from . import facts, lint, names, paths, urls
+from . import facts, lint, names, paths, schema, urls
 
 # the shortest run of long characters that counts as a copy of evidence
 WINDOW = 32
@@ -98,6 +127,18 @@ EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 # where a fuzz target's own files live: a file under one of these may name a statement of it without its project (its
 # proofs, counterexamples and findings are under projects/ in the per-project layout)
 UNIT_DIRS = ("projects", "proofs", "counterexamples")
+# the reviewed record of the fuzz targets, and of their statements, that a public release carried before their
+# project's hold began (module docstring)
+PUBLIC_BEFORE_HOLD = "tools/publish/public-before-hold.tsv"
+# a row of it: <project>/<harness> (a unit row) or <project>/<harness>/<statement> (a statement row), the first public
+# release that carried it, and the hold's pull request.  No name of the three may hold a `/`, so the two kinds of row
+# differ by their count of slashes
+PUBLIC_ROW = re.compile(r"(%s)/(%s)(?:/(%s))?\t(v(\d{4})\.(\d{2})\.(\d+))\t#([1-9][0-9]*)"
+                        % (schema.SCALARS["project-name"], schema.SCALARS["harness-name"],
+                           schema.SCALARS["statement-name"]))
+# a record of the rows of PUBLIC_BEFORE_HOLD: units {(project, harness): (release, hold)} and statements
+# {(project, harness, statement): (release, hold)}, each hold a pull request number
+Record = collections.namedtuple("Record", "units statements")
 # what every counterexample note and finding summary writes about a run: build names, outcomes, articles, connectives
 # and numbers.  A window made only of these words says what the statements already say (`the plain and ubsan builds
 # exit 0, the control ...` is in public counterexample notes), so it is no evidence; a window with one other word is.
@@ -115,12 +156,13 @@ OUTCOME_WORDS = frozenset("""
 Name = collections.namedtuple("Name", "text label relative scope")
 Exact = collections.namedtuple("Exact", "data label")
 # names: [Name]; exact: [Exact]; windows: {long window: {label}}; whole: {(punctuation-form unit, its plain form):
-# {label}}; byte_windows: {WINDOW-byte run: {label}}.  needles() completes them (_complete): whole becomes
+# {label}}; byte_windows: {WINDOW-byte run: {label}}; held: {held entry <project>/<harness>: label}, which `found`
+# reads by the rule of held_match, not as a name.  needles() completes them (_complete): whole becomes
 # [(unit, plain, its long form, {label})], grams and byte_grams index the windows by their _GRAM-long runs, which
 # `found` probes every _STRIDE positions before it looks a window up (so every WINDOW-long copy is found), and
 # nul_digit says whether an input holds a NUL before an octal digit, the one byte pair YAML's writer and a C reader
 # spell otherwise
-Needles = collections.namedtuple("Needles", "names exact windows whole byte_windows grams byte_grams nul_digit")
+Needles = collections.namedtuple("Needles", "names exact windows whole byte_windows grams byte_grams nul_digit held")
 _GRAM = 16
 _STRIDE = WINDOW - _GRAM + 1
 
@@ -497,7 +539,9 @@ def found(rel, data, needles):
     """The labels of needles the file at rel, whose bytes are data, holds: a name in its path or text; an exact copy of
     an input or a patch, or a window of an input's bytes, in the bytes it spells; a window of evidence in its long form;
     or a whole unit of evidence in its punctuation form or its plain form, which are built only when the long form
-    holds that unit's letters and digits (the long form of a text's punctuation form is its long form)."""
+    holds that unit's letters and digits (the long form of a text's punctuation form is its long form); or a held
+    entry by the rule of held_match, in its path or in a reading of its bytes as they are (no escape decoded, no case
+    folded)."""
     readings = _readings(data)
     rounds = [_unescaped(t) for t in readings]
     rounds += [r for r in (_yaml_nul(t, steps, needles.nul_digit) for t, steps in zip(readings, rounds)) if r]
@@ -535,6 +579,10 @@ def found(rel, data, needles):
                 continue
         if _named(text, n.text, n.relative):
             hits.add(n.label)
+    if needles.held:
+        entries = sorted(needles.held)
+        for t in [rel] + readings:
+            hits.update(needles.held[e] for e in held_match(t, entries))
     return hits
 
 
@@ -545,11 +593,12 @@ def _search_one(root, needles, rel):
 
 
 def search(root, needles, skip, writes):
-    """[(path, label)]: each kept on-disk file or write that holds a needle.  With no needle (nothing held) it reads
-    nothing.  The files are independent, so they are judged on lint's forked scanner, on every CPU this process may
-    use; the output is sorted after, so it is deterministic.  A path at or under skip, an ignored/generated path, a link
-    or a non-regular file is not read."""
-    if not any((needles.names, needles.exact, needles.windows, needles.whole, needles.byte_windows)):
+    """[(path, label)]: each kept on-disk file or write that holds a needle.  needles() always gives one, the name of
+    this internal repository, so the search reads every kept file; with no needle at all it reads nothing.  The files
+    are independent, so they are judged on lint's forked scanner, on every CPU this process may use; the output is
+    sorted after, so it is deterministic.  A path at or under skip, an ignored/generated path, a link or a non-regular
+    file is not read."""
+    if not any((needles.names, needles.exact, needles.windows, needles.whole, needles.byte_windows, needles.held)):
         return []
     skip = {s.rstrip("/") for s in skip}
     hits = [(rel, label) for rel, text in sorted(writes.items()) for label in found(rel, text.encode(), needles)]
@@ -758,41 +807,191 @@ def _own_recipe_needles(tree, hold, out):
             out.names.append(_name(own["release"], "%s, the release tag %s" % (own["release"], what)))
 
 
-def needles(tree, hold):
-    """The Needles of what hold (facts.hold of tree) leaves out of tree: empty when nothing is held.
+def public_before_hold(path):
+    """The Record of the record at path (PUBLIC_BEFORE_HOLD), a blank line or one that starts with `#` being no row.
+    None, so that no needle relaxes, when the file is not there, is no regular file of at most facts.FINDING_FILE_CAP
+    bytes, or is no UTF-8 text, or when a row is ambiguous: a line that is no row, a row twice, a statement row whose
+    fuzz target has no unit row, or one that names another hold than its unit row or a release before its unit
+    row's."""
+    try:
+        lines = facts.read_bounded(path).decode("utf-8").split("\n")
+    except (facts.BoundedFileError, OSError, ValueError):
+        return None
+    units, statements, order = {}, {}, {}
+    for line in lines:
+        if not line.strip() or line.startswith("#"):
+            continue
+        m = PUBLIC_ROW.fullmatch(line)
+        if m is None:
+            return None
+        p, h, st, release, year, month, n, hold = m.groups()
+        key, rows = ((p, h), units) if st is None else ((p, h, st), statements)
+        if key in rows:
+            return None
+        rows[key], order[release] = (release, int(hold)), (int(year), int(month), int(n))
+    for (p, h, st), (release, hold) in statements.items():
+        unit = units.get((p, h))
+        if unit is None or unit[1] != hold or order[release] < order[unit[0]]:
+            return None
+    return Record(units, statements)
 
-    Names: each fuzz target of a project held whole, as <project>/<harness> and as its Rocq module; for a project held
-    whole that pins a recipe of its own (one release.yaml does not list: a `release: private` project's draft asset),
-    that recipe's SHA-256 (_digest), its file name, and its release tag when no fact the release keeps names that tag;
-    for each holding finding, its slug, every `*.patch` name in its directory, its recorded digests and its inputs'
-    SHA-256; for each held statement, its id, its Rocq names without the root, <harness>/<statement> (relative), and,
-    in a file about its fuzz target, <statement> and <statement>_holds (relative).  The evidence: _finding_needles."""
-    out = Needles([], [], {}, {}, {}, None, None, False)
+
+def _statement_needles(out, ns, p, h, st, what):
+    """Add to out the needles of statement st of fuzz target p/h, which what says why the release holds back: its id,
+    its folders in the per-project layout (<project>/<harness>/proofs/<statement> and .../counterexamples/<statement>,
+    under projects/, where its id is no part of the path), its Rocq names without the root, <harness>/<statement>
+    (relative), and, in a file about its fuzz target, <statement> and <statement>_holds (relative)."""
+    sid, module = "%s/%s/%s" % (p, h, st), _module(p, h)
+    out.names.append(_name(sid, "%s, %s" % (sid, what)))
+    for kind in ("proofs", "counterexamples"):
+        folder = "%s/%s/%s/%s" % (p, h, kind, st)
+        out.names.append(_name(folder, "%s, the %s folder of held statement %s" % (folder, kind, sid)))
+    for text, full in (("%s.Statements.%s" % (module, st), "%s.Statements.%s" % (names.rocq_harness(ns, p, h), st)),
+                       ("%s.%s" % (module, st), "%s.%s" % (names.rocq_harness(ns, p, h), st)),
+                       ("Proofs.%s.%s" % (module, st), names.rocq_proof(ns, p, h, st))):
+        out.names.append(_name(text, "%s, the Rocq name of held statement %s" % (full, sid)))
+    short = "%s/%s" % (h, st)
+    out.names.append(_name(short, "%s, held statement %s without its project" % (short, sid), relative=True))
+    scope = (tuple("%s/%s/%s/" % (top, p, h) for top in UNIT_DIRS) + ("notes/%s.md" % p,),
+             (_name_text(_decoded(module)),))
+    for name in (st, st + "_holds"):
+        out.names.append(_name(name, "%s, held statement %s in a file about its fuzz target" % (name, sid),
+                               True, scope))
+
+
+
+
+def needles(tree, hold):
+    """The Needles of what hold (facts.hold of tree) leaves out of tree, and the name of this internal repository.
+
+    Names: in every cut, held or not, the full name of this internal repository (schema.INTERNAL_PORT_REPOSITORY),
+    which no public file names (the cut writes the port repository `none` in its place); each fuzz target of a project
+    held whole that no unit row of PUBLIC_BEFORE_HOLD names, or that private_harnesses holds (a unit row relaxes no
+    held fuzz target), as <project>/<harness> and as its Rocq module, and of each other one a unit row names, each
+    statement the facts hold that no statement row names (_statement_needles); the Rocq module of each held fuzz
+    target of a project's private_harnesses (hold.harnesses); for a project held whole that pins a recipe of its own
+    (one release.yaml does not list: a `release: private` project's draft asset), that recipe's SHA-256 (_digest), its
+    file name, and its release tag when no fact the release keeps names that tag; for each holding finding, its slug,
+    every `*.patch` name in its directory, its recorded digests and its inputs' SHA-256; for each held statement,
+    _statement_needles.  Held: each held fuzz target of private_harnesses as its held entry <project>/<harness>, which
+    `found` reads by the rule of held_match (its three forms, held_forms).  The evidence: _finding_needles."""
+    out = Needles([], [], {}, {}, {}, None, None, False, {})
     ns = tree.namespace
+    internal = schema.INTERNAL_PORT_REPOSITORY
+    out.names.append(_name(internal, "%s, the name of this internal repository, which no release names" % internal))
+    record = (public_before_hold(tree.path(PUBLIC_BEFORE_HOLD)) or Record({}, {})) if hold.whole else Record({}, {})
     for p in sorted(hold.whole):
         proj = tree.projects[p]
         for h in sorted(set(proj.harnesses) | {e["name"] for e in proj.entries()}):
+            # a unit row relaxes a fuzz target with facts alone, whose statements the facts name, and never one that
+            # private_harnesses holds: a held fuzz target fails closed (Dispatch issue OSSV-377, R4)
+            if (p, h) in record.units and h in proj.harnesses and h not in hold.harnesses.get(p, ()):
+                for st in sorted(proj.harnesses[h].statements):
+                    if (p, h, st) not in record.statements:
+                        _statement_needles(out, ns, p, h, st, "a statement of held project %s that no public release "
+                                                              "carried before its hold" % p)
+                continue
             unit = "%s/%s" % (p, h)
             out.names.append(_name(unit, "%s, a fuzz target of held project %s" % (unit, p)))
             out.names.append(_name(_module(p, h), "%s, the Rocq module of held fuzz target %s"
                                    % (names.rocq_harness(ns, p, h), unit)))
+    for entry in sorted(hold.entries):
+        p, h = entry.split("/")
+        out.held[entry] = "%s, a held fuzz target (private_harnesses of %s)" % (entry, p)
+        out.names.append(_name(_module(p, h), "%s, the Rocq module of held fuzz target %s"
+                               % (names.rocq_harness(ns, p, h), entry)))
     _own_recipe_needles(tree, hold, out)
     for fs in facts.holding(tree).values():
         for f in fs:
             _finding_needles(tree, f, out)
     for sid in sorted(hold.ids):
         p, h, st = sid.split("/")
-        module = _module(p, h)
-        out.names.append(_name(sid, "%s, a statement an open finding of %s holds back" % (sid, p)))
-        for text, full in (("%s.Statements.%s" % (module, st), "%s.Statements.%s" % (names.rocq_harness(ns, p, h), st)),
-                           ("%s.%s" % (module, st), "%s.%s" % (names.rocq_harness(ns, p, h), st)),
-                           ("Proofs.%s.%s" % (module, st), names.rocq_proof(ns, p, h, st))):
-            out.names.append(_name(text, "%s, the Rocq name of held statement %s" % (full, sid)))
-        short = "%s/%s" % (h, st)
-        out.names.append(_name(short, "%s, held statement %s without its project" % (short, sid), relative=True))
-        scope = (tuple("%s/%s/%s/" % (top, p, h) for top in UNIT_DIRS) + ("notes/%s.md" % p,),
-                 (_name_text(_decoded(module)),))
-        for name in (st, st + "_holds"):
-            out.names.append(_name(name, "%s, held statement %s in a file about its fuzz target" % (name, sid),
-                                   True, scope))
+        _statement_needles(out, ns, p, h, st, "a statement an open finding of %s holds back" % p)
     return _complete(out)
+
+
+# The rule of a held entry `<project>/<harness>` (Dispatch issue OSSV-377, R2): the cut's copy of it.  Its twins
+# are held_forms and held_match in tools/publish/release_pins.py and in dev/stream/bin/release_pins.py.  This file
+# imports neither of them, because the cut removes both directories.  The one table tools/publish/held-match-cases.tsv
+# holds the three copies equal: the test of each copy runs every row of the table (tools/oft/tests/test_held_match.py
+# for this one).  This rule is not the rule of _named: it decodes no escapes, folds no case, and its boundary is
+# HELD_WORD.
+# A character that continues a name: the `<project>/<harness>` form and the bare form of a held entry match only where
+# neither side of the match is one of these.  `\w` is Unicode here, as in the twins: R2 says "letters, digits or
+# `_`", and a letter outside ASCII is a letter.
+HELD_WORD = re.compile(r"\w")
+
+
+def held_forms(entry):
+    """The three forms that text can hold of entry, a held entry `<project>/<harness>` (OSSV-377 R2): the path prefix
+    `projects/<p>/<h>/`, which matches wherever it stands, the entry itself, and the bare harness name.  The last two
+    match only between characters that do not continue a name (HELD_WORD).  So `p1-held_target` and
+    `held_target.patch` match `p1/held_target`, and `held_target_v2` and `p1/held_target_v2` do not.  An entry of
+    any other shape has no form and matches nothing."""
+    project, slash, harness = str(entry).partition("/")
+    if not (slash and project and harness) or "/" in harness:
+        return ()
+    return ("projects/%s/%s/" % (project, harness), "%s/%s" % (project, harness), harness)
+
+
+def held_match(text, entries):
+    """The items of entries that text matches by the rule of held_forms, sorted.  text is any text: a path, a name, a
+    line of a file or a whole file read as text.  The rule is case-sensitive."""
+    out = set()
+    for entry in entries:
+        forms = held_forms(entry)
+        if forms and _held_in(text, forms[0]):
+            out.add(entry)
+        elif forms and any(_word_in(text, form, HELD_WORD) for form in forms[1:]):
+            out.add(entry)
+    return sorted(out)
+
+
+def _held_in(text, form):
+    return form in text
+
+
+def _word_in(text, form, word):
+    """Whether text holds form with no name character (a match of the regex word, HELD_WORD or SCAN_WORD) on either
+    side of it.  text and form are both str or both bytes, of the type that word reads."""
+    start = text.find(form)
+    while start >= 0:
+        before = text[start - 1:start]
+        after = text[start + len(form):start + len(form) + 1]
+        if not word.fullmatch(before) and not word.fullmatch(after):
+            return True
+        start = text.find(form, start + 1)
+    return False
+
+
+# The scanner's reading of a held entry: the reading of ossv-binscan --held (dev/stream/bin/ossv-binscan, the one
+# scanner, held_needles), which oft lint uses so that a held name is refused where the scanner would stop.  The scanner
+# lowers each form and the data (bytes.lower(): ASCII letters only), and for the entry form and the bare form a name
+# character is [0-9a-z_] (SCAN_WORD).  tools/oft/tests/test_held_match.py holds this copy equal to the scanner's
+# needles.
+SCAN_WORD = re.compile(rb"[0-9a-z_]")
+
+
+def held_scan_match(text, entries):
+    """The items of entries that the scanner's held needles find in text, sorted: held_forms of each entry in lower
+    case, the path prefix wherever it stands, the entry and the bare name where no SCAN_WORD byte is next to them, all
+    in text's UTF-8 bytes in lower case."""
+    data = text.encode("utf-8").lower()
+    out = set()
+    for entry in entries:
+        forms = [f.lower().encode("utf-8") for f in held_forms(entry)]
+        if forms and (forms[0] in data or any(_word_in(data, f, SCAN_WORD) for f in forms[1:])):
+            out.add(entry)
+    return sorted(out)
+
+
+def held_name_stops(entry, texts):
+    """The labels of texts ([(label, text)]) in which the cut or a scanner finds the held entry `entry`, sorted: the
+    cut's needles of it (its Rocq module as a name, and the entry by the rule of held_match, as needles() gives them,
+    read by `found`), or the scanner's held needles (held_scan_match).  oft lint gives it the name, the entry form, the
+    path and the Rocq module of each kept fuzz target, and the name and the path of each project: a hit there stops
+    the cut ("nothing changed") or the gate on a file that the release keeps."""
+    p, h = entry.split("/")
+    cut = _complete(Needles([_name(_module(p, h), entry)], [], {}, {}, {}, None, None, False, {entry: entry}))
+    return sorted({label for label, text in texts
+                   if found(text, text.encode("utf-8"), cut) or held_scan_match(text, [entry])})

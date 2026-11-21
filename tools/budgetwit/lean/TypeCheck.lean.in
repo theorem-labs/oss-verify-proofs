@@ -1,0 +1,84 @@
+import {{unit_prefix}}.BudgetWitness
+
+open Lean Meta Elab Command
+
+/- Compare discharged types, not source headers. Only the carrier constant is renamed.
+Explicitly strengthened lemmas must have exactly one additional grant binder; its proof
+must not occur in the remaining type. No other statement change is accepted. -/
+namespace BudgetwitTypeCheck
+
+def renameCarrier (type : Expr) : MetaM Expr := do
+  let original ← getConstInfo `{{original_relation}}
+  let twin ← getConstInfo `{{twin_relation}}
+  unless original.levelParams.length == twin.levelParams.length do
+    throwError "budgetwit carrier universe arity mismatch"
+  return type.replace fun expression =>
+    match expression with
+    | .const name levels =>
+      if name == `{{original_relation}} then some (.const `{{twin_relation}} levels)
+      else none
+    | _ => none
+
+def stripGrant : Expr → Expr × Nat
+  | .forallE name domain body binderInfo =>
+    let (body', count) := stripGrant body
+    if domain.getAppFn.constName? == some `{{twin_namespace}}.grant_ok then
+      let erased := body'.instantiate1 (mkConst ``True.intro)
+      if erased == body'.instantiate1 (mkConst ``False.elim) then (erased, count + 1)
+      else (.forallE name domain body' binderInfo, count)
+    else (.forallE name domain body' binderInfo, count)
+  | type => (type, 0)
+
+elab "#budget_twin " original:ident " => " twin:ident : command => do
+  liftTermElabM do
+    let originalInfo ← getConstInfo original.getId
+    let twinInfo ← getConstInfo twin.getId
+    let expected ← renameCarrier originalInfo.type
+    unless ← isDefEq expected twinInfo.type do
+      throwError "budgetwit type mismatch: {original.getId} => {twin.getId}\noriginal: {originalInfo.type}\ntwin: {twinInfo.type}"
+    logInfo m!"BUDGETWIT TYPE equal {original.getId} => {twin.getId}"
+
+elab "#budget_strengthened " original:ident " => " twin:ident : command => do
+  liftTermElabM do
+    let originalInfo ← getConstInfo original.getId
+    let twinInfo ← getConstInfo twin.getId
+    let (stripped, count) := stripGrant twinInfo.type
+    unless count == 1 do
+      throwError "budgetwit expected exactly one independent grant premise: {twin.getId}"
+    let expected ← renameCarrier originalInfo.type
+    unless ← isDefEq expected stripped do
+      throwError "budgetwit strengthened type mismatch: {original.getId} => {twin.getId}\noriginal: {originalInfo.type}\ntwin: {twinInfo.type}"
+    logInfo m!"BUDGETWIT TYPE extra_grant {original.getId} => {twin.getId}"
+
+elab "#budget_reject " original:ident " => " twin:ident : command => do
+  liftTermElabM do
+    let originalInfo ← getConstInfo original.getId
+    let twinInfo ← getConstInfo twin.getId
+    let expected ← renameCarrier originalInfo.type
+    if ← isDefEq expected twinInfo.type then
+      throwError "budgetwit negative control unexpectedly equal"
+    logInfo m!"BUDGETWIT NEGATIVE CONTROL rejected {original.getId} => {twin.getId}"
+
+elab "#budget_grant_controls" : command => do
+  liftTermElabM do
+    let info ← getConstInfo `{{twin_namespace}}.grant_ok
+    forallTelescope info.type fun arguments _ => do
+      let grant := mkAppN (mkConst `{{twin_namespace}}.grant_ok) arguments
+      let truth := mkConst ``True
+      let expected ← mkArrow truth truth
+      let hidden ← mkArrow grant truth
+      let hypothesis ← mkArrow hidden truth
+      let mutant ← mkArrow grant hypothesis
+      let (stripped, count) := stripGrant mutant
+      unless count == 1 do throwError "budgetwit nested-grant control: bad count"
+      if ← isDefEq expected stripped then
+        throwError "budgetwit unsoundly erased a grant inside a hypothesis"
+      let double ← mkArrow grant hidden
+      let (_, doubleCount) := stripGrant double
+      unless doubleCount == 2 do throwError "budgetwit double-grant control: bad count"
+      let dependent := mkApp3 (mkConst ``Eq [Level.zero]) grant (.bvar 0) (.bvar 0)
+      let (_, usedCount) := stripGrant (.forallE `h grant dependent .default)
+      unless usedCount == 0 do throwError "budgetwit erased a used grant proof"
+      logInfo "BUDGETWIT NEGATIVE CONTROLS nested_grant, double_grant, used_grant rejected"
+
+end BudgetwitTypeCheck

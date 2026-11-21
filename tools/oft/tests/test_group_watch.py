@@ -1,9 +1,9 @@
 """pr.yml's watch of a merge queue group: the step `cancel this run once its merge queue group is gone`, the same in
-the lint job and the check job, run as GitHub runs it.  When the queue drops a group, GitHub deletes the group's branch
-and nothing stops its run; the watch cancels that run once two answers in a row say the branch does not exist (git
-ls-remote --exit-code's exit status 2), and never on any other answer, so a group the queue still holds is never
-cancelled.  It runs only for a merge queue group, and the two jobs that run it may cancel a run (actions: write).
-pr.yml's concurrency comment has the measurements."""
+the lint job, the check job and the made_from job, run as GitHub runs it.  When the queue drops a group, GitHub deletes
+the group's branch and nothing stops its run; the watch cancels that run once two answers in a row say the branch does
+not exist (git ls-remote --exit-code's exit status 2), and never on any other answer, so a group the queue still holds
+is never cancelled.  It runs only for a merge queue group, and the three jobs that run it may cancel a run (actions:
+write).  pr.yml's concurrency comment has the measurements."""
 import base64
 import os
 import subprocess
@@ -12,12 +12,12 @@ import time
 import unittest
 
 from oft import yamlio
-from oft.tests.helpers import REPO
+from oft.tests.helpers import REPO, with_scripts
 
 PR_YML = os.path.join(REPO, ".github", "workflows", "pr.yml")
 WATCH = "cancel this run once its merge queue group is gone"
 LOG = "the merge queue group's watch, its log"
-JOBS = ("lint", "check")
+JOBS = ("lint", "check", "made_from")
 REPOSITORY = "acme/proofs"
 REF = "refs/heads/gh-readonly-queue/main/pr-656-" + "e" * 40
 TOKEN = "t0ken"
@@ -39,7 +39,7 @@ FAKE_SLEEP = '#!/usr/bin/env bash\necho "sleep $1" >> "$FAKE/calls"\n/bin/sleep 
 def jobs(test):
     if not os.path.exists(PR_YML):
         test.skipTest("no .github/workflows/pr.yml beside tools/oft")
-    return yamlio.load_file(PR_YML)["jobs"]
+    return with_scripts(yamlio.load_file(PR_YML))["jobs"]
 
 
 def step(job, name):
@@ -52,15 +52,16 @@ class GroupWatchShape(unittest.TestCase):
     def setUp(self):
         self.jobs = jobs(self)
 
-    def test_lint_and_check_start_the_same_watch_first_and_print_its_log_last(self):
+    def test_lint_check_and_made_from_start_the_same_watch_first_and_print_its_log_last(self):
         """First, so that it watches the whole job, checkout included; and lint runs before every job but plan."""
         for name in JOBS:
             with self.subTest(job=name):
                 self.assertEqual(self.jobs[name]["steps"][0]["name"], WATCH)
                 self.assertEqual(self.jobs[name]["steps"][-1]["name"], LOG)
         for name in (WATCH, LOG):
-            with self.subTest(step=name):
-                self.assertEqual(step(self.jobs["lint"], name), step(self.jobs["check"], name))
+            for job in JOBS[1:]:
+                with self.subTest(step=name, job=job):
+                    self.assertEqual(step(self.jobs[JOBS[0]], name), step(self.jobs[job], name))
 
     def test_only_a_merge_queue_group_is_watched(self):
         """A pull request's run and a push's are cancelled by their own concurrency group, or never."""
@@ -69,8 +70,8 @@ class GroupWatchShape(unittest.TestCase):
         self.assertEqual(step(job, LOG)["if"], "always() && github.event_name == 'merge_group'")
         self.assertEqual(step(job, WATCH)["env"], {"GH_TOKEN": "${{ github.token }}", "EVERY": "120", "CONFIRM": "10"})
 
-    def test_the_two_jobs_may_cancel_a_run_and_keep_the_workflow_s_permissions(self):
-        """A job's permissions replace the workflow's: these two keep contents: read and packages: read, and add
+    def test_the_three_jobs_may_cancel_a_run_and_keep_the_workflow_s_permissions(self):
+        """A job's permissions replace the workflow's: these three keep contents: read and packages: read, and add
         actions: write, which `gh run cancel` needs.  No other job may cancel a run."""
         for name, job in self.jobs.items():
             with self.subTest(job=name):

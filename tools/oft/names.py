@@ -10,6 +10,9 @@ distinct, which `oft generate` checks (rules.symbol_facts).
 import collections
 import re
 
+from .shapes import (BUILD_IDENT, BUILD_MODULE, classifier_ident, classifier_module, ident, original_ident,
+                     original_module)
+
 # The Rocq namespace of the theories and the stem of the opam packages of a release that names neither in its
 # release.yaml (`namespace`, `opam_stem`: facts.Tree.namespace, facts.Tree.opam_stem).  Every name below takes the
 # namespace or the stem from its caller, which reads it from the tree: nothing here knows which release it names.
@@ -19,17 +22,7 @@ OPAM_STEM_DEFAULT = "oss-fuzz-theorems"
 RESERVED_HARNESS_NAMES = {"images", "source", "bin", "proofs", "patches", "unpatched-bin"}
 API_DRIVER = "api-driver"
 
-BUILD_IDENT = {"plain": "plain", "ubsan": "ubsan", "asan": "asan", "asan-ubsan": "asan_ubsan"}
-BUILD_MODULE = {"plain": "Plain", "ubsan": "Ubsan", "asan": "Asan", "asan-ubsan": "AsanUbsan"}
 BUILD_WORDS = {"plain": "plain", "ubsan": "UBSan", "asan": "ASan", "asan-ubsan": "ASan+UBSan"}
-
-
-def ident(name):
-    """A Rocq identifier for an OSS-Fuzz project or harness name."""
-    s = re.sub(r"[^A-Za-z0-9_]", "_", name)
-    if s[:1].isdigit():
-        s = "h_" + s
-    return s
 
 
 def rocq_ident(name):
@@ -110,8 +103,38 @@ def build_file(harness, build):
     return "%s.%s" % (harness, build)
 
 
-def statement_name(kind, builds, reading):
+def classifier_file(harness, role, build):
+    """The file name of classifier `role` (a or b) of the pair whose sanitizer build is `build`."""
+    return "%s.classifier-%s-%s" % (harness, role, build)
+
+
+def original_file(harness, build):
+    """The file name of `build` built without the harness's patches."""
+    return "%s.original-%s" % (harness, build)
+
+
+# The name of each classifier statement, after the pair's sanitizer build: (kind, classifier) -> suffix, the names the
+# yes / no / maybe form gives them.  A is the classifier of the inputs on which the originals agree ("good"), B the
+# classifier of the inputs on which each build agrees with its original ("diff").
+CLASSIFIER_SUFFIX = {("classifier-total", "a"): "_ca_total", ("classifier-total", "b"): "_cb_total",
+                     ("classifier-sound", "a"): "_ca_sound", ("classifier-sound", "b"): "_cb_sound",
+                     ("classifier-maybe", "a"): "_maybe_good", ("classifier-maybe", "b"): "_maybe_diff",
+                     ("classifier-bound", "a"): "_bound_good", ("classifier-bound", "b"): "_bound_diff"}
+
+
+# A twin is a second statement of a harness beside its first: the statement the same kind, builds and reading name
+# without a twin.  It differs from its first in the one way its `twin` field names, and its name is its first's name
+# with that difference after it.  any-exit: a halts statement that allows any exit status, beside one that allows a
+# finite set; alloc-forced-only: an agreement statement read alloc-forced-only, beside one read may-fail
+# (docs/statements.md, "Twins").
+TWIN_SUFFIX = {"any-exit": "_any_exit", "alloc-forced-only": "_alloc_forced_only"}
+TWIN_KIND = {"any-exit": "halts", "alloc-forced-only": "agreement"}
+
+
+def statement_name(kind, builds, reading, classifier=None, twin=None):
     """The one name a statement with these fields may have."""
+    if twin is not None:
+        return statement_name(kind, builds, reading, classifier) + TWIN_SUFFIX[twin]
     san = BUILD_IDENT[builds[-1]]
     if kind == "halts":
         return san + ("_halts_may_fail" if reading == "may-fail" else "_halts")
@@ -121,12 +144,17 @@ def statement_name(kind, builds, reading):
         return san + "_disagrees_at_most"
     if kind == "decidability":
         return san + "_agreement_decidable"
+    if (kind, classifier) in CLASSIFIER_SUFFIX:
+        return san + CLASSIFIER_SUFFIX[(kind, classifier)]
     raise ValueError(kind)
 
 
 _STATEMENT_BUILDS = dict(
     [(statement_name("agreement", ("plain", b), None), ("plain", b)) for b in BUILD_IDENT if b != "plain"] +
-    [(statement_name("halts", (b,), r), (b,)) for b in BUILD_IDENT for r in ("budget", "may-fail")])
+    [(statement_name("halts", (b,), r), (b,)) for b in BUILD_IDENT for r in ("budget", "may-fail")] +
+    [(statement_name("agreement", ("plain", b), None, twin="alloc-forced-only"), ("plain", b))
+     for b in BUILD_IDENT if b != "plain"] +
+    [(statement_name("halts", (b,), r, twin="any-exit"), (b,)) for b in BUILD_IDENT for r in ("budget", "may-fail")])
 
 
 def statement_builds(name):

@@ -9,7 +9,7 @@ defs:
       schema: {type: const, value: oss-fuzz-theorems/proof/1}
       proves: {type: statement-id, optional: true}      # exactly one of proves / refutes
       refutes: {type: statement-id, optional: true}
-      bound: {type: fraction, optional: true}            # a bound statement's b, required for kind bound
+      bound: {type: fraction, optional: true}            # b, required for a statement that takes one (shapes.takes_bound)
       fingerprint: {type: sha256}                        # must equal the statement's in index/statements.tsv
       classifier:                                        # a classifier proof's own program
         type: object

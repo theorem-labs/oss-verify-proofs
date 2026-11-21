@@ -53,7 +53,7 @@ def _missing_requirement(e):
 
 try:
     from . import (approvals, change_ledger, check, check_run, classify, contracts, fetch, generate, ledger, lint,
-                   lps_impact, nsrename, plan, port, prove, release_tree, revisions, schema, symbols)
+                   lps_impact, nsrename, plan, port, prove, release_tree, render, revisions, schema, symbols)
 except ModuleNotFoundError as _e:
     _said = _missing_requirement(_e)
     if _said is None:
@@ -107,11 +107,11 @@ def cmd_lint(a):
     if a.changed:
         with open(a.changed, encoding="utf-8") as f:
             changed = [l.strip() for l in f if l.strip()]
-    pending, expired = [], []
+    pending, expired, donors = [], [], []
     try:
         found = lint.run(_root(a), changed=changed, pr_kind=a.pr_kind, base=a.base, skeleton=a.skeleton,
                          release=a.release, changed_only=a.changed_only, jobs=a.jobs, pending=pending,
-                         max_rss_gib=a.max_rss_gib, pending_base=a.pending_base, expired=expired)
+                         max_rss_gib=a.max_rss_gib, pending_base=a.pending_base, expired=expired, donors=donors)
     except lint.ChangedOnlyError as e:
         print("FAIL oft lint --changed-only: %s" % e)
         return 1
@@ -128,6 +128,15 @@ def cmd_lint(a):
     else:
         for unit, n in lint.pending_by_unit(pending):
             print("pending %s: %d licence finding(s) (--list-pending prints each)" % (unit, n))
+    # the donor `Read from:` line of a relocated proof file, which the rule exempts because the file names the pinned
+    # build of its own fuzz target too: counted and reported, never failed and never silent, as a pending licence
+    # finding is; one line per fuzz target with its count, each one with --list-donors
+    if a.list_donors:
+        for f in donors:
+            print("donor %s" % f)
+    else:
+        for unit, n in lint.donors_by_unit(donors):
+            print("donor %s: %d exempt `Read from:` line(s) (--list-donors prints each)" % (unit, n))
     # an expired licence-pending entry that this change does not touch: a warning, here and on GitHub's checks page
     for f in expired:
         print("expired %s" % f)
@@ -136,6 +145,9 @@ def cmd_lint(a):
     if pending:
         summary += "; %d pending licence finding(s) in %d unit(s) that %s lists, which do not fail" % (
             len(pending), len({lint.finding_unit(f) for f in pending}), lint.EXCEPTIONS)
+    if donors:
+        summary += ("; %d exempt donor `Read from:` line(s) in %d unit(s), which do not fail"
+                    % (len(donors), len({lint.finding_unit(f) for f in donors})))
     if expired:
         summary += ("; %d expired licence-pending entr(ies) that this change does not touch, which do not fail"
                     % len(expired))
@@ -170,7 +182,8 @@ def cmd_check(a):
 def cmd_plan(a):
     if a.contracts:
         ignored = [flag for flag, given in (("--pr-kind", a.pr_kind != "release"), ("--tools", a.tools),
-                                            ("--store", a.store), ("--units", a.units), ("--rocqchk", a.rocqchk))
+                                            ("--store", a.store), ("--units", a.units), ("--rocqchk", a.rocqchk),
+                                            ("--hosted", a.hosted))
                    if given]
         if ignored:
             print("oft plan: --contracts reads only --change and --base, not %s" % ", ".join(ignored),
@@ -185,7 +198,7 @@ def cmd_plan(a):
         return plan.explain(_root(a), a.explain, change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools,
                             store=a.store, rocqchk=a.rocqchk)
     return plan.plan(_root(a), change=a.change, base=a.base, kind=a.pr_kind, tools=a.tools, store=a.store,
-                     units=units, max_jobs=a.max_jobs, rocqchk=a.rocqchk)
+                     units=units, max_jobs=a.max_jobs, rocqchk=a.rocqchk, hosted=a.hosted)
 
 
 def cmd_release_tree(a):
@@ -298,9 +311,11 @@ def main(argv=None):
     li.add_argument("--changed-only", metavar="BASE",
                     help="run the per-file text rules only over the files that differ from commit BASE, or over "
                          "every file when a fact (a file tools/oft/paths.py classes as facts), a finding's "
-                         "finding.yaml, a build record, a .gitattributes, tools/oft/lint-exceptions.yaml or the "
-                         "running tools differ from it (the rules over the whole tree still run); --root must be "
-                         "the top of a git checkout")
+                         "finding.yaml, a build record, a project's NOTICE (projects/<project>/NOTICE), a "
+                         ".gitattributes, tools/oft/lint-exceptions.yaml, %s, a licence text lint pins (%s) or the "
+                         "running tools differ from it (the rules over the whole tree still run); --root must be the "
+                         "top of a git checkout"
+                         % (lint.THIRD_PARTY, render.join_words(sorted(lint.PINNED_VERBATIM))))
     li.add_argument("--jobs", type=_processes,
                     help="processes for the per-file text rules, 1 or more (default: every CPU this process may "
                          "run on, but no more than the available memory holds at %g GiB each, "
@@ -314,6 +329,9 @@ def main(argv=None):
                          "the ones a pull request that changes proof files may have")
     li.add_argument("--list-pending", action="store_true",
                     help="print each pending licence finding, not one line per fuzz target with its count")
+    li.add_argument("--list-donors", action="store_true",
+                    help="print each exempt donor `Read from:` line of a relocated proof file, not one line per "
+                         "fuzz target with its count")
     li.set_defaults(fn=cmd_lint)
 
     le = sub.add_parser("ledger", help="the findings ledger over a change's history: every record a commit had from "
@@ -347,6 +365,10 @@ def main(argv=None):
     pl.add_argument("--units", metavar="FILE", help="only the units FILE lists, one per line")
     pl.add_argument("--max-jobs", type=int, default=20)
     pl.add_argument("--rocqchk", action="store_true", help="the check jobs run rocqchk")
+    pl.add_argument("--hosted", action="store_true",
+                    help="plan for GitHub-hosted runners: leave out each unit whose measured check is longer than "
+                         "any hosted job may run (pack.SWEEP_TIMES against pack.HOSTED_CAP) and put a "
+                         "sentence about each in the plan's `skipped`, for the run's summary")
     what = pl.add_mutually_exclusive_group()
     what.add_argument("--explain", metavar="PROJECT/HARNESS",
                       help="print each part of one unit, whether it is checked and why, and every input of its key")
@@ -359,7 +381,8 @@ def main(argv=None):
                            "symbol changes the key), and no address; with --base, which inputs differ")
     pl.set_defaults(fn=cmd_plan)
 
-    rt = sub.add_parser("release-tree", help="keep only the proofs approvals.yaml lists, in place, and render again")
+    rt = sub.add_parser("release-tree", help="keep, in place, each proof that nothing holds back (a held project, fuzz "
+                                             "target or statement, or a refutation), and render again")
     rt.set_defaults(fn=cmd_release_tree)
 
     po = sub.add_parser("port-layout", help="move an old-layout tree (proofs/, counterexamples/, findings/, patches/) "
@@ -482,18 +505,43 @@ def main(argv=None):
                          "request")
     pv.set_defaults(fn=cmd_prove)
 
-    cg = sub.add_parser("change-ledger", help="what one change cost, from the records that hold it: its agent "
-                                              "sessions' tokens, cost and hours, its VM time and check time, and its "
-                                              "proof edits (changes/<change>/, tools/oft/change_ledger.py)")
+    cg = sub.add_parser("change-ledger", help="what one change, or one fuzz target, cost, from the records that "
+                                              "hold it: its agent sessions' tokens, cost and hours, its VM time and "
+                                              "check time, and its proof edits (changes/<change>/ and "
+                                              "changes/targets/<project>/<harness>/, tools/oft/change_ledger.py)")
     cgs = cg.add_subparsers(dest="ledger_cmd", required=True)
     ct = cgs.add_parser("tag", help="record an agent session that worked on a step of CHANGE in "
-                                    "changes/CHANGE/sessions.tsv; a session counts in one step of one change, unless "
-                                    "each of its tags gives a window (--from, --until) and no two windows overlap")
-    ct.add_argument("change", metavar="CHANGE")
-    ct.add_argument("--step", required=True, help="the step of the change the session worked on")
+                                    "changes/CHANGE/sessions.tsv, or on a step of a fuzz target (--target) in "
+                                    "changes/targets/PROJECT/HARNESS/sessions.tsv; a session counts in one step of "
+                                    "one change (and in one step of one fuzz target: the two are separate), unless "
+                                    "each of its tags gives a window (--from, --until) and no two windows overlap",
+                        description="It is not a pure writer: it opens and parses --transcript, checks that the "
+                                    "file's own session entry is --session, and refuses a window that holds no "
+                                    "entry of it. So the transcript must be on the disk of the machine that runs "
+                                    "this command, and a path string alone is not enough. With --target it then "
+                                    "writes one local file and reaches no network and no repository, so it runs "
+                                    "with no credential, and it says what it did on one line and in its exit "
+                                    "status: 0 and `tagged now`; 3 and `already tagged`, when this fuzz target "
+                                    "already counts this session in a window that shares a moment with this one, "
+                                    "which writes nothing and is no error, so a settle step may run again from "
+                                    "another machine; 1 and `FAIL oft change-ledger: refused: <reason>` when it "
+                                    "writes nothing because something is wrong (a fuzz target this repository "
+                                    "does not have, a session this change already counts, a transcript it cannot "
+                                    "read). The status is 3, not 2, because argparse exits 2 on a usage error and "
+                                    "prints nothing, so a caller that reads the status alone must not confuse "
+                                    "the two.")
+    ct.add_argument("change", metavar="CHANGE", nargs="?",
+                    help="the change the session worked on; leave it out and give --target instead")
+    ct.add_argument("--target", metavar="PROJECT/HARNESS",
+                    help="the fuzz target the session worked on, instead of a CHANGE: its ledger is "
+                         "changes/targets/PROJECT/HARNESS/, and the target must be one this repository has "
+                         "(projects/PROJECT/HARNESS/harness.yaml), else the tag is refused")
+    ct.add_argument("--step", required=True, help="the step of the change or fuzz target the session worked on")
     ct.add_argument("--session", required=True, metavar="ID", help="the omp session id, as its transcript records it")
     ct.add_argument("--host", required=True, help="the machine the session ran on")
-    ct.add_argument("--transcript", required=True, metavar="PATH", help="the session's omp transcript (.jsonl)")
+    ct.add_argument("--transcript", required=True, metavar="PATH",
+                    help="the session's omp transcript (.jsonl), on the disk of the machine running this command: "
+                         "it is opened and parsed, and its own session entry must be --session")
     ct.add_argument("--vm", action="append", default=[], metavar="NAME",
                     help="a VM the session drove, whose samples count in its time span (repeat for each)")
     ct.add_argument("--from", dest="since", metavar="TIME",
@@ -502,21 +550,36 @@ def main(argv=None):
                          "each")
     ct.add_argument("--until", metavar="TIME",
                     help="count only the transcript's entries before TIME (ISO 8601 with a time zone)")
-    cc = cgs.add_parser("check", help="record the GNU time -v log of a check run for a step of CHANGE in "
-                                      "changes/CHANGE/checks.tsv")
+    cc = cgs.add_parser("check", help="record a check run for a step of CHANGE in changes/CHANGE/checks.tsv, by its "
+                                      "GNU time -v log or by its farm run; sum reads its seconds and its verdict")
     cc.add_argument("change", metavar="CHANGE")
     cc.add_argument("--step", required=True, help="the step of the change the check belongs to")
-    cc.add_argument("--time-log", required=True, metavar="PATH", help="the check's `time -v` output")
+    log = cc.add_mutually_exclusive_group(required=True)
+    log.add_argument("--time-log", metavar="PATH", help="the check's `time -v` output")
+    log.add_argument("--farm-run", metavar="DIR",
+                     help="the directory `ossv-job fetch farm/RUN DIR` wrote for the check's farm run: its "
+                          "result.json (exit_code, duration_s) and its job.log")
     cn = cgs.add_parser("no-work", help="record in changes/CHANGE/no-work.tsv that a step of CHANGE needed no work, "
                                         "so its row reads 0 rather than not measured")
     cn.add_argument("change", metavar="CHANGE")
     cn.add_argument("--step", required=True, help="the step of the change that needed no work")
     cn.add_argument("--why", required=True, metavar="TEXT",
                     help="what shows it needed no work, on one line (such as: oft prove finds no function changed)")
-    cs = cgs.add_parser("sum", help="write changes/CHANGE/ledger.tsv, session-totals.tsv, gaps.tsv, inputs.tsv and, "
-                                    "with a saved prediction (prove.json), contracts.tsv, from the records; create "
-                                    "journal.md when it is missing")
-    cs.add_argument("change", metavar="CHANGE")
+    cs = cgs.add_parser("sum", help="write ledger.tsv, session-totals.tsv, gaps.tsv, inputs.tsv and, with a saved "
+                                    "prediction (prove.json), contracts.tsv, from the records of CHANGE (in "
+                                    "changes/CHANGE/) or of a fuzz target (--target, in "
+                                    "changes/targets/PROJECT/HARNESS/); create journal.md when it is missing",
+                        description="A fuzz target with no tagged session is refused (exit 1, `FAIL oft "
+                                    "change-ledger: refused: ...`) and nothing is written, because an empty ledger "
+                                    "read as 0 hours would make a settled target look free. It writes local files "
+                                    "and reaches no network; with --base it reads this checkout's git history for "
+                                    "the unit's figures.")
+    cs.add_argument("change", metavar="CHANGE", nargs="?",
+                    help="the change to sum; leave it out and give --target instead")
+    cs.add_argument("--target", metavar="PROJECT/HARNESS",
+                    help="the fuzz target to sum, instead of a CHANGE: its records are in "
+                         "changes/targets/PROJECT/HARNESS/, and with --base it is also the unit the git figures are "
+                         "about")
     cs.add_argument("--unit", metavar="PROJECT/HARNESS",
                     help="the fuzz target whose proof lines, function classes, contracts and proof edits count")
     cs.add_argument("--base", metavar="REF", help="the commit the change started from (with --unit)")

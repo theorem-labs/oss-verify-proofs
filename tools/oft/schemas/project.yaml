@@ -50,6 +50,17 @@ defs:
       patches: {type: list, items: {type: ref, name: patch}, optional: true}
       withheld: {type: ref, name: withheld, optional: true}
       harnesses: {type: list, items: {type: ref, name: harness_entry}, optional: true}
+      # The fuzz targets of this project that no public repository may hold, while the rest of the project publishes:
+      # one harness name each, which may come before the harness's files exist.  A person adds the name of a fuzz
+      # target to hold it, and removes the name to lift the hold.  `oft generate` writes each name, as
+      # <project>/<harness>, to tools/publish/private-harnesses.txt in a tree that has tools/publish/.
+      # `oft release-tree` removes each named fuzz target, and this field, from a release.  `oft lint` refuses a name
+      # that this list cannot hold (lint.py check_private_harnesses): a person holds such a fuzz target with its whole
+      # project instead (release: private).  A name that public main, a published release asset's name, the tree of
+      # the pinned model or static-asan commit, or the message, author or committer of a commit in their history
+      # already holds stops every publication until it leaves this list: the gate's scan and the asset guards refuse
+      # each byte that names it
+      private_harnesses: {type: list, items: {type: harness-name}, optional: true}
       assets:
         type: object
         optional: true
@@ -74,8 +85,11 @@ defs:
           go: {type: str, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$', optional: true}
           builder: {type: image}
           # The OSS Verify port that built every binary of this project instead of a build recipe: its repository
-          # name, commit and project directory.  Its internal copy is permitted only for a project a finding holds
-          # back (rules.py).
+          # name, commit and project directory.  Its internal copy is permitted only for a project held back whole (a
+          # finding holds it back whole, or it says `release: private`), or for a project with a held fuzz target in
+          # private_harnesses (rules.py internal_port_projects).  For such a project with a held fuzz target, the cut
+          # writes the repository `none` in place of the internal copy.  `oft lint` refuses `none` in a tree that has
+          # tools/publish/ (lint.py check_port_none).
           oss_verify:
             type: object
             optional: true

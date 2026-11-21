@@ -13,15 +13,14 @@ Its title counts the contracts that need work (prove.PREDICTS_WORK: needs work, 
 functions changed (the rows of every build whose class prove.CHANGED_CLASSES names: changed, added or removed), and the
 data changed and unknown contracts when there are any.  Its summary is prove.markdown, cut to GitHub's limit of LIMIT
 characters when it is longer (_summary): the counts stay whole, and the rows that predict an agent's work come first.
-The state is a prediction, never a verdict: Rocq checks every proof, so success says no agent is predicted, not that a
-proof holds.
+Its text is for a program (_text): the line JSON_MARKER, then `oft prove --json`'s data (prove.SCHEMA) alone in one
+fenced block, or, when that would pass GitHub's limit of LIMIT characters on a text too, TRUNCATED in its place, never
+a cut JSON, so a reader finds the data without parsing prose and refuses a report that did not fit.  The state is a
+prediction, never a verdict: Rocq checks every proof, so success says no agent is predicted, not that a proof holds.
 
 Writing a check run needs a GitHub App installation token, or a workflow's GITHUB_TOKEN, with checks: write on the
 repository: a Token, which is checked once, when it is made, before the report.  `oft prove --post-check`
-(__main__.cmd_prove) makes the report with prove.py, prints it, then posts it with run().  code_target reads the line
-`Code: OWNER/REPO@SHA` of a pull request's body: the commit of the code repository, where the prove workflow
-(.github/workflows/prove.yml, ci/prove-pr) posts the same check when github_repository of a unit's `library.repository`
-names that repository.
+(__main__.cmd_prove) makes the report with prove.py, prints it, then posts it with run().
 
 This module is not the checker (keys.NOT_THE_CHECKER): no check posts a check run."""
 import collections
@@ -38,8 +37,12 @@ NAME = "theorem/prove"
 API = "https://api.github.com"
 NEUTRAL = ("Every contract that is not unchanged is data changed: Rocq decides whether its proofs still hold, and no "
            "agent is predicted.")
-# GitHub's limit on a check run's output.summary, in characters
+# GitHub's limit on a check run's output.summary, and on its output.text, in characters
 LIMIT = 65535
+# the line the check run's output.text starts with, before the report's JSON (_text)
+JSON_MARKER = "<!-- theorem-prove-json -->"
+# what the JSON block holds when the report's own JSON does not fit in output.text
+TRUNCATED = {"schema": prove.SCHEMA, "truncated": True}
 LEFT_OUT = ("_%d of the report's %d rows are left out to keep this summary within GitHub's 65,535 characters: the full "
             "report is the output of `oft prove`, and every row is in `oft prove --json`._")
 # a token: printable ASCII, with no whitespace or control character (a header value may hold no other, and http.client
@@ -48,11 +51,9 @@ _TOKEN = re.compile(r"[\x21-\x7e]+")
 # what stands for each whole copy of the token in every text post shows: GitHub's message, its body, a header, an
 # error's reason
 REDACTED = "[token]"
-# a commit of a GitHub repository, OWNER/REPO@SHA: where `oft prove --post-check` posts, and what a pull request's
-# `Code:` line names; the commit by its full lower-case id
+# a commit of a GitHub repository, OWNER/REPO@SHA: where `oft prove --post-check` posts; the commit by its full
+# lower-case id
 TARGET = re.compile(r"([A-Za-z0-9][A-Za-z0-9-]*)/([A-Za-z0-9._-]+)@([0-9a-f]{40})")
-# a line of a pull request's body that names the commit of its code repository (code_target)
-CODE = "Code:"
 # a pull request on GitHub, as `oft prove --pull-request` takes it
 PULL_REQUEST = re.compile("https" + r"://github\.com/[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+/pull/[1-9][0-9]*")
 # what the summary says first with --pull-request: the report is of a change no reviewer has merged
@@ -71,18 +72,6 @@ class PostError(Exception):
 
 # a check run GitHub made: its id, and its page (None when GitHub's answer names none), which the job log shows
 Posted = collections.namedtuple("Posted", "id url")
-# a repository on GitHub as a fact's URL names it (library.repository): https://github.com/OWNER/REPO, with .git or a
-# slash after it or neither
-GITHUB_URL = re.compile(re.escape("https://github.com/") + r"([A-Za-z0-9][A-Za-z0-9-]*)/([A-Za-z0-9._-]+?)(?:\.git)?/?")
-
-
-def github_repository(url):
-    """OWNER/REPO, lower-cased (GitHub's names ignore case), of a GitHub repository's URL (GITHUB_URL); None for any
-    other URL."""
-    m = GITHUB_URL.fullmatch(url) if isinstance(url, str) else None
-    if not m or m.group(2) in (".", ".."):
-        return None
-    return ("%s/%s" % m.group(1, 2)).lower()
 
 
 def target(text):
@@ -91,29 +80,6 @@ def target(text):
     if not m or m.group(2) in (".", ".."):
         return None
     return "%s/%s" % m.group(1, 2), m.group(3)
-
-
-def code_target(body):
-    """The commit a pull request's body names on a line of its own, `Code: OWNER/REPO@SHA` (CODE, target), where the
-    prove workflow also posts the check: ((repository, commit) or None, [problem]).  Lines that name one commit are
-    one; lines that name two or more name none.  A line that starts with `Code:` and names no commit is a problem,
-    named by its number: its text is the pull request author's, and is never shown."""
-    found, problems = [], []
-    for n, line in enumerate((body or "").splitlines(), 1):
-        line = line.strip()
-        if not line.startswith(CODE):
-            continue
-        got = target(line[len(CODE):].strip())
-        if got is None:
-            problems.append("line %d of the pull request's body starts with `%s` but is not `%s OWNER/REPO@SHA` with "
-                            "the full 40-hex commit id" % (n, CODE, CODE))
-        elif got not in found:
-            found.append(got)
-    if len(found) > 1:
-        problems.append("the pull request's body names %d code commits on `%s` lines (%s): none is posted"
-                        % (len(found), CODE, ", ".join("%s@%s" % t for t in found)))
-        return None, problems
-    return (found[0] if found else None), problems
 
 
 class Token(str):
@@ -138,7 +104,15 @@ def payload(r, sha, pull_request=None):
     prefix = UNMERGED % pull_request + "\n\n" if pull_request else ""
     summary = _summary(r, prefix + (NEUTRAL + "\n\n" if conclusion == "neutral" else ""))
     return {"name": "%s: %s" % (NAME, r.unit), "head_sha": sha, "status": "completed", "conclusion": conclusion,
-            "output": {"title": title, "summary": summary}}
+            "output": {"title": title, "summary": summary, "text": _text(r)}}
+
+
+def _text(r):
+    """The check run's output.text: JSON_MARKER, then prove.as_json(r) alone in one fenced `json` block; TRUNCATED in
+    its place when that would hold more than LIMIT characters."""
+    block = JSON_MARKER + "\n```json\n%s\n```\n"
+    text = block % json.dumps(prove.as_json(r), sort_keys=True)
+    return text if len(text) <= LIMIT else block % json.dumps(TRUNCATED, sort_keys=True)
 
 
 def _summary(r, prefix):

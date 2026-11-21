@@ -748,6 +748,17 @@ class Tree(unittest.TestCase):
         for rel in (dump, script):
             self.assertEqual(after[rel], before[rel], rel)
 
+    def test_the_licence_generator_is_left_alone(self):
+        # dev/licence/ holds the shared licence-record generator of OSSV-400, whose module-path mask names both
+        # namespaces on purpose: it already holds the new name, so were it not exempt the rename would refuse the tree
+        gen = "dev/licence/made_from.py"
+        self.t.write(gen, 'import re\nMODULE = re.compile(r"(?:%s|%s)\\.")\n' % (OLD, NEW))
+        helpers.git_commit(self.t.root, "the licence generator names both namespaces")
+        before = self.snapshot()
+        code, out = self.run_tool()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.snapshot()[gen], before[gen], gen)
+
     def test_the_stream_tools_are_left_alone(self):
         # dev/stream/ is internal (the release cut removes it): a tool there already names the new namespace by design,
         # and a compiled .glob keeps the old one; neither refuses the rename nor is rewritten
@@ -988,16 +999,28 @@ class Verify(unittest.TestCase):
 
 
 class ToolFiles(unittest.TestCase):
-    def test_only_four_tool_files_name_the_old_namespace(self):
+    def test_only_the_four_tool_files_and_a_pinned_recipe_name_the_old_namespace(self):
         """names.py (NAMESPACE_DEFAULT), facts.py (FINGERPRINT_NAMESPACE), nsrename.py (OLD_DEFAULT) and lint.py (the
-        finding's message): every other name in the tools comes from release.yaml."""
+        finding's message): every other name the tools' code holds comes from release.yaml.
+
+        The four files of tools/budgetwit/lean/control/libreac/ are data, not code: the recorded Lean witness control
+        against commit b0aef851, whose tree's root namespace is the old one. They are quoted source ranges, rename
+        tables and a record of what the comparison found, and the comparison holds only while they keep that tree's
+        own text. A rename of this repository's namespace must leave them alone, which `rename-namespace` does
+        anyway, since it rewrites no file under tools/. The Lean emitter itself names no namespace: it reads the
+        root from the tree it is pointed at (lean/emitter.py, lean/units.py), and git grep finds the old name in
+        none of its code."""
         if not os.path.isdir(os.path.join(helpers.REPO, ".git")) and not os.path.isfile(
                 os.path.join(helpers.REPO, ".git")):
             self.skipTest("no git checkout beside tools/oft")
         got = subprocess.run(["git", "-C", helpers.REPO, "grep", "-l", OLD, "--", "tools", ":!tools/oft/tests",
                               ":!tools/enroll/tests"], capture_output=True, text=True).stdout.split()
-        self.assertEqual(sorted(got), ["tools/oft/facts.py", "tools/oft/lint.py", "tools/oft/names.py",
-                                       "tools/oft/nsrename.py"])
+        pinned = "tools/budgetwit/lean/control/libreac/"
+        self.assertEqual(sorted(got), sorted(["tools/oft/facts.py", "tools/oft/lint.py", "tools/oft/names.py",
+                                              "tools/oft/nsrename.py"]
+                                             + [pinned + n for n in ("BudgetWitness.lean.in", "RESULTS.md",
+                                                                     "StartB.tsv", "WritevG.tsv")]))
+        self.assertEqual([p for p in got if p.startswith("tools/budgetwit/") and not p.startswith(pinned)], [])
         self.assertEqual(ns.OLD_DEFAULT, names.NAMESPACE_DEFAULT)
 
 
